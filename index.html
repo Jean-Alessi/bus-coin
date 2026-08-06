@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Busmac Viaje App — Prototipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0F2A4D;
+    --navy-light:#1C3F6E;
+    --orange:#E8720F;
+    --orange-light:#FDEBDA;
+    --cream:#F7F5F0;
+    --gray:#8A94A3;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Poppins',sans-serif;
+    background:var(--cream);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 16px;
+  }
+  .device{
+    width:390px;
+    max-width:100%;
+    background:#000;
+    border-radius:44px;
+    padding:12px;
+    box-shadow:0 20px 60px rgba(15,42,77,0.25);
+  }
+  .screen{
+    background:var(--cream);
+    border-radius:32px;
+    height:780px;
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  .statusbar{
+    height:44px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:12px;
+    font-weight:600;
+    color:var(--navy);
+    flex-shrink:0;
+  }
+  .view{
+    flex:1;
+    overflow-y:auto;
+    display:none;
+    flex-direction:column;
+    padding:0 20px 20px;
+  }
+  .view.active{display:flex;}
+
+  /* ---- Header comun ---- */
+  .app-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:8px 0 16px;
+  }
+  .app-header h1{font-size:18px; font-weight:600; color:var(--navy);}
+  .app-header .sub{font-size:12px; color:var(--gray); font-weight:400; margin-top:2px;}
+  .chip-fichas{
+    display:flex; align-items:center; gap:6px;
+    background:var(--navy); color:#fff;
+    padding:6px 12px; border-radius:20px;
+    font-size:13px; font-weight:600;
+  }
+
+  /* ---- Onboarding: elegir grupo ---- */
+  .hero{
+    background:var(--navy);
+    border-radius:24px;
+    padding:24px 20px;
+    color:#fff;
+    margin-bottom:20px;
+    margin-top:8px;
+  }
+  .hero h2{font-size:20px; font-weight:600; margin-bottom:4px;}
+  .hero p{font-size:13px; color:#C6D3E8; font-weight:400;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;}
+  .segment-card{
+    background:#fff; border-radius:18px; padding:18px 14px;
+    border:2px solid transparent; cursor:pointer;
+    text-align:left; transition:.15s;
+  }
+  .segment-card:hover{border-color:var(--orange);}
+  .segment-card.selected{border-color:var(--orange); background:var(--orange-light);}
+  .segment-card .emoji-box{
+    width:40px;height:40px;border-radius:12px;background:var(--orange-light);
+    display:flex;align-items:center;justify-content:center; margin-bottom:10px;
+    font-size:20px; color:var(--orange);
+  }
+  .segment-card h3{font-size:14px; font-weight:600; color:var(--navy); margin-bottom:2px;}
+  .segment-card p{font-size:11px; color:var(--gray);}
+  .btn-primary{
+    background:var(--orange); color:#fff; border:none;
+    padding:16px; border-radius:16px; font-size:15px; font-weight:600;
+    font-family:'Poppins',sans-serif; cursor:pointer; width:100%;
+    margin-top:auto;
+  }
+  .btn-primary:disabled{background:#D9DEE6; color:#9AA3B0; cursor:not-allowed;}
+  .btn-ghost{
+    background:none; border:1.5px solid var(--navy); color:var(--navy);
+    padding:12px; border-radius:14px; font-size:13px; font-weight:600;
+    font-family:'Poppins',sans-serif; cursor:pointer; width:100%; margin-top:10px;
+  }
+
+  /* ---- Home ---- */
+  .card{
+    background:#fff; border-radius:18px; padding:16px; margin-bottom:12px;
+    display:flex; gap:14px; align-items:center; cursor:pointer;
+    border:1px solid #ECE9E1;
+  }
+  .card:hover{border-color:var(--orange);}
+  .card .icon{
+    width:44px; height:44px; border-radius:12px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; background:var(--orange-light); color:var(--orange);
+  }
+  .card .txt h3{font-size:14px; font-weight:600; color:var(--navy); margin-bottom:2px;}
+  .card .txt p{font-size:12px; color:var(--gray);}
+  .section-label{font-size:12px; font-weight:600; color:var(--gray); text-transform:uppercase; letter-spacing:.5px; margin:14px 0 8px;}
+
+  /* ---- Trivia ---- */
+  .progress-bar{height:6px; background:#EDEAE2; border-radius:3px; margin:12px 0 20px; overflow:hidden;}
+  .progress-fill{height:100%; background:var(--orange); border-radius:3px; transition:width .3s;}
+  .question-box{background:#fff; border-radius:18px; padding:20px; margin-bottom:16px;}
+  .question-box .qnum{font-size:11px; color:var(--gray); font-weight:600; margin-bottom:8px;}
+  .question-box h3{font-size:16px; color:var(--navy); font-weight:600; line-height:1.4;}
+  .option{
+    background:#fff; border:1.5px solid #ECE9E1; border-radius:14px;
+    padding:14px; margin-bottom:10px; font-size:13px; color:var(--navy);
+    font-weight:500; cursor:pointer;
+  }
+  .option:hover{border-color:var(--orange);}
+  .option.correct{border-color:#3B9B5A; background:#EAF7EE; color:#256B3A;}
+  .option.wrong{border-color:#D34C3D; background:#FCECEA; color:#9E3226;}
+
+  /* ---- Ranking ---- */
+  .rank-row{
+    display:flex; align-items:center; gap:12px; background:#fff;
+    border-radius:14px; padding:12px 14px; margin-bottom:8px;
+  }
+  .rank-row.me{border:1.5px solid var(--orange); background:var(--orange-light);}
+  .rank-num{font-size:14px; font-weight:700; color:var(--gray); width:20px;}
+  .rank-avatar{
+    width:34px; height:34px; border-radius:50%; background:var(--navy);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:600; flex-shrink:0;
+  }
+  .rank-name{flex:1; font-size:13px; font-weight:600; color:var(--navy);}
+  .rank-pts{font-size:13px; font-weight:700; color:var(--orange);}
+
+  /* ---- Tienda ---- */
+  .pack{
+    background:#fff; border-radius:16px; padding:16px; margin-bottom:10px;
+    display:flex; justify-content:space-between; align-items:center;
+    border:1px solid #ECE9E1;
+  }
+  .pack .info h3{font-size:14px; font-weight:600; color:var(--navy);}
+  .pack .info p{font-size:11px; color:var(--gray); margin-top:2px;}
+  .pack .buy{
+    background:var(--navy); color:#fff; border:none; padding:8px 14px;
+    border-radius:12px; font-size:12px; font-weight:600; font-family:'Poppins',sans-serif;
+    cursor:pointer;
+  }
+
+  /* ---- Nav inferior ---- */
+  .tabbar{
+    display:flex; justify-content:space-around; padding:12px 0;
+    border-top:1px solid #ECE9E1; background:#fff; flex-shrink:0;
+  }
+  .tab{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    font-size:10px; color:var(--gray); font-weight:500; cursor:pointer;
+    background:none; border:none; font-family:'Poppins',sans-serif;
+  }
+  .tab.active{color:var(--orange); font-weight:600;}
+  .tab .dot{width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:16px;}
+
+  .toast{
+    position:absolute; bottom:90px; left:20px; right:20px;
+    background:var(--navy); color:#fff; padding:12px 16px; border-radius:14px;
+    font-size:12px; font-weight:500; text-align:center;
+    opacity:0; transform:translateY(10px); transition:.25s;
+    pointer-events:none;
+  }
+  .toast.show{opacity:1; transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="device">
+  <div class="screen">
+    <div class="statusbar">Busmac Viajes — prototipo</div>
+
+    <!-- ONBOARDING -->
+    <div class="view active" id="view-onboard">
+      <div class="hero">
+        <h2>¿Quién viaja hoy?</h2>
+        <p>Elegí tu perfil para armar tu experiencia en el micro.</p>
+      </div>
+      <div class="grid2">
+        <div class="segment-card" data-seg="estudiantes" onclick="selectSegment('estudiantes')">
+          <div class="emoji-box">EST</div>
+          <h3>Estudiantes</h3>
+          <p>Trivia, ranking, música</p>
+        </div>
+        <div class="segment-card" data-seg="jubilados" onclick="selectSegment('jubilados')">
+          <div class="emoji-box">JUB</div>
+          <h3>Jubilados</h3>
+          <p>Historias, truco, calma</p>
+        </div>
+        <div class="segment-card" data-seg="familia" onclick="selectSegment('familia')">
+          <div class="emoji-box">FAM</div>
+          <h3>Familia</h3>
+          <p>Juegos para todos</p>
+        </div>
+        <div class="segment-card" data-seg="pareja" onclick="selectSegment('pareja')">
+          <div class="emoji-box">PAR</div>
+          <h3>Pareja</h3>
+          <p>Desafíos de a dos</p>
+        </div>
+      </div>
+      <div class="section-label">Tu grupo cerrado</div>
+      <div class="card" style="cursor:default;">
+        <div class="icon">GR</div>
+        <div class="txt">
+          <h3>Los Rieleros</h3>
+          <p>4 integrantes ya sumados</p>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-continuar" disabled onclick="goHome()">Continuar</button>
+    </div>
+
+    <!-- HOME -->
+    <div class="view" id="view-home">
+      <div class="app-header">
+        <div>
+          <h1 id="home-saludo">Hola</h1>
+          <div class="sub">Grupo Los Rieleros</div>
+        </div>
+        <div class="chip-fichas">FICHAS <span id="fichas-count">120</span></div>
+      </div>
+
+      <div id="home-content"></div>
+    </div>
+
+    <!-- TRIVIA -->
+    <div class="view" id="view-trivia">
+      <div class="app-header">
+        <div>
+          <h1>Trivia</h1>
+          <div class="sub" id="trivia-sub">Pregunta 1 de 3</div>
+        </div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="trivia-progress" style="width:33%"></div></div>
+      <div class="question-box">
+        <div class="qnum" id="q-cat">CULTURA GENERAL</div>
+        <h3 id="q-text">¿En qué año se independizó Argentina?</h3>
+      </div>
+      <div id="q-options"></div>
+    </div>
+
+    <!-- RANKING -->
+    <div class="view" id="view-ranking">
+      <div class="app-header">
+        <div>
+          <h1>Ranking</h1>
+          <div class="sub">Los Rieleros — solo tu grupo</div>
+        </div>
+      </div>
+      <div id="ranking-list"></div>
+    </div>
+
+    <!-- TIENDA -->
+    <div class="view" id="view-tienda">
+      <div class="app-header">
+        <div>
+          <h1>Tienda de fichas</h1>
+          <div class="sub">Se usan solo dentro de la app</div>
+        </div>
+      </div>
+      <div class="pack">
+        <div class="info"><h3>Pack chico</h3><p>50 fichas</p></div>
+        <button class="buy" onclick="comprarFichas(50)">$1.000</button>
+      </div>
+      <div class="pack">
+        <div class="info"><h3>Pack viaje</h3><p>150 fichas</p></div>
+        <button class="buy" onclick="comprarFichas(150)">$2.500</button>
+      </div>
+      <div class="pack">
+        <div class="info"><h3>Pack a fondo</h3><p>350 fichas</p></div>
+        <button class="buy" onclick="comprarFichas(350)">$5.000</button>
+      </div>
+      <div class="section-label">Con tus fichas podés</div>
+      <div class="card" style="cursor:default;">
+        <div class="icon">DJ</div>
+        <div class="txt"><h3>Priorizar un tema</h3><p>20 fichas por canción</p></div>
+      </div>
+      <div class="card" style="cursor:default;">
+        <div class="icon">JG</div>
+        <div class="txt"><h3>Apostar en truco</h3><p>10 fichas por mano</p></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="tabbar" id="tabbar" style="display:none;">
+      <button class="tab active" onclick="showView('home')" data-tab="home"><span class="dot">·</span>Inicio</button>
+      <button class="tab" onclick="showView('trivia')" data-tab="trivia"><span class="dot">·</span>Juegos</button>
+      <button class="tab" onclick="showView('ranking')" data-tab="ranking"><span class="dot">·</span>Ranking</button>
+      <button class="tab" onclick="showView('tienda')" data-tab="tienda"><span class="dot">·</span>Tienda</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let segmento = null;
+let fichas = 120;
+let qIndex = 0;
+
+const contenidoPorSegmento = {
+  estudiantes: {
+    saludo: "Hola, Fede",
+    cards: [
+      { icon:"TR", title:"Trivia veloz", sub:"Sumá puntos para el ranking", view:"trivia" },
+      { icon:"DJ", title:"DJ en vivo", sub:"Votá y pagá el próximo tema", view:"tienda" },
+      { icon:"RK", title:"Ranking del micro", sub:"¿Quién va primero hoy?", view:"ranking" },
+    ]
+  },
+  jubilados: {
+    saludo: "Buen día",
+    cards: [
+      { icon:"AU", title:"Cuento del día", sub:"El Aleph — resumen en audio, 12 min", view:"trivia" },
+      { icon:"TR", title:"Trivia tranquila", sub:"Historia argentina, sin apuro", view:"trivia" },
+      { icon:"CA", title:"Truco con el grupo", sub:"Ranking cerrado, solo ustedes", view:"tienda" },
+    ]
+  },
+  familia: {
+    saludo: "Hola, familia",
+    cards: [
+      { icon:"PZ", title:"Buscá las diferencias", sub:"Juego para todas las edades", view:"trivia" },
+      { icon:"TR", title:"Desafío en pareja", sub:"Vos vs tu pareja", view:"trivia" },
+      { icon:"RK", title:"Ranking familiar", sub:"Gómez vs Pérez", view:"ranking" },
+    ]
+  },
+  pareja: {
+    saludo: "Hola, ustedes dos",
+    cards: [
+      { icon:"CO", title:"Trivia en pareja", sub:"¿Cuánto se conocen de verdad?", view:"trivia" },
+      { icon:"CA", title:"Truco de a dos", sub:"Cartas rápidas para pasar el rato", view:"tienda" },
+      { icon:"RK", title:"Su historial", sub:"Racha de victorias juntos", view:"ranking" },
+    ]
+  }
+};
+
+const preguntas = [
+  { cat:"CULTURA GENERAL", text:"¿En qué año se independizó Argentina?", opciones:["1810","1816","1853"], correcta:1 },
+  { cat:"DESTINO", text:"¿Qué provincia estamos por visitar?", opciones:["Córdoba","Mendoza","Santa Fe"], correcta:0 },
+  { cat:"CULTURA GENERAL", text:"¿Cuál es el río más largo del mundo?", opciones:["Amazonas","Nilo","Paraná"], correcta:0 }
+];
+
+const ranking = [
+  { name:"Marcelo", pts:340, me:false },
+  { name:"Vos", pts:290, me:true },
+  { name:"Martín", pts:210, me:false },
+  { name:"Carmelo", pts:150, me:false },
+];
+
+function selectSegment(seg){
+  segmento = seg;
+  document.querySelectorAll('.segment-card').forEach(c=>c.classList.remove('selected'));
+  document.querySelector(`.segment-card[data-seg="${seg}"]`).classList.add('selected');
+  document.getElementById('btn-continuar').disabled = false;
+}
+
+function goHome(){
+  showView('home');
+  document.getElementById('tabbar').style.display = 'flex';
+  renderHome();
+}
+
+function renderHome(){
+  const data = contenidoPorSegmento[segmento] || contenidoPorSegmento.estudiantes;
+  document.getElementById('home-saludo').textContent = data.saludo;
+  const container = document.getElementById('home-content');
+  container.innerHTML = '<div class="section-label">Para vos</div>';
+  data.cards.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.onclick = ()=> showView(c.view);
+    div.innerHTML = `<div class="icon">${c.icon}</div><div class="txt"><h3>${c.title}</h3><p>${c.sub}</p></div>`;
+    container.appendChild(div);
+  });
+}
+
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  const tab = document.querySelector(`.tab[data-tab="${name}"]`);
+  if(tab) tab.classList.add('active');
+  if(name==='trivia'){ qIndex = 0; renderPregunta(); }
+  if(name==='ranking'){ renderRanking(); }
+}
+
+function renderPregunta(){
+  const p = preguntas[qIndex];
+  document.getElementById('trivia-sub').textContent = `Pregunta ${qIndex+1} de ${preguntas.length}`;
+  document.getElementById('trivia-progress').style.width = `${((qIndex+1)/preguntas.length)*100}%`;
+  document.getElementById('q-cat').textContent = p.cat;
+  document.getElementById('q-text').textContent = p.text;
+  const opts = document.getElementById('q-options');
+  opts.innerHTML = '';
+  p.opciones.forEach((op,i)=>{
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.textContent = op;
+    div.onclick = ()=> responder(i);
+    opts.appendChild(div);
+  });
+}
+
+function responder(i){
+  const p = preguntas[qIndex];
+  const opts = document.querySelectorAll('.option');
+  opts.forEach((o,idx)=>{
+    o.onclick = null;
+    if(idx===p.correcta) o.classList.add('correct');
+    else if(idx===i) o.classList.add('wrong');
+  });
+  if(i===p.correcta){
+    fichas += 10;
+    document.getElementById('fichas-count').textContent = fichas;
+    mostrarToast('+10 fichas por acertar');
+  } else {
+    mostrarToast('Esa no era... seguí sumando en la próxima');
+  }
+  setTimeout(()=>{
+    if(qIndex < preguntas.length - 1){
+      qIndex++;
+      renderPregunta();
+    } else {
+      showView('ranking');
+    }
+  }, 1200);
+}
+
+function renderRanking(){
+  const list = document.getElementById('ranking-list');
+  list.innerHTML = '';
+  ranking.forEach((r,i)=>{
+    const div = document.createElement('div');
+    div.className = 'rank-row' + (r.me ? ' me' : '');
+    div.innerHTML = `<div class="rank-num">${i+1}</div><div class="rank-avatar">${r.name.slice(0,2).toUpperCase()}</div><div class="rank-name">${r.name}</div><div class="rank-pts">${r.pts} pts</div>`;
+    list.appendChild(div);
+  });
+}
+
+function comprarFichas(cantidad){
+  fichas += cantidad;
+  document.getElementById('fichas-count').textContent = fichas;
+  mostrarToast(`Sumaste ${cantidad} fichas`);
+}
+
+function mostrarToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 1800);
+}
+</script>
+</body>
+</html>
