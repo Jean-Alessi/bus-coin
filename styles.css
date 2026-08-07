@@ -195,11 +195,11 @@ body{
 
 /* ---- Truco ---- */
 .truco-mesa{
-  display:flex; justify-content:space-around; align-items:flex-start;
+  display:flex; flex-wrap:wrap; justify-content:space-around; align-items:flex-start; gap:10px 6px;
   background:#fff; border-radius:18px; padding:16px; margin-bottom:8px;
   border:1px solid #ECE9E1;
 }
-.truco-mesa-slot{display:flex; flex-direction:column; align-items:center; gap:8px;}
+.truco-mesa-slot{display:flex; flex-direction:column; align-items:center; gap:8px; min-width:72px;}
 .truco-mesa-nombre{font-size:11px; font-weight:600; color:var(--gray);}
 .carta-truco{
   width:56px; height:76px; border-radius:10px; background:#fff;

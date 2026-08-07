@@ -61,6 +61,18 @@ function calcularPuntosEnvido(cartas){
   return mejor;
 }
 
+// En equipos de 2, el envido del equipo es el mejor de sus dos integrantes.
+function calcularPuntosEnvidoEquipo(equipo){
+  const jugadoresDelEquipo = truco.equipoDe
+    .map((eq, i) => (eq === equipo ? i : null))
+    .filter(i => i !== null);
+  return Math.max(...jugadoresDelEquipo.map(i => calcularPuntosEnvido(truco.cartasOriginales[i])));
+}
+
+function trucoNombreEquipo(equipo){
+  return truco.jugadores.filter((_, i) => truco.equipoDe[i] === equipo).join(' y ');
+}
+
 function evaluarGanadorMano(resultadosBazas, liderInicial){
   const conteo = { 0: 0, 1: 0 };
   resultadosBazas.forEach(r => { if(r !== 'parda') conteo[r]++; });
@@ -77,24 +89,47 @@ function evaluarGanadorMano(resultadosBazas, liderInicial){
   return null;
 }
 
+// modo: 'dos' (2 jugadores, cada uno su propio equipo) o 'equipos' (4 jugadores, 2 parejas alternadas en la mesa).
+function trucoConfigurarPartida(modo){
+  const numJugadores = modo === 'equipos' ? 4 : 2;
+  const jugadores = numJugadores === 4
+    ? ['Jugador 1', 'Jugador 2', 'Jugador 3', 'Jugador 4']
+    : ['Jugador 1', 'Jugador 2'];
+  const equipoDe = numJugadores === 4 ? [0, 1, 0, 1] : [0, 1];
+  truco = {
+    modo,
+    numJugadores,
+    jugadores,
+    equipoDe,
+    puntosPartida: [0, 0],
+    liderInicial: undefined,
+    manosJugadas: 0,
+  };
+  trucoNuevaMano();
+}
+
 function trucoNuevaMano(){
+  const numJugadores = truco.numJugadores;
   const mazo = barajar(crearMazoTruco());
-  const jugadoresPrevios = truco ? truco.jugadores : ['Jugador 1', 'Jugador 2'];
-  const manosJugadasPrevias = truco ? truco.manosJugadas : 0;
-  const liderAnterior = truco ? truco.liderInicial : undefined;
-  const liderInicial = liderAnterior === undefined ? 0 : 1 - liderAnterior;
-  const puntosPartida = truco ? truco.puntosPartida : [0, 0];
-  const manoJugador0 = mazo.slice(0, 3);
-  const manoJugador1 = mazo.slice(3, 6);
+  const liderAnterior = truco.liderInicial;
+  const liderInicial = liderAnterior === undefined ? 0 : (liderAnterior + 1) % numJugadores;
+
+  const cartasEnMano = [];
+  for(let i = 0; i < numJugadores; i++){
+    cartasEnMano.push(mazo.slice(i * 3, i * 3 + 3));
+  }
 
   truco = {
-    jugadores: jugadoresPrevios,
-    puntosPartida,
+    modo: truco.modo,
+    numJugadores,
+    jugadores: truco.jugadores,
+    equipoDe: truco.equipoDe,
+    puntosPartida: truco.puntosPartida,
     partidaTerminada: false,
-    cartasOriginales: [manoJugador0.slice(), manoJugador1.slice()],
-    cartasEnMano: [manoJugador0, manoJugador1],
-    cartasJugadas: [[], []],
-    cartasBazaActual: [null, null],
+    cartasOriginales: cartasEnMano.map(m => m.slice()),
+    cartasEnMano,
+    cartasJugadas: cartasEnMano.map(() => []),
+    cartasBazaActual: new Array(numJugadores).fill(null),
     resultadosBazas: [],
     bazaActual: 0,
     liderInicial,
@@ -107,13 +142,21 @@ function trucoNuevaMano(){
     envido: { estado: 'nada' },
     pendiente: null,
     envidoResultado: null,
-    manosJugadas: manosJugadasPrevias + 1,
+    manosJugadas: truco.manosJugadas + 1,
   };
   renderTruco();
 }
 
 function trucoNuevaPartida(){
-  truco = { jugadores: truco.jugadores, puntosPartida: [0, 0], liderInicial: undefined, manosJugadas: 0 };
+  truco = {
+    modo: truco.modo,
+    numJugadores: truco.numJugadores,
+    jugadores: truco.jugadores,
+    equipoDe: truco.equipoDe,
+    puntosPartida: [0, 0],
+    liderInicial: undefined,
+    manosJugadas: 0,
+  };
   trucoNuevaMano();
 }
 
@@ -130,24 +173,35 @@ function trucoJugarCarta(indiceCarta){
   truco.cartasJugadas[jugador].push(carta);
   truco.cartasBazaActual[jugador] = carta;
 
-  const otro = 1 - jugador;
-  if(truco.cartasBazaActual[otro] === null){
-    truco.turno = otro;
-    truco.fase = 'pase-jugar';
-  } else {
+  const todosJugaron = truco.cartasBazaActual.every(c => c !== null);
+  if(todosJugaron){
     trucoResolverBaza();
+  } else {
+    truco.turno = (jugador + 1) % truco.numJugadores;
+    truco.fase = 'pase-jugar';
   }
   renderTruco();
 }
 
 function trucoResolverBaza(){
-  const [c0, c1] = truco.cartasBazaActual;
-  const p0 = poderCarta(c0);
-  const p1 = poderCarta(c1);
-  const resultado = p0 > p1 ? 0 : (p1 > p0 ? 1 : 'parda');
+  const jugadas = truco.cartasBazaActual
+    .map((c, i) => (c ? { jugador: i, poder: poderCarta(c) } : null))
+    .filter(Boolean);
+  const maxPoder = Math.max(...jugadas.map(j => j.poder));
+  const mejores = jugadas.filter(j => j.poder === maxPoder);
+  const equiposMejores = [...new Set(mejores.map(j => truco.equipoDe[j.jugador]))];
+
+  let resultado, jugadorGanadorBaza;
+  if(equiposMejores.length > 1){
+    resultado = 'parda';
+    jugadorGanadorBaza = null;
+  } else {
+    resultado = equiposMejores[0];
+    jugadorGanadorBaza = mejores.find(j => truco.equipoDe[j.jugador] === resultado).jugador;
+  }
   truco.resultadosBazas.push(resultado);
 
-  const ganador = evaluarGanadorMano(truco.resultadosBazas, truco.liderInicial);
+  const ganador = evaluarGanadorMano(truco.resultadosBazas, truco.equipoDe[truco.liderInicial]);
   if(ganador !== null){
     truco.ganadorMano = ganador;
     truco.puntosPartida[ganador] += truco.trucoEstado.valorActual;
@@ -158,8 +212,10 @@ function trucoResolverBaza(){
   }
 
   truco.bazaActual++;
-  truco.cartasBazaActual = [null, null];
-  truco.liderBaza = resultado === 'parda' ? truco.liderBaza : resultado;
+  truco.cartasBazaActual = new Array(truco.numJugadores).fill(null);
+  if(resultado !== 'parda'){
+    truco.liderBaza = jugadorGanadorBaza;
+  }
   truco.turno = truco.liderBaza;
   truco.fase = 'pase-jugar';
 }
@@ -169,7 +225,7 @@ function trucoResolverBaza(){
 function trucoCantarTruco(){
   const proximoNivel = truco.trucoEstado.nivelAceptado + 1;
   if(proximoNivel > 3) return;
-  truco.pendiente = { tipo: 'truco', nivel: proximoNivel, cantadoPor: truco.turno, respondePor: 1 - truco.turno };
+  truco.pendiente = { tipo: 'truco', nivel: proximoNivel, cantadoPor: truco.turno, respondePor: (truco.turno + 1) % truco.numJugadores };
   truco.fase = 'pase-respuesta';
   renderTruco();
 }
@@ -191,8 +247,8 @@ function trucoResponderTruco(quiero){
     return;
   }
   const puntos = TRUCO_VALOR_NO_QUIERO[p.nivel];
-  truco.puntosPartida[p.cantadoPor] += puntos;
-  truco.ganadorMano = p.cantadoPor;
+  truco.puntosPartida[truco.equipoDe[p.cantadoPor]] += puntos;
+  truco.ganadorMano = truco.equipoDe[p.cantadoPor];
   truco.motivoFinMano = { texto: `${truco.jugadores[p.respondePor]} no quiso el ${TRUCO_NOMBRES[p.nivel - 1]}`, puntos };
   truco.pendiente = null;
   truco.fase = 'fin-mano';
@@ -204,7 +260,7 @@ function trucoResponderTruco(quiero){
 
 function trucoCantarEnvido(nivel){
   truco.envido.estado = 'en-curso';
-  truco.pendiente = { tipo: 'envido', nivel, cantadoPor: truco.turno, respondePor: 1 - truco.turno, acumuladoPrevio: 0 };
+  truco.pendiente = { tipo: 'envido', nivel, cantadoPor: truco.turno, respondePor: (truco.turno + 1) % truco.numJugadores, acumuladoPrevio: 0 };
   truco.fase = 'pase-respuesta';
   renderTruco();
 }
@@ -222,9 +278,10 @@ function trucoResponderEnvido(quiero){
   const p = truco.pendiente;
   if(quiero){
     const incremento = ENVIDO_INCREMENTOS[p.nivel];
-    const p0 = calcularPuntosEnvido(truco.cartasOriginales[0]);
-    const p1 = calcularPuntosEnvido(truco.cartasOriginales[1]);
-    const ganador = p0 === p1 ? truco.liderInicial : (p0 > p1 ? 0 : 1);
+    const p0 = calcularPuntosEnvidoEquipo(0);
+    const p1 = calcularPuntosEnvidoEquipo(1);
+    const liderEquipo = truco.equipoDe[truco.liderInicial];
+    const ganador = p0 === p1 ? liderEquipo : (p0 > p1 ? 0 : 1);
     const puntosGanados = incremento === 'falta'
       ? PUNTOS_PARTIDA - truco.puntosPartida[1 - ganador]
       : p.acumuladoPrevio + incremento;
@@ -238,7 +295,7 @@ function trucoResponderEnvido(quiero){
     return;
   }
   const puntos = Math.max(p.acumuladoPrevio, 1);
-  truco.puntosPartida[p.cantadoPor] += puntos;
+  truco.puntosPartida[truco.equipoDe[p.cantadoPor]] += puntos;
   truco.envido = { estado: 'declinado' };
   truco.envidoResultado = { declinadoPor: p.respondePor, cantadoPor: p.cantadoPor, puntos };
   truco.pendiente = null;
@@ -262,9 +319,11 @@ function trucoContinuarTrasEnvido(){
   renderTruco();
 }
 
-function iniciarTruco(){
+function iniciarTruco(modo){
   if(!truco){
-    trucoNuevaMano();
+    trucoConfigurarPartida(modo || 'dos');
+  } else if(modo && modo !== truco.modo){
+    trucoConfigurarPartida(modo);
   } else {
     renderTruco();
   }
@@ -286,26 +345,21 @@ function cartaDorsoHTML(){
 
 function trucoMarcadorHTML(){
   return `<div class="truco-marcador">
-    <span>${truco.jugadores[0]} ${truco.puntosPartida[0]}</span>
+    <span>${trucoNombreEquipo(0)} ${truco.puntosPartida[0]}</span>
     <span class="truco-marcador-meta">a ${PUNTOS_PARTIDA}</span>
-    <span>${truco.puntosPartida[1]} ${truco.jugadores[1]}</span>
+    <span>${truco.puntosPartida[1]} ${trucoNombreEquipo(1)}</span>
   </div>`;
 }
 
 function trucoMesaHTML(){
-  const [c0, c1] = truco.cartasBazaActual;
+  const slots = truco.cartasBazaActual.map((c, i) => `
+      <div class="truco-mesa-slot">
+        <div class="truco-mesa-nombre">${truco.jugadores[i]}</div>
+        ${c ? cartaHTML(c) : cartaDorsoHTML()}
+      </div>`).join('');
   return `
     <div class="section-label">Baza ${truco.bazaActual + 1} de 3</div>
-    <div class="truco-mesa">
-      <div class="truco-mesa-slot">
-        <div class="truco-mesa-nombre">${truco.jugadores[0]}</div>
-        ${c0 ? cartaHTML(c0) : cartaDorsoHTML()}
-      </div>
-      <div class="truco-mesa-slot">
-        <div class="truco-mesa-nombre">${truco.jugadores[1]}</div>
-        ${c1 ? cartaHTML(c1) : cartaDorsoHTML()}
-      </div>
-    </div>`;
+    <div class="truco-mesa">${slots}</div>`;
 }
 
 function trucoApuestasRowHTML(){
@@ -397,9 +451,9 @@ function renderTruco(){
     const r = truco.envidoResultado;
     let texto;
     if(r.puntosPropios){
-      const ganadorNombre = truco.jugadores[r.ganador];
+      const ganadorNombre = trucoNombreEquipo(r.ganador);
       texto = `<h2>Envido para ${ganadorNombre}</h2>
-        <p>${truco.jugadores[0]} tenía ${r.puntosPropios[0]}, ${truco.jugadores[1]} tenía ${r.puntosPropios[1]}. +${r.puntosGanados} puntos.</p>`;
+        <p>${trucoNombreEquipo(0)} tenía ${r.puntosPropios[0]}, ${trucoNombreEquipo(1)} tenía ${r.puntosPropios[1]}. +${r.puntosGanados} puntos.</p>`;
     } else {
       texto = `<h2>${truco.jugadores[r.cantadoPor]} gana el envido</h2>
         <p>${truco.jugadores[r.declinadoPor]} dijo no quiero. +${r.puntos} puntos.</p>`;
@@ -416,7 +470,7 @@ function renderTruco(){
   }
 
   if(truco.fase === 'fin-mano'){
-    const ganador = truco.jugadores[truco.ganadorMano];
+    const ganador = trucoNombreEquipo(truco.ganadorMano);
     const boton = truco.partidaTerminada
       ? `<button class="btn-primary" onclick="trucoNuevaPartida()">Nueva partida</button>`
       : `<button class="btn-primary" onclick="trucoNuevaMano()">Jugar otra mano</button>`;
