@@ -251,3 +251,14 @@ body{
 .btn-votar{background:var(--navy); color:#fff;}
 .btn-priorizar{background:#fff; color:var(--orange); border:1.5px solid var(--orange);}
 .btn-priorizar:disabled{color:var(--gray); border-color:#D9DEE6; cursor:not-allowed;}
+
+/* ---- Buscá las diferencias ---- */
+.dif-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:16px;}
+.dif-celda{
+  aspect-ratio:1; background:#fff; border:1.5px solid #ECE9E1; border-radius:12px;
+  display:flex; align-items:center; justify-content:center; color:var(--navy);
+  cursor:pointer; transition:.15s;
+}
+.dif-celda:hover{border-color:var(--orange); transform:scale(1.04);}
+.dif-celda.dif-encontrada{background:#EAF7EE; border-color:#3B9B5A; color:#256B3A; cursor:default;}
+.dif-celda.dif-encontrada:hover{transform:none;}

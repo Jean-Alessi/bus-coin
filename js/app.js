@@ -21,7 +21,7 @@ const contenidoPorSegmento = {
   familia: {
     saludo: "Hola, familia",
     cards: [
-      { icon:"lupa", title:"Buscá las diferencias", sub:"Juego para todas las edades", view:"trivia" },
+      { icon:"lupa", title:"Buscá las diferencias", sub:"Juego para todas las edades", view:"diferencias" },
       { icon:"trivia", title:"Desafío en pareja", sub:"Vos vs tu pareja", view:"trivia" },
       { icon:"trofeo", title:"Ranking familiar", sub:"Gómez vs Pérez", view:"ranking" },
     ]
@@ -80,6 +80,7 @@ function showView(name, modo){
   if(name==='ranking'){ renderRanking(); }
   if(name==='truco'){ iniciarTruco(modo); }
   if(name==='dj'){ iniciarDJ(); }
+  if(name==='diferencias'){ iniciarDiferencias(); }
 }
 
 function renderRanking(){
