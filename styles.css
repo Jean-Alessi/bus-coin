@@ -262,3 +262,27 @@ body{
 .dif-celda:hover{border-color:var(--orange); transform:scale(1.04);}
 .dif-celda.dif-encontrada{background:#EAF7EE; border-color:#3B9B5A; color:#256B3A; cursor:default;}
 .dif-celda.dif-encontrada:hover{transform:none;}
+
+/* ---- Cuento del día ---- */
+.cuento-player{
+  background:#fff; border-radius:18px; padding:16px; margin-bottom:8px;
+  display:flex; gap:14px; align-items:center; border:1px solid #ECE9E1;
+}
+.cuento-player .icon{
+  width:44px; height:44px; border-radius:12px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--orange-light); color:var(--orange);
+}
+.cuento-player .txt{flex:1; min-width:0;}
+.cuento-player .txt h3{font-size:14px; font-weight:600; color:var(--navy);}
+.cuento-player .txt p{font-size:12px; color:var(--gray); margin-top:2px;}
+.btn-play{
+  width:40px; height:40px; border-radius:50%; border:none; flex-shrink:0;
+  background:var(--navy); color:#fff; font-size:14px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.cuento-barra{height:6px; background:#EDEAE2; border-radius:3px; overflow:hidden; margin:0 0 16px;}
+.cuento-barra-fill{height:100%; background:var(--orange); width:0%;}
+.cuento-barra.sonando .cuento-barra-fill{animation:cuento-avance 40s linear forwards;}
+@keyframes cuento-avance{from{width:0%} to{width:100%}}
+.cuento-texto{font-size:13px; color:var(--navy); line-height:1.6; margin-bottom:16px;}

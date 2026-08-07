@@ -13,7 +13,7 @@ const contenidoPorSegmento = {
   jubilados: {
     saludo: "Buen día",
     cards: [
-      { icon:"auriculares", title:"Cuento del día", sub:"El Aleph — resumen en audio, 12 min", view:"trivia" },
+      { icon:"auriculares", title:"Cuento del día", sub:"Leyendas argentinas, en audio", view:"cuento" },
       { icon:"trivia", title:"Trivia tranquila", sub:"Historia argentina, sin apuro", view:"trivia" },
       { icon:"cartas", title:"Truco con el grupo", sub:"Ranking cerrado, solo ustedes", view:"truco", modo:"equipos" },
     ]
@@ -81,6 +81,7 @@ function showView(name, modo){
   if(name==='truco'){ iniciarTruco(modo); }
   if(name==='dj'){ iniciarDJ(); }
   if(name==='diferencias'){ iniciarDiferencias(); }
+  if(name==='cuento'){ iniciarCuento(); }
 }
 
 function renderRanking(){
