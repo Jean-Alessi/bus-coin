@@ -2,6 +2,15 @@ let truco = null;
 
 const PALOS_TRUCO = ['espada', 'basto', 'oro', 'copa'];
 const NUMEROS_TRUCO = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12];
+const PUNTOS_PARTIDA = 15;
+
+const TRUCO_NOMBRES = { 0: 'Truco', 1: 'Retruco', 2: 'Vale cuatro' };
+const TRUCO_VALORES = { 1: 2, 2: 3, 3: 4 };
+const TRUCO_VALOR_NO_QUIERO = { 1: 1, 2: 2, 3: 3 };
+
+const ENVIDO_NIVELES = ['envido', 'real-envido', 'falta-envido'];
+const ENVIDO_NOMBRES = { envido: 'Envido', 'real-envido': 'Real envido', 'falta-envido': 'Falta envido' };
+const ENVIDO_INCREMENTOS = { envido: 2, 'real-envido': 3, 'falta-envido': 'falta' };
 
 function crearMazoTruco(){
   const mazo = [];
@@ -32,6 +41,26 @@ function poderCarta(carta){
   return 1;
 }
 
+// Valor de envido de una carta: figuras (10/11/12) valen 0, el resto su número.
+function calcularPuntosEnvido(cartas){
+  const porPalo = {};
+  cartas.forEach(c => {
+    const valor = c.numero >= 10 ? 0 : c.numero;
+    (porPalo[c.palo] = porPalo[c.palo] || []).push(valor);
+  });
+  let mejor = 0;
+  Object.values(porPalo).forEach(valores => {
+    if(valores.length >= 2){
+      valores.sort((a, b) => b - a);
+      mejor = Math.max(mejor, 20 + valores[0] + valores[1]);
+    }
+  });
+  if(mejor === 0){
+    mejor = Math.max(...cartas.map(c => c.numero >= 10 ? 0 : c.numero));
+  }
+  return mejor;
+}
+
 function evaluarGanadorMano(resultadosBazas, liderInicial){
   const conteo = { 0: 0, 1: 0 };
   resultadosBazas.forEach(r => { if(r !== 'parda') conteo[r]++; });
@@ -54,10 +83,16 @@ function trucoNuevaMano(){
   const manosJugadasPrevias = truco ? truco.manosJugadas : 0;
   const liderAnterior = truco ? truco.liderInicial : undefined;
   const liderInicial = liderAnterior === undefined ? 0 : 1 - liderAnterior;
+  const puntosPartida = truco ? truco.puntosPartida : [0, 0];
+  const manoJugador0 = mazo.slice(0, 3);
+  const manoJugador1 = mazo.slice(3, 6);
 
   truco = {
     jugadores: jugadoresPrevios,
-    cartasEnMano: [mazo.slice(0, 3), mazo.slice(3, 6)],
+    puntosPartida,
+    partidaTerminada: false,
+    cartasOriginales: [manoJugador0.slice(), manoJugador1.slice()],
+    cartasEnMano: [manoJugador0, manoJugador1],
     cartasJugadas: [[], []],
     cartasBazaActual: [null, null],
     resultadosBazas: [],
@@ -67,9 +102,25 @@ function trucoNuevaMano(){
     turno: liderInicial,
     fase: 'pase-jugar',
     ganadorMano: null,
+    motivoFinMano: null,
+    trucoEstado: { nivelAceptado: 0, valorActual: 1 },
+    envido: { estado: 'nada' },
+    pendiente: null,
+    envidoResultado: null,
     manosJugadas: manosJugadasPrevias + 1,
   };
   renderTruco();
+}
+
+function trucoNuevaPartida(){
+  truco = { jugadores: truco.jugadores, puntosPartida: [0, 0], liderInicial: undefined, manosJugadas: 0 };
+  trucoNuevaMano();
+}
+
+function trucoVerificarFinPartida(){
+  if(truco.puntosPartida[0] >= PUNTOS_PARTIDA || truco.puntosPartida[1] >= PUNTOS_PARTIDA){
+    truco.partidaTerminada = true;
+  }
 }
 
 function trucoJugarCarta(indiceCarta){
@@ -99,7 +150,10 @@ function trucoResolverBaza(){
   const ganador = evaluarGanadorMano(truco.resultadosBazas, truco.liderInicial);
   if(ganador !== null){
     truco.ganadorMano = ganador;
+    truco.puntosPartida[ganador] += truco.trucoEstado.valorActual;
+    truco.motivoFinMano = { texto: 'Ganó las bazas de la mano', puntos: truco.trucoEstado.valorActual };
     truco.fase = 'fin-mano';
+    trucoVerificarFinPartida();
     return;
   }
 
@@ -110,6 +164,104 @@ function trucoResolverBaza(){
   truco.fase = 'pase-jugar';
 }
 
+// ---- Apuestas: Truco / Retruco / Vale cuatro ----
+
+function trucoCantarTruco(){
+  const proximoNivel = truco.trucoEstado.nivelAceptado + 1;
+  if(proximoNivel > 3) return;
+  truco.pendiente = { tipo: 'truco', nivel: proximoNivel, cantadoPor: truco.turno, respondePor: 1 - truco.turno };
+  truco.fase = 'pase-respuesta';
+  renderTruco();
+}
+
+function trucoSubirTruco(){
+  const p = truco.pendiente;
+  truco.pendiente = { tipo: 'truco', nivel: p.nivel + 1, cantadoPor: p.respondePor, respondePor: p.cantadoPor };
+  truco.fase = 'pase-respuesta';
+  renderTruco();
+}
+
+function trucoResponderTruco(quiero){
+  const p = truco.pendiente;
+  if(quiero){
+    truco.trucoEstado = { nivelAceptado: p.nivel, valorActual: TRUCO_VALORES[p.nivel] };
+    truco.pendiente = null;
+    truco.fase = 'pase-jugar';
+    renderTruco();
+    return;
+  }
+  const puntos = TRUCO_VALOR_NO_QUIERO[p.nivel];
+  truco.puntosPartida[p.cantadoPor] += puntos;
+  truco.ganadorMano = p.cantadoPor;
+  truco.motivoFinMano = { texto: `${truco.jugadores[p.respondePor]} no quiso el ${TRUCO_NOMBRES[p.nivel - 1]}`, puntos };
+  truco.pendiente = null;
+  truco.fase = 'fin-mano';
+  trucoVerificarFinPartida();
+  renderTruco();
+}
+
+// ---- Apuestas: Envido / Real envido / Falta envido ----
+
+function trucoCantarEnvido(nivel){
+  truco.envido.estado = 'en-curso';
+  truco.pendiente = { tipo: 'envido', nivel, cantadoPor: truco.turno, respondePor: 1 - truco.turno, acumuladoPrevio: 0 };
+  truco.fase = 'pase-respuesta';
+  renderTruco();
+}
+
+function trucoSubirEnvido(nuevoNivel){
+  const p = truco.pendiente;
+  const incrementoActual = ENVIDO_INCREMENTOS[p.nivel];
+  const nuevoAcumulado = p.acumuladoPrevio + incrementoActual;
+  truco.pendiente = { tipo: 'envido', nivel: nuevoNivel, cantadoPor: p.respondePor, respondePor: p.cantadoPor, acumuladoPrevio: nuevoAcumulado };
+  truco.fase = 'pase-respuesta';
+  renderTruco();
+}
+
+function trucoResponderEnvido(quiero){
+  const p = truco.pendiente;
+  if(quiero){
+    const incremento = ENVIDO_INCREMENTOS[p.nivel];
+    const p0 = calcularPuntosEnvido(truco.cartasOriginales[0]);
+    const p1 = calcularPuntosEnvido(truco.cartasOriginales[1]);
+    const ganador = p0 === p1 ? truco.liderInicial : (p0 > p1 ? 0 : 1);
+    const puntosGanados = incremento === 'falta'
+      ? PUNTOS_PARTIDA - truco.puntosPartida[1 - ganador]
+      : p.acumuladoPrevio + incremento;
+    truco.puntosPartida[ganador] += puntosGanados;
+    truco.envido = { estado: 'resuelto' };
+    truco.envidoResultado = { ganador, puntosPropios: [p0, p1], puntosGanados };
+    truco.pendiente = null;
+    truco.fase = 'envido-resultado';
+    trucoVerificarFinPartida();
+    renderTruco();
+    return;
+  }
+  const puntos = Math.max(p.acumuladoPrevio, 1);
+  truco.puntosPartida[p.cantadoPor] += puntos;
+  truco.envido = { estado: 'declinado' };
+  truco.envidoResultado = { declinadoPor: p.respondePor, cantadoPor: p.cantadoPor, puntos };
+  truco.pendiente = null;
+  truco.fase = 'envido-resultado';
+  trucoVerificarFinPartida();
+  renderTruco();
+}
+
+function trucoResponder(quiero){
+  if(truco.pendiente.tipo === 'truco') trucoResponderTruco(quiero);
+  else trucoResponderEnvido(quiero);
+}
+
+function trucoRevelarRespuesta(){
+  truco.fase = 'respondiendo';
+  renderTruco();
+}
+
+function trucoContinuarTrasEnvido(){
+  truco.fase = 'pase-jugar';
+  renderTruco();
+}
+
 function iniciarTruco(){
   if(!truco){
     trucoNuevaMano();
@@ -117,6 +269,8 @@ function iniciarTruco(){
     renderTruco();
   }
 }
+
+// ---- Render ----
 
 function cartaHTML(carta){
   const colorPalo = (carta.palo === 'oro' || carta.palo === 'copa') ? 'var(--orange)' : 'var(--navy)';
@@ -128,6 +282,14 @@ function cartaHTML(carta){
 
 function cartaDorsoHTML(){
   return `<div class="carta-truco carta-dorso"></div>`;
+}
+
+function trucoMarcadorHTML(){
+  return `<div class="truco-marcador">
+    <span>${truco.jugadores[0]} ${truco.puntosPartida[0]}</span>
+    <span class="truco-marcador-meta">a ${PUNTOS_PARTIDA}</span>
+    <span>${truco.puntosPartida[1]} ${truco.jugadores[1]}</span>
+  </div>`;
 }
 
 function trucoMesaHTML(){
@@ -146,6 +308,18 @@ function trucoMesaHTML(){
     </div>`;
 }
 
+function trucoApuestasRowHTML(){
+  if(truco.ganadorMano !== null || truco.pendiente !== null) return '';
+  const botones = [];
+  if(truco.trucoEstado.nivelAceptado < 3){
+    botones.push(`<button class="btn-apuesta" onclick="trucoCantarTruco()">${TRUCO_NOMBRES[truco.trucoEstado.nivelAceptado]}</button>`);
+  }
+  if(truco.envido.estado === 'nada' && truco.bazaActual === 0){
+    ENVIDO_NIVELES.forEach(n => botones.push(`<button class="btn-apuesta secondary" onclick="trucoCantarEnvido('${n}')">${ENVIDO_NOMBRES[n]}</button>`));
+  }
+  return botones.length ? `<div class="apuestas-row">${botones.join('')}</div>` : '';
+}
+
 function renderTruco(){
   const container = document.getElementById('truco-content');
   if(!container || !truco) return;
@@ -153,6 +327,7 @@ function renderTruco(){
   if(truco.fase === 'pase-jugar'){
     const nombre = truco.jugadores[truco.turno];
     container.innerHTML = `
+      ${trucoMarcadorHTML()}
       ${trucoMesaHTML()}
       <div class="hero" style="margin-top:8px;">
         <h2>Pasale el celular a ${nombre}</h2>
@@ -166,23 +341,95 @@ function renderTruco(){
     const jugador = truco.turno;
     const cartas = truco.cartasEnMano[jugador];
     container.innerHTML = `
+      ${trucoMarcadorHTML()}
       ${trucoMesaHTML()}
       <div class="section-label">Tus cartas, ${truco.jugadores[jugador]}</div>
       <div class="truco-mano">
         ${cartas.map((c, i) => `<div onclick="trucoJugarCarta(${i})">${cartaHTML(c)}</div>`).join('')}
+      </div>
+      ${trucoApuestasRowHTML()}`;
+    return;
+  }
+
+  if(truco.fase === 'pase-respuesta'){
+    const nombre = truco.jugadores[truco.pendiente.respondePor];
+    const tipoTexto = truco.pendiente.tipo === 'truco' ? TRUCO_NOMBRES[truco.pendiente.nivel - 1] : ENVIDO_NOMBRES[truco.pendiente.nivel];
+    container.innerHTML = `
+      ${trucoMarcadorHTML()}
+      ${trucoMesaHTML()}
+      <div class="hero" style="margin-top:8px;">
+        <h2>Pasale el celular a ${nombre}</h2>
+        <p>${truco.jugadores[truco.pendiente.cantadoPor]} cantó ${tipoTexto}.</p>
+      </div>
+      <button class="btn-primary" onclick="trucoRevelarRespuesta()">Ver la apuesta</button>`;
+    return;
+  }
+
+  if(truco.fase === 'respondiendo'){
+    const p = truco.pendiente;
+    const tipoTexto = p.tipo === 'truco' ? TRUCO_NOMBRES[p.nivel - 1] : ENVIDO_NOMBRES[p.nivel];
+    let botonesSubir = '';
+    if(p.tipo === 'truco' && p.nivel < 3){
+      botonesSubir = `<button class="btn-apuesta" onclick="trucoSubirTruco()">${TRUCO_NOMBRES[p.nivel]}</button>`;
+    }
+    if(p.tipo === 'envido'){
+      const idxActual = ENVIDO_NIVELES.indexOf(p.nivel);
+      botonesSubir = ENVIDO_NIVELES.slice(idxActual + 1)
+        .map(n => `<button class="btn-apuesta" onclick="trucoSubirEnvido('${n}')">${ENVIDO_NOMBRES[n]}</button>`)
+        .join('');
+    }
+    container.innerHTML = `
+      ${trucoMarcadorHTML()}
+      ${trucoMesaHTML()}
+      <div class="hero" style="margin-top:8px;">
+        <h2>${truco.jugadores[p.cantadoPor]} cantó ${tipoTexto}</h2>
+        <p>¿Qué decís, ${truco.jugadores[p.respondePor]}?</p>
+      </div>
+      <div class="apuestas-row">
+        <button class="btn-apuesta" onclick="trucoResponder(true)">Quiero</button>
+        <button class="btn-apuesta secondary" onclick="trucoResponder(false)">No quiero</button>
+        ${botonesSubir}
       </div>`;
+    return;
+  }
+
+  if(truco.fase === 'envido-resultado'){
+    const r = truco.envidoResultado;
+    let texto;
+    if(r.puntosPropios){
+      const ganadorNombre = truco.jugadores[r.ganador];
+      texto = `<h2>Envido para ${ganadorNombre}</h2>
+        <p>${truco.jugadores[0]} tenía ${r.puntosPropios[0]}, ${truco.jugadores[1]} tenía ${r.puntosPropios[1]}. +${r.puntosGanados} puntos.</p>`;
+    } else {
+      texto = `<h2>${truco.jugadores[r.cantadoPor]} gana el envido</h2>
+        <p>${truco.jugadores[r.declinadoPor]} dijo no quiero. +${r.puntos} puntos.</p>`;
+    }
+    const boton = truco.partidaTerminada
+      ? `<button class="btn-primary" onclick="trucoNuevaPartida()">Nueva partida</button>`
+      : `<button class="btn-primary" onclick="trucoContinuarTrasEnvido()">Seguir jugando</button>`;
+    container.innerHTML = `
+      ${trucoMarcadorHTML()}
+      ${trucoMesaHTML()}
+      <div class="hero" style="margin-top:8px;">${texto}</div>
+      ${boton}`;
     return;
   }
 
   if(truco.fase === 'fin-mano'){
     const ganador = truco.jugadores[truco.ganadorMano];
+    const boton = truco.partidaTerminada
+      ? `<button class="btn-primary" onclick="trucoNuevaPartida()">Nueva partida</button>`
+      : `<button class="btn-primary" onclick="trucoNuevaMano()">Jugar otra mano</button>`;
+    const bannerPartida = truco.partidaTerminada ? `<p style="font-weight:700;">¡${ganador} ganó la partida!</p>` : '';
     container.innerHTML = `
+      ${trucoMarcadorHTML()}
       ${trucoMesaHTML()}
       <div class="hero" style="margin-top:8px;">
         <h2>Ganó ${ganador}</h2>
-        <p>${truco.resultadosBazas.length} de 3 bazas jugadas esta mano.</p>
+        <p>${truco.motivoFinMano.texto} (+${truco.motivoFinMano.puntos} pts)</p>
+        ${bannerPartida}
       </div>
-      <button class="btn-primary" onclick="trucoNuevaMano()">Jugar otra mano</button>`;
+      ${boton}`;
     return;
   }
 }
