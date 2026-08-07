@@ -15,7 +15,7 @@ const contenidoPorSegmento = {
     cards: [
       { icon:"auriculares", title:"Cuento del día", sub:"El Aleph — resumen en audio, 12 min", view:"trivia" },
       { icon:"trivia", title:"Trivia tranquila", sub:"Historia argentina, sin apuro", view:"trivia" },
-      { icon:"cartas", title:"Truco con el grupo", sub:"Ranking cerrado, solo ustedes", view:"tienda" },
+      { icon:"cartas", title:"Truco con el grupo", sub:"Ranking cerrado, solo ustedes", view:"truco" },
     ]
   },
   familia: {
@@ -30,7 +30,7 @@ const contenidoPorSegmento = {
     saludo: "Hola, ustedes dos",
     cards: [
       { icon:"chat", title:"Trivia en pareja", sub:"¿Cuánto se conocen de verdad?", view:"trivia" },
-      { icon:"cartas", title:"Truco de a dos", sub:"Cartas rápidas para pasar el rato", view:"tienda" },
+      { icon:"cartas", title:"Truco de a dos", sub:"Cartas rápidas para pasar el rato", view:"truco" },
       { icon:"trofeo", title:"Su historial", sub:"Racha de victorias juntos", view:"ranking" },
     ]
   }
@@ -78,6 +78,7 @@ function showView(name){
   if(tab) tab.classList.add('active');
   if(name==='trivia'){ iniciarTrivia(); }
   if(name==='ranking'){ renderRanking(); }
+  if(name==='truco'){ iniciarTruco(); }
 }
 
 function renderRanking(){
