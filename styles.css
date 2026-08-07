@@ -216,6 +216,10 @@ body{
   font-weight:700; font-size:14px; color:var(--navy); margin-bottom:10px;
 }
 .truco-marcador-meta{font-weight:500; font-size:11px; color:var(--gray);}
+.truco-apuesta-activa{
+  text-align:center; font-size:12px; font-weight:600; color:var(--orange);
+  margin-bottom:10px;
+}
 .apuestas-row{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:14px;}
 .btn-apuesta{
   border:none; border-radius:999px; padding:10px 16px; font-weight:600; font-size:13px;

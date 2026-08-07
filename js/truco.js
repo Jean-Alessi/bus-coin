@@ -3,6 +3,7 @@ let truco = null;
 const PALOS_TRUCO = ['espada', 'basto', 'oro', 'copa'];
 const NUMEROS_TRUCO = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12];
 const PUNTOS_PARTIDA = 15;
+const COSTO_APUESTA_FICHAS = 10;
 
 const TRUCO_NOMBRES = { 0: 'Truco', 1: 'Retruco', 2: 'Vale cuatro' };
 const TRUCO_VALORES = { 1: 2, 2: 3, 3: 4 };
@@ -135,13 +136,14 @@ function trucoNuevaMano(){
     liderInicial,
     liderBaza: liderInicial,
     turno: liderInicial,
-    fase: 'pase-jugar',
+    fase: 'elegir-apuesta',
     ganadorMano: null,
     motivoFinMano: null,
     trucoEstado: { nivelAceptado: 0, valorActual: 1 },
     envido: { estado: 'nada' },
     pendiente: null,
     envidoResultado: null,
+    apuestaFichas: 0,
     manosJugadas: truco.manosJugadas + 1,
   };
   renderTruco();
@@ -164,6 +166,39 @@ function trucoVerificarFinPartida(){
   if(truco.puntosPartida[0] >= PUNTOS_PARTIDA || truco.puntosPartida[1] >= PUNTOS_PARTIDA){
     truco.partidaTerminada = true;
   }
+}
+
+// El equipo 0 (siempre Jugador 1 y su compañero) es el dueño de las fichas de este celular.
+function trucoApostarFichas(){
+  if(fichas < COSTO_APUESTA_FICHAS) return;
+  fichas -= COSTO_APUESTA_FICHAS;
+  actualizarFichasEnPantalla();
+  truco.apuestaFichas = COSTO_APUESTA_FICHAS;
+  truco.fase = 'pase-jugar';
+  renderTruco();
+}
+
+function trucoOmitirApuesta(){
+  truco.apuestaFichas = 0;
+  truco.fase = 'pase-jugar';
+  renderTruco();
+}
+
+function trucoLiquidarApuestaFichas(){
+  if(!truco.apuestaFichas) return;
+  if(truco.ganadorMano === 0){
+    fichas += truco.apuestaFichas * 2;
+    mostrarToast(`¡Ganaste ${truco.apuestaFichas} fichas apostadas!`);
+  } else {
+    mostrarToast(`Perdiste las ${truco.apuestaFichas} fichas apostadas`);
+  }
+  actualizarFichasEnPantalla();
+  truco.apuestaFichas = 0;
+}
+
+function actualizarFichasEnPantalla(){
+  const el = document.getElementById('fichas-count');
+  if(el) el.textContent = fichas;
 }
 
 function trucoJugarCarta(indiceCarta){
@@ -207,6 +242,7 @@ function trucoResolverBaza(){
     truco.puntosPartida[ganador] += truco.trucoEstado.valorActual;
     truco.motivoFinMano = { texto: 'Ganó las bazas de la mano', puntos: truco.trucoEstado.valorActual };
     truco.fase = 'fin-mano';
+    trucoLiquidarApuestaFichas();
     trucoVerificarFinPartida();
     return;
   }
@@ -252,6 +288,7 @@ function trucoResponderTruco(quiero){
   truco.motivoFinMano = { texto: `${truco.jugadores[p.respondePor]} no quiso el ${TRUCO_NOMBRES[p.nivel - 1]}`, puntos };
   truco.pendiente = null;
   truco.fase = 'fin-mano';
+  trucoLiquidarApuestaFichas();
   trucoVerificarFinPartida();
   renderTruco();
 }
@@ -344,11 +381,14 @@ function cartaDorsoHTML(){
 }
 
 function trucoMarcadorHTML(){
+  const apuestaTxt = truco.apuestaFichas
+    ? `<div class="truco-apuesta-activa">${truco.apuestaFichas} fichas en juego esta mano</div>`
+    : '';
   return `<div class="truco-marcador">
     <span>${trucoNombreEquipo(0)} ${truco.puntosPartida[0]}</span>
     <span class="truco-marcador-meta">a ${PUNTOS_PARTIDA}</span>
     <span>${truco.puntosPartida[1]} ${trucoNombreEquipo(1)}</span>
-  </div>`;
+  </div>${apuestaTxt}`;
 }
 
 function trucoMesaHTML(){
@@ -377,6 +417,23 @@ function trucoApuestasRowHTML(){
 function renderTruco(){
   const container = document.getElementById('truco-content');
   if(!container || !truco) return;
+
+  if(truco.fase === 'elegir-apuesta'){
+    const alcanza = fichas >= COSTO_APUESTA_FICHAS;
+    container.innerHTML = `
+      ${trucoMarcadorHTML()}
+      <div class="hero" style="margin-top:8px;">
+        <h2>¿Apuestan fichas esta mano?</h2>
+        <p>Tenés ${fichas} fichas. Si gana ${trucoNombreEquipo(0)}, duplican las ${COSTO_APUESTA_FICHAS} que arriesguen.</p>
+      </div>
+      <div class="apuestas-row">
+        ${alcanza
+          ? `<button class="btn-apuesta" onclick="trucoApostarFichas()">Apostar ${COSTO_APUESTA_FICHAS} fichas</button>`
+          : `<button class="btn-apuesta" disabled style="opacity:.5;cursor:not-allowed;">No alcanzan las fichas</button>`}
+        <button class="btn-apuesta secondary" onclick="trucoOmitirApuesta()">Jugar sin apostar</button>
+      </div>`;
+    return;
+  }
 
   if(truco.fase === 'pase-jugar'){
     const nombre = truco.jugadores[truco.turno];
