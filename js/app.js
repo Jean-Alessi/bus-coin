@@ -6,7 +6,7 @@ const contenidoPorSegmento = {
     saludo: "Hola, Fede",
     cards: [
       { icon:"trivia", title:"Trivia veloz", sub:"Sumá puntos para el ranking", view:"trivia" },
-      { icon:"musica", title:"DJ en vivo", sub:"Votá y pagá el próximo tema", view:"tienda" },
+      { icon:"musica", title:"DJ en vivo", sub:"Votá y pagá el próximo tema", view:"dj" },
       { icon:"trofeo", title:"Ranking del micro", sub:"¿Quién va primero hoy?", view:"ranking" },
     ]
   },
@@ -79,6 +79,7 @@ function showView(name, modo){
   if(name==='trivia'){ iniciarTrivia(); }
   if(name==='ranking'){ renderRanking(); }
   if(name==='truco'){ iniciarTruco(modo); }
+  if(name==='dj'){ iniciarDJ(); }
 }
 
 function renderRanking(){

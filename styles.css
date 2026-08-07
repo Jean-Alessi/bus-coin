@@ -227,3 +227,27 @@ body{
 }
 .btn-apuesta:hover{opacity:.9;}
 .btn-apuesta.secondary{background:#fff; color:var(--navy); border:1.5px solid var(--navy);}
+
+/* ---- DJ en vivo ---- */
+.dj-item{
+  background:#fff; border-radius:16px; padding:14px; margin-bottom:10px;
+  display:flex; gap:12px; align-items:center; border:1px solid #ECE9E1;
+}
+.dj-item.dj-sonando{border-color:var(--orange); background:var(--orange-light);}
+.dj-item .icon{
+  width:40px; height:40px; border-radius:12px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--orange-light); color:var(--orange);
+}
+.dj-item.dj-sonando .icon{background:var(--orange); color:#fff;}
+.dj-item .txt{flex:1; min-width:0;}
+.dj-item .txt h3{font-size:13px; font-weight:600; color:var(--navy);}
+.dj-item .txt p{font-size:11px; color:var(--gray); margin-top:2px;}
+.dj-acciones{display:flex; flex-direction:column; gap:6px; flex-shrink:0;}
+.btn-votar, .btn-priorizar{
+  border:none; border-radius:999px; padding:6px 10px; font-size:11px; font-weight:600;
+  font-family:'Poppins',sans-serif; cursor:pointer; white-space:nowrap;
+}
+.btn-votar{background:var(--navy); color:#fff;}
+.btn-priorizar{background:#fff; color:var(--orange); border:1.5px solid var(--orange);}
+.btn-priorizar:disabled{color:var(--gray); border-color:#D9DEE6; cursor:not-allowed;}
