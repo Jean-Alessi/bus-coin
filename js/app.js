@@ -76,7 +76,7 @@ function showView(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   const tab = document.querySelector(`.tab[data-tab="${name}"]`);
   if(tab) tab.classList.add('active');
-  if(name==='trivia'){ qIndex = 0; renderPregunta(); }
+  if(name==='trivia'){ iniciarTrivia(); }
   if(name==='ranking'){ renderRanking(); }
 }
 
