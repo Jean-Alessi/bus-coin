@@ -39,8 +39,15 @@ function bingoVolverANombres(){
   renderBingo();
 }
 
-function bingoCambiarCantidad(delta){
-  bingo.cantidadCartones = Math.min(8, Math.max(1, bingo.cantidadCartones + delta));
+const BINGO_MAX_CARTONES = 200;
+
+function bingoActualizarCantidad(valor){
+  const n = parseInt(valor, 10);
+  bingo.cantidadCartones = isNaN(n) ? 1 : Math.min(BINGO_MAX_CARTONES, Math.max(1, n));
+}
+
+function bingoSetCantidad(n){
+  bingo.cantidadCartones = Math.min(BINGO_MAX_CARTONES, Math.max(1, n));
   renderBingo();
 }
 
@@ -158,10 +165,9 @@ function renderBingo(){
         <h2>¿Cuántos cartones armamos?</h2>
         <p>Se arman al azar con los ${bingo.nombres.length} nombres cargados (cartón de ${tamano}×${tamano}).</p>
       </div>
-      <div class="bingo-stepper">
-        <button onclick="bingoCambiarCantidad(-1)">−</button>
-        <span>${bingo.cantidadCartones}</span>
-        <button onclick="bingoCambiarCantidad(1)">+</button>
+      <input type="number" id="bingo-cantidad-input" class="bingo-input-numero" min="1" max="${BINGO_MAX_CARTONES}" value="${bingo.cantidadCartones}" oninput="bingoActualizarCantidad(this.value)">
+      <div class="bingo-presets">
+        ${[10, 20, 40, 60].map(n => `<button class="btn-ghost-chico" onclick="bingoSetCantidad(${n})">${n}</button>`).join('')}
       </div>
       <button class="btn-primary" onclick="bingoArmarCartones()">Armar cartones y jugar</button>
       <button class="btn-ghost" onclick="bingoVolverANombres()">Editar nombres</button>`;

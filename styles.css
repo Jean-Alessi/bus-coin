@@ -293,12 +293,17 @@ body{
   padding:12px; font-family:'Poppins',sans-serif; font-size:13px; color:var(--navy);
   margin-bottom:12px; resize:vertical;
 }
-.bingo-stepper{display:flex; align-items:center; justify-content:center; gap:20px; margin:20px 0;}
-.bingo-stepper button{
-  width:40px; height:40px; border-radius:50%; border:none; background:var(--navy); color:#fff;
-  font-size:18px; font-weight:700; cursor:pointer; font-family:'Poppins',sans-serif;
+.bingo-input-numero{
+  width:100%; text-align:center; font-size:22px; font-weight:700; color:var(--navy);
+  border:1.5px solid #ECE9E1; border-radius:14px; padding:12px; margin:16px 0 10px;
+  font-family:'Poppins',sans-serif;
 }
-.bingo-stepper span{font-size:20px; font-weight:700; color:var(--navy); min-width:24px; text-align:center;}
+.bingo-presets{display:flex; justify-content:center; gap:8px; margin-bottom:16px; flex-wrap:wrap;}
+.btn-ghost-chico{
+  background:#fff; border:1.5px solid var(--navy); color:var(--navy);
+  padding:6px 14px; border-radius:999px; font-size:12px; font-weight:600;
+  font-family:'Poppins',sans-serif; cursor:pointer;
+}
 .bingo-sorteo{background:var(--navy); border-radius:18px; padding:20px; text-align:center; margin-bottom:16px;}
 .bingo-ultimo{color:#fff; font-size:22px; font-weight:700; margin-bottom:14px; min-height:28px; word-break:break-word;}
 .bingo-sorteo .btn-primary{margin-top:0;}
