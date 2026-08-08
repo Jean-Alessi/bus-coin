@@ -286,3 +286,39 @@ body{
 .cuento-barra.sonando .cuento-barra-fill{animation:cuento-avance 40s linear forwards;}
 @keyframes cuento-avance{from{width:0%} to{width:100%}}
 .cuento-texto{font-size:13px; color:var(--navy); line-height:1.6; margin-bottom:16px;}
+
+/* ---- Bingo de nombres ---- */
+.bingo-textarea{
+  width:100%; min-height:140px; border:1.5px solid #ECE9E1; border-radius:14px;
+  padding:12px; font-family:'Poppins',sans-serif; font-size:13px; color:var(--navy);
+  margin-bottom:12px; resize:vertical;
+}
+.bingo-stepper{display:flex; align-items:center; justify-content:center; gap:20px; margin:20px 0;}
+.bingo-stepper button{
+  width:40px; height:40px; border-radius:50%; border:none; background:var(--navy); color:#fff;
+  font-size:18px; font-weight:700; cursor:pointer; font-family:'Poppins',sans-serif;
+}
+.bingo-stepper span{font-size:20px; font-weight:700; color:var(--navy); min-width:24px; text-align:center;}
+.bingo-sorteo{background:var(--navy); border-radius:18px; padding:20px; text-align:center; margin-bottom:16px;}
+.bingo-ultimo{color:#fff; font-size:22px; font-weight:700; margin-bottom:14px; min-height:28px; word-break:break-word;}
+.bingo-sorteo .btn-primary{margin-top:0;}
+.bingo-historial{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px;}
+.bingo-chip{
+  background:#fff; border:1px solid #ECE9E1; border-radius:999px; padding:4px 10px;
+  font-size:11px; font-weight:600; color:var(--navy);
+}
+.bingo-chip-vacio{color:var(--gray); font-weight:400;}
+.bingo-carton{background:#fff; border-radius:16px; padding:12px; margin-bottom:12px; border:1px solid #ECE9E1;}
+.bingo-carton-titulo{font-size:13px; font-weight:700; color:var(--navy); margin-bottom:8px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
+.bingo-badge{
+  background:var(--orange-light); color:var(--orange); font-size:10px; font-weight:700;
+  padding:2px 8px; border-radius:999px; text-transform:uppercase;
+}
+.bingo-badge-full{background:var(--orange); color:#fff;}
+.bingo-grid{display:grid; gap:4px;}
+.bingo-celda{
+  aspect-ratio:1; background:var(--cream); border-radius:6px; display:flex; align-items:center;
+  justify-content:center; text-align:center; font-size:10px; font-weight:600; color:var(--navy);
+  padding:2px; overflow:hidden; word-break:break-word; line-height:1.15; transition:.15s;
+}
+.bingo-celda.bingo-marcada{background:var(--orange); color:#fff;}

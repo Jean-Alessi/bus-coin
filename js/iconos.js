@@ -15,7 +15,8 @@ const ICONOS = {
   espada: '<path d="M12 2v14"/><path d="M8 6h8"/><path d="M12 16l-2.5 5h5L12 16Z"/>',
   basto: '<path d="M12 3v18"/><path d="M8 7c0-2.2 1.8-4 4-4s4 1.8 4 4-1.8 4-4 4-4-1.8-4-4Z"/>',
   oro: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2"/>',
-  copa: '<path d="M6 4h12l-1 6a5 5 0 0 1-10 0L6 4Z"/><path d="M12 15v4"/><path d="M8 21h8"/>'
+  copa: '<path d="M6 4h12l-1 6a5 5 0 0 1-10 0L6 4Z"/><path d="M12 15v4"/><path d="M8 21h8"/>',
+  bingo: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'
 };
 
 function icono(nombre, size){

@@ -8,6 +8,7 @@ const contenidoPorSegmento = {
       { icon:"trivia", title:"Trivia veloz", sub:"Sumá puntos para el ranking", view:"trivia" },
       { icon:"musica", title:"DJ en vivo", sub:"Votá y pagá el próximo tema", view:"dj" },
       { icon:"trofeo", title:"Ranking del micro", sub:"¿Quién va primero hoy?", view:"ranking" },
+      { icon:"bingo", title:"Bingo de nombres", sub:"Sorteo con los pasajeros del micro", view:"bingo" },
     ]
   },
   jubilados: {
@@ -16,6 +17,7 @@ const contenidoPorSegmento = {
       { icon:"auriculares", title:"Cuento del día", sub:"Leyendas argentinas, en audio", view:"cuento" },
       { icon:"trivia", title:"Trivia tranquila", sub:"Historia argentina, sin apuro", view:"trivia" },
       { icon:"cartas", title:"Truco con el grupo", sub:"Ranking cerrado, solo ustedes", view:"truco", modo:"equipos" },
+      { icon:"bingo", title:"Bingo de nombres", sub:"Sorteo con los pasajeros del micro", view:"bingo" },
     ]
   },
   familia: {
@@ -24,6 +26,7 @@ const contenidoPorSegmento = {
       { icon:"lupa", title:"Buscá las diferencias", sub:"Juego para todas las edades", view:"diferencias" },
       { icon:"trivia", title:"Desafío en pareja", sub:"Vos vs tu pareja", view:"trivia" },
       { icon:"trofeo", title:"Ranking familiar", sub:"Gómez vs Pérez", view:"ranking" },
+      { icon:"bingo", title:"Bingo de nombres", sub:"Sorteo con los pasajeros del micro", view:"bingo" },
     ]
   },
   pareja: {
@@ -32,6 +35,7 @@ const contenidoPorSegmento = {
       { icon:"chat", title:"Trivia en pareja", sub:"¿Cuánto se conocen de verdad?", view:"trivia" },
       { icon:"cartas", title:"Truco de a dos", sub:"Cartas rápidas para pasar el rato", view:"truco", modo:"dos" },
       { icon:"trofeo", title:"Su historial", sub:"Racha de victorias juntos", view:"ranking" },
+      { icon:"bingo", title:"Bingo de nombres", sub:"Sorteo con los pasajeros del micro", view:"bingo" },
     ]
   }
 };
@@ -82,6 +86,7 @@ function showView(name, modo){
   if(name==='dj'){ iniciarDJ(); }
   if(name==='diferencias'){ iniciarDiferencias(); }
   if(name==='cuento'){ iniciarCuento(); }
+  if(name==='bingo'){ iniciarBingo(); }
 }
 
 function renderRanking(){
