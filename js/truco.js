@@ -369,15 +369,11 @@ function iniciarTruco(modo){
 // ---- Render ----
 
 function cartaHTML(carta){
-  const colorPalo = (carta.palo === 'oro' || carta.palo === 'copa') ? 'var(--orange)' : 'var(--navy)';
-  return `<div class="carta-truco" style="color:${colorPalo}">
-    <div class="carta-num">${carta.numero}</div>
-    <div class="carta-palo">${icono(carta.palo, 18)}</div>
-  </div>`;
+  return `<div class="carta-truco">${naipeCaraSVG(carta)}</div>`;
 }
 
 function cartaDorsoHTML(){
-  return `<div class="carta-truco carta-dorso"></div>`;
+  return `<div class="carta-truco carta-dorso">${naipeDorsoSVG()}</div>`;
 }
 
 function trucoMarcadorHTML(){

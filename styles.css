@@ -202,12 +202,11 @@ body{
 .truco-mesa-slot{display:flex; flex-direction:column; align-items:center; gap:8px; min-width:72px;}
 .truco-mesa-nombre{font-size:11px; font-weight:600; color:var(--gray);}
 .carta-truco{
-  width:56px; height:76px; border-radius:10px; background:#fff;
-  border:1.5px solid #ECE9E1; box-shadow:0 2px 6px rgba(15,42,77,0.08);
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-  font-weight:700; font-size:18px;
+  width:66px; height:92px; border-radius:9px; overflow:hidden;
+  box-shadow:0 2px 6px rgba(15,42,77,0.15);
+  display:flex; align-items:center; justify-content:center;
 }
-.carta-dorso{background:var(--navy); border-color:var(--navy);}
+.carta-truco svg{display:block;}
 .truco-mano{display:flex; justify-content:center; gap:14px; margin-top:auto; padding:12px 0; flex-wrap:wrap;}
 .truco-mano .carta-truco{cursor:pointer; transition:.15s;}
 .truco-mano .carta-truco:hover{transform:translateY(-4px); border-color:var(--orange);}
