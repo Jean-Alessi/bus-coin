@@ -40,21 +40,49 @@ const contenidoPorSegmento = {
   }
 };
 
-const ranking = [
-  { name:"Marcelo", pts:340, me:false },
-  { name:"Vos", pts:290, me:true },
-  { name:"Martín", pts:210, me:false },
-  { name:"Carmelo", pts:150, me:false },
-];
+// ---- Identidad y ranking compartido: cada celular dice su nombre una vez,
+// y los puntos que gana se suman a una tabla en vivo en Firebase. ----
+
+let miNombre = localStorage.getItem('mi-nombre') || '';
+let rankingPuntos = {};
+let rankingListener = null;
+
+function rankingClave(nombre){
+  return nombre.trim().replace(/[.#$\[\]\/]/g, '_');
+}
+
+function rankingRefPuntos(){ return db.ref('salas/ranking-grupo/puntos'); }
+
+function rankingUnirse(){
+  if(!miNombre) return;
+  const ref = rankingRefPuntos().child(rankingClave(miNombre));
+  ref.once('value').then(snap => {
+    if(snap.val() == null) ref.set(0);
+  });
+  if(!rankingListener){
+    rankingListener = rankingRefPuntos().on('value', snap => {
+      rankingPuntos = snap.val() || {};
+      renderRanking();
+    });
+  }
+}
+
+function actualizarBotonContinuar(){
+  const nombreOk = document.getElementById('mi-nombre-input').value.trim().length > 0;
+  document.getElementById('btn-continuar').disabled = !(segmento && nombreOk);
+}
 
 function selectSegment(seg){
   segmento = seg;
   document.querySelectorAll('.segment-card').forEach(c=>c.classList.remove('selected'));
   document.querySelector(`.segment-card[data-seg="${seg}"]`).classList.add('selected');
-  document.getElementById('btn-continuar').disabled = false;
+  actualizarBotonContinuar();
 }
 
 function goHome(){
+  miNombre = document.getElementById('mi-nombre-input').value.trim();
+  localStorage.setItem('mi-nombre', miNombre);
+  rankingUnirse();
   showView('home');
   document.getElementById('tabbar').style.display = 'flex';
   renderHome();
@@ -90,13 +118,17 @@ function showView(name, modo){
 }
 
 function renderRanking(){
-  ranking.sort((a,b)=> b.pts - a.pts);
   const list = document.getElementById('ranking-list');
-  list.innerHTML = '';
-  ranking.forEach((r,i)=>{
+  if(!list) return;
+  const miClave = rankingClave(miNombre);
+  const filas = Object.keys(rankingPuntos)
+    .map(clave => ({ nombre: clave, pts: rankingPuntos[clave], me: clave === miClave }))
+    .sort((a,b)=> b.pts - a.pts);
+  list.innerHTML = filas.length ? '' : '<p style="color:var(--gray);font-size:13px;">Todavía nadie sumó puntos.</p>';
+  filas.forEach((r,i)=>{
     const div = document.createElement('div');
     div.className = 'rank-row' + (r.me ? ' me' : '');
-    div.innerHTML = `<div class="rank-num">${i+1}</div><div class="rank-avatar">${r.name.slice(0,2).toUpperCase()}</div><div class="rank-name">${r.name}</div><div class="rank-pts">${r.pts} pts</div>`;
+    div.innerHTML = `<div class="rank-num">${i+1}</div><div class="rank-avatar">${r.nombre.slice(0,2).toUpperCase()}</div><div class="rank-name">${r.me ? 'Vos' : r.nombre}</div><div class="rank-pts">${r.pts} pts</div>`;
     list.appendChild(div);
   });
 }
@@ -104,8 +136,11 @@ function renderRanking(){
 function ganarFichas(cantidad){
   fichas += cantidad;
   document.getElementById('fichas-count').textContent = fichas;
-  const yo = ranking.find(r=>r.me);
-  if(yo) yo.pts += cantidad;
+  if(miNombre){
+    const clave = rankingClave(miNombre);
+    rankingPuntos[clave] = (rankingPuntos[clave] || 0) + cantidad;
+    rankingRefPuntos().child(clave).set(rankingPuntos[clave]);
+  }
 }
 
 function comprarFichas(cantidad){
@@ -125,4 +160,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.querySelectorAll('[data-icon]').forEach(el=>{
     el.innerHTML = icono(el.dataset.icon);
   });
+  const nombreInput = document.getElementById('mi-nombre-input');
+  if(nombreInput && miNombre) nombreInput.value = miNombre;
 });

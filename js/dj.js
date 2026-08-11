@@ -10,11 +10,28 @@ const CANCIONES_INICIALES = [
   { id: 5, titulo: 'Zamba Para Olvidar', artista: 'Mercedes Sosa', votos: 2 },
 ];
 
+// Todo el grupo comparte la misma cola de temas en vivo: no hace falta
+// elegir un asiento, cualquier celular puede votar o priorizar.
+let djListener = null;
+
+function djRefEstado(){ return db.ref('salas/dj-vivo/estado'); }
+
+function djGuardar(){
+  djRefEstado().set(dj);
+}
+
 function iniciarDJ(){
-  if(!dj){
-    dj = { canciones: CANCIONES_INICIALES.map(c => ({ ...c })) };
-  }
-  renderDJ();
+  if(djListener) return;
+  djListener = djRefEstado().on('value', snap => {
+    const data = snap.val();
+    if(!data){
+      dj = { canciones: CANCIONES_INICIALES.map(c => ({ ...c })) };
+      djGuardar();
+      return;
+    }
+    dj = data;
+    renderDJ();
+  });
 }
 
 function ordenarCanciones(){
@@ -24,7 +41,7 @@ function ordenarCanciones(){
 function votarCancion(id){
   const cancion = dj.canciones.find(c => c.id === id);
   if(cancion) cancion.votos++;
-  renderDJ();
+  djGuardar();
 }
 
 function priorizarCancion(id){
@@ -36,7 +53,7 @@ function priorizarCancion(id){
   const maxVotos = Math.max(...dj.canciones.map(c => c.votos));
   cancion.votos = maxVotos + 5;
   mostrarToast(`"${cancion.titulo}" ahora suena antes`);
-  renderDJ();
+  djGuardar();
 }
 
 function djItemHTML(cancion, esSonando){
