@@ -277,11 +277,12 @@ body{
 .bingo-roster-item span:first-child{color:var(--navy); font-weight:600;}
 .bingo-roster-item.bingo-roster-listo{border-color:#3B9B5A;}
 .bingo-roster-item.bingo-roster-listo span:last-child{color:#3B9B5A; font-weight:700;}
-.bingo-link-organizador{
-  text-align:center; font-size:12px; color:var(--gray); text-decoration:underline;
-  cursor:pointer; margin-top:16px;
+.btn-organizador-link{
+  display:block; width:100%; background:var(--navy); color:#fff; border:none;
+  border-radius:14px; padding:12px; font-size:13px; font-weight:600;
+  font-family:'Poppins',sans-serif; cursor:pointer; margin-bottom:16px;
 }
-.bingo-pin-box{margin-top:12px;}
+.bingo-pin-box{margin-bottom:16px;}
 .bingo-sorteo{background:var(--navy); border-radius:18px; padding:20px; text-align:center; margin-bottom:16px;}
 .bingo-ultimo{
   color:#fff; font-size:17px; font-weight:700; line-height:1.35;

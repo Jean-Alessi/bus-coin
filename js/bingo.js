@@ -9,6 +9,8 @@ let bingoMostrandoPin = false;
 const BINGO_PIN_ORGANIZADOR = '2314';
 const BINGO_CANTIDAD_CARTON = 9;
 const BINGO_TAMANO_CARTON = 3;
+// Si son menos de 9 pasajeros, se completa el cartón con números para poder jugar igual.
+const BINGO_NUMEROS_EXTRA = Array.from({ length: 40 }, (_, i) => String(i + 1));
 
 // Cantos con onda: cada sorteo arma una frase al azar en vez de mostrar el nombre pelado.
 const BINGO_LLAMADAS = [
@@ -127,20 +129,34 @@ function bingoIntentarSerOrganizador(){
   renderBingo();
 }
 
-function bingoToggleSeleccion(nombre){
-  const idx = bingoSeleccion.indexOf(nombre);
+// Los números se guardan en la selección con un prefijo "#" para no confundirse
+// con un nombre real (ej. si alguien se llama "7"); se saca al confirmar el cartón.
+function bingoToggleSeleccion(valor){
+  const idx = bingoSeleccion.indexOf(valor);
   if(idx !== -1){
     bingoSeleccion.splice(idx, 1);
   } else if(bingoSeleccion.length < BINGO_CANTIDAD_CARTON){
-    bingoSeleccion.push(nombre);
+    bingoSeleccion.push(valor);
   }
   renderBingo();
 }
 
+function bingoToggleNumero(numero){
+  bingoToggleSeleccion('#' + numero);
+}
+
 function bingoConfirmarCarton(){
   if(bingoSeleccion.length !== BINGO_CANTIDAD_CARTON || !miAsiento) return;
-  const nombres = barajar(bingoSeleccion.slice());
+  const nombres = barajar(bingoSeleccion.map(v => v.startsWith('#') ? v.slice(1) : v));
   bingoRefCartones().child(String(miAsiento)).set({ nombres, marcados: [] });
+}
+
+// La bolsa incluye a todos los pasajeros más cualquier número que alguien
+// haya usado para completar su cartón (si el grupo era chico).
+function bingoArmarBolsa(){
+  const items = new Set(Object.values(bingoPasajeros));
+  Object.values(bingoCartones).forEach(c => (c.nombres || []).forEach(n => items.add(n)));
+  return barajar([...items]);
 }
 
 function bingoEmpezarJuego(){
@@ -148,7 +164,7 @@ function bingoEmpezarJuego(){
   const asientos = Object.keys(bingoPasajeros);
   const todosCompletos = asientos.length > 0 && asientos.every(a => bingoCartones[a] && bingoCartones[a].nombres && bingoCartones[a].nombres.length === BINGO_CANTIDAD_CARTON);
   if(!todosCompletos) return;
-  bingo.bolsa = barajar(Object.values(bingoPasajeros));
+  bingo.bolsa = bingoArmarBolsa();
   bingo.sorteados = [];
   bingo.ultimaLlamada = null;
   bingo.ganadorLinea = null;
@@ -197,7 +213,7 @@ function bingoSortear(){
 function bingoJugarDeNuevo(){
   if(!bingoEsOrganizador()) return;
   Object.values(bingoCartones).forEach(c => { c.marcados = []; });
-  bingo.bolsa = barajar(Object.values(bingoPasajeros));
+  bingo.bolsa = bingoArmarBolsa();
   bingo.sorteados = [];
   bingo.ultimaLlamada = null;
   bingo.ganadorLinea = null;
@@ -223,7 +239,7 @@ function bingoCartonHTML(asiento, titulo, carton){
 
 function bingoPinHTML(){
   if(!bingoMostrandoPin){
-    return `<p class="bingo-link-organizador" onclick="bingoMostrarPinOrganizador()">¿Sos el organizador?</p>`;
+    return `<button class="btn-organizador-link" onclick="bingoMostrarPinOrganizador()">👤 ¿Sos el organizador? Entrá acá</button>`;
   }
   return `
     <div class="bingo-pin-box">
@@ -306,19 +322,29 @@ function renderBingoPasajero(container){
 
   if(bingo.fase === 'esperando' && !tengoCartonCompleto){
     const nombres = Object.values(bingoPasajeros);
-    const item = (n) => {
+    const faltan = BINGO_CANTIDAD_CARTON - nombres.length;
+    const itemNombre = (n) => {
       const marcado = bingoSeleccion.includes(n);
       return `<div class="bingo-nombre-item ${marcado ? 'bingo-nombre-elegido' : ''}" onclick="bingoToggleSeleccion(${JSON.stringify(n)})">${n}</div>`;
     };
+    const itemNumero = (n) => {
+      const marcado = bingoSeleccion.includes('#' + n);
+      return `<div class="bingo-nombre-item ${marcado ? 'bingo-nombre-elegido' : ''}" onclick="bingoToggleNumero('${n}')">${n}</div>`;
+    };
+    const seccionNumeros = faltan > 0
+      ? `<div class="section-label">Como son menos de ${BINGO_CANTIDAD_CARTON} pasajeros, completá con números</div>
+         <div class="bingo-lista-nombres">${BINGO_NUMEROS_EXTRA.map(itemNumero).join('')}</div>`
+      : '';
     container.innerHTML = `
+      ${bingoPinHTML()}
       <div class="hero" style="margin-top:8px;">
         <h2>Armá tu cartón</h2>
-        <p>Elegí exactamente ${BINGO_CANTIDAD_CARTON} nombres de la lista de pasajeros. Vas a jugar con el asiento ${miAsiento}.</p>
+        <p>Elegí exactamente ${BINGO_CANTIDAD_CARTON} nombres o números para tu cartón. Vas a jugar con el asiento ${miAsiento}.</p>
       </div>
       <div class="section-label">Elegidos: ${bingoSeleccion.length}/${BINGO_CANTIDAD_CARTON}</div>
-      <div class="bingo-lista-nombres">${nombres.length ? nombres.map(item).join('') : '<p style="color:var(--gray);font-size:13px;">Todavía no hay otros pasajeros anotados.</p>'}</div>
-      <button class="btn-primary" onclick="bingoConfirmarCarton()" ${bingoSeleccion.length === BINGO_CANTIDAD_CARTON ? '' : 'disabled'}>Confirmar mi cartón</button>
-      ${bingoPinHTML()}`;
+      <div class="bingo-lista-nombres">${nombres.length ? nombres.map(itemNombre).join('') : '<p style="color:var(--gray);font-size:13px;">Todavía no hay otros pasajeros anotados.</p>'}</div>
+      ${seccionNumeros}
+      <button class="btn-primary" onclick="bingoConfirmarCarton()" ${bingoSeleccion.length === BINGO_CANTIDAD_CARTON ? '' : 'disabled'}>Confirmar mi cartón</button>`;
     return;
   }
 
@@ -326,12 +352,12 @@ function renderBingoPasajero(container){
     const asientos = Object.keys(bingoPasajeros);
     const completos = asientos.filter(a => bingoCartones[a] && bingoCartones[a].nombres && bingoCartones[a].nombres.length === BINGO_CANTIDAD_CARTON);
     container.innerHTML = `
+      ${bingoPinHTML()}
       <div class="hero" style="margin-top:8px;">
         <h2>Ya armaste tu cartón</h2>
         <p>Esperando a que el resto del grupo complete el suyo (${completos.length}/${asientos.length}).</p>
       </div>
-      ${bingoCartonHTML(String(miAsiento), `Tu cartón (asiento ${miAsiento})`, miCarton)}
-      ${bingoPinHTML()}`;
+      ${bingoCartonHTML(String(miAsiento), `Tu cartón (asiento ${miAsiento})`, miCarton)}`;
     return;
   }
 
@@ -343,6 +369,7 @@ function renderBingoPasajero(container){
     : '<span class="bingo-chip bingo-chip-vacio">Todavía nada</span>';
   const bannerFinal = terminado ? `<div class="hero" style="margin-top:8px;"><h2>¡BINGO!</h2><p>Ganó ${bingoPasajeros[bingo.ganadorCartonLleno]} (asiento ${bingo.ganadorCartonLleno}) con el cartón lleno.</p></div>` : '';
   container.innerHTML = `
+    ${bingoPinHTML()}
     <div class="section-label">Tu asiento es el ${miAsiento}</div>
     ${bannerFinal}
     <div class="bingo-sorteo">
@@ -351,6 +378,5 @@ function renderBingoPasajero(container){
     </div>
     <div class="section-label">Ya salieron (${sorteados.length}/${Object.keys(bingoPasajeros).length})</div>
     <div class="bingo-historial">${historialHTML}</div>
-    ${miCarton ? bingoCartonHTML(String(miAsiento), `Tu cartón (asiento ${miAsiento})`, miCarton) : ''}
-    ${bingoPinHTML()}`;
+    ${miCarton ? bingoCartonHTML(String(miAsiento), `Tu cartón (asiento ${miAsiento})`, miCarton) : ''}`;
 }
