@@ -288,6 +288,7 @@ body{
 }
 .bingo-sorteo .btn-primary{margin-top:0;}
 .bingo-espera{color:#C6D3E8; font-size:12px; margin:0;}
+.bingo-pin-error{color:var(--orange); font-size:13px; text-align:center; margin-top:8px; min-height:16px;}
 .bingo-historial{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px;}
 .bingo-chip{
   background:#fff; border:1px solid #ECE9E1; border-radius:999px; padding:4px 10px;
