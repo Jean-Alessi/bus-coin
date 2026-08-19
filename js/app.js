@@ -47,6 +47,7 @@ const contenidoPorSegmento = {
 // y los puntos que gana se suman a una tabla en vivo en Firebase. ----
 
 let miNombre = localStorage.getItem('mi-nombre') || '';
+let miAsiento = localStorage.getItem('mi-asiento') || '';
 let rankingPuntos = {};
 let rankingListener = null;
 
@@ -72,7 +73,8 @@ function rankingUnirse(){
 
 function actualizarBotonContinuar(){
   const nombreOk = document.getElementById('mi-nombre-input').value.trim().length > 0;
-  document.getElementById('btn-continuar').disabled = !(segmento && nombreOk);
+  const asientoOk = Number(document.getElementById('mi-asiento-input').value) > 0;
+  document.getElementById('btn-continuar').disabled = !(segmento && nombreOk && asientoOk);
 }
 
 function selectSegment(seg){
@@ -84,8 +86,11 @@ function selectSegment(seg){
 
 function goHome(){
   miNombre = document.getElementById('mi-nombre-input').value.trim();
+  miAsiento = document.getElementById('mi-asiento-input').value.trim();
   localStorage.setItem('mi-nombre', miNombre);
+  localStorage.setItem('mi-asiento', miAsiento);
   rankingUnirse();
+  bingoRegistrarPasajero(miAsiento, miNombre);
   showView('home');
   document.getElementById('tabbar').style.display = 'flex';
   renderHome();
@@ -189,4 +194,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
   const nombreInput = document.getElementById('mi-nombre-input');
   if(nombreInput && miNombre) nombreInput.value = miNombre;
+  const asientoInput = document.getElementById('mi-asiento-input');
+  if(asientoInput && miAsiento) asientoInput.value = miAsiento;
 });
