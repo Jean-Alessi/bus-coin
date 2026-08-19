@@ -45,11 +45,9 @@ function votarCancion(id){
 }
 
 function priorizarCancion(id){
-  if(fichas < COSTO_PRIORIZAR) return;
   const cancion = dj.canciones.find(c => c.id === id);
   if(!cancion) return;
-  fichas -= COSTO_PRIORIZAR;
-  actualizarFichasEnPantalla();
+  if(!gastarFichas(COSTO_PRIORIZAR)) return;
   const maxVotos = Math.max(...dj.canciones.map(c => c.votos));
   cancion.votos = maxVotos + 5;
   mostrarToast(`"${cancion.titulo}" ahora suena antes`);
@@ -57,7 +55,7 @@ function priorizarCancion(id){
 }
 
 function djItemHTML(cancion, esSonando){
-  const alcanza = fichas >= COSTO_PRIORIZAR;
+  const alcanza = alcanzanFichas(COSTO_PRIORIZAR);
   return `
     <div class="dj-item ${esSonando ? 'dj-sonando' : ''}">
       <div class="icon">${icono('musica', 20)}</div>

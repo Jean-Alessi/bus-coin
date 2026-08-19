@@ -62,7 +62,10 @@
           <h1 id="home-saludo">Hola</h1>
           <div class="sub">Grupo Los Rieleros</div>
         </div>
-        <div class="chip-fichas">FICHAS <span id="fichas-count">120</span></div>
+        <div class="chips-fichas">
+          <div class="chip-fichas chip-fichas-juego">JUGADAS <span id="fichas-juego-count">20</span></div>
+          <div class="chip-fichas chip-fichas-compradas">COMPRADAS <span id="fichas-compradas-count">100</span></div>
+        </div>
       </div>
 
       <div id="home-content"></div>
@@ -147,6 +150,7 @@
           <div class="sub">Se usan solo dentro de la app</div>
         </div>
       </div>
+      <p class="tienda-nota">Las fichas que comprás acá quedan separadas de las que ganás jugando (trivia, bingo). Nunca se mezclan, pero las dos sirven para lo de abajo.</p>
       <div class="pack">
         <div class="info"><h3>Pack chico</h3><p>50 fichas</p></div>
         <button class="buy" onclick="comprarFichas(50)">$1.000</button>

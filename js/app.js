@@ -1,5 +1,10 @@
 let segmento = null;
-let fichas = 120;
+
+// Fichas ganadas jugando (trivia, diferencias, bingo) y fichas compradas con
+// dinero real quedan separadas a propósito: ningún juego de azar reparte algo
+// que se haya pagado, para no parecerse a un juego de azar regulado.
+let fichasJuego = 20;
+let fichasCompradas = 100;
 
 const contenidoPorSegmento = {
   estudiantes: {
@@ -130,9 +135,34 @@ function renderRanking(){
   });
 }
 
+function totalFichas(){
+  return fichasJuego + fichasCompradas;
+}
+
+function alcanzanFichas(cantidad){
+  return totalFichas() >= cantidad;
+}
+
+// Gasta primero las fichas ganadas jugando y recién después las compradas.
+function gastarFichas(cantidad){
+  if(!alcanzanFichas(cantidad)) return false;
+  const deJuego = Math.min(fichasJuego, cantidad);
+  fichasJuego -= deJuego;
+  fichasCompradas -= (cantidad - deJuego);
+  actualizarFichasEnPantalla();
+  return true;
+}
+
+function actualizarFichasEnPantalla(){
+  const elJuego = document.getElementById('fichas-juego-count');
+  if(elJuego) elJuego.textContent = fichasJuego;
+  const elCompradas = document.getElementById('fichas-compradas-count');
+  if(elCompradas) elCompradas.textContent = fichasCompradas;
+}
+
 function ganarFichas(cantidad){
-  fichas += cantidad;
-  document.getElementById('fichas-count').textContent = fichas;
+  fichasJuego += cantidad;
+  actualizarFichasEnPantalla();
   if(miNombre){
     const clave = rankingClave(miNombre);
     rankingPuntos[clave] = (rankingPuntos[clave] || 0) + cantidad;
@@ -141,8 +171,8 @@ function ganarFichas(cantidad){
 }
 
 function comprarFichas(cantidad){
-  fichas += cantidad;
-  document.getElementById('fichas-count').textContent = fichas;
+  fichasCompradas += cantidad;
+  actualizarFichasEnPantalla();
   mostrarToast(`Sumaste ${cantidad} fichas`);
 }
 
