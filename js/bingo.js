@@ -25,7 +25,8 @@ const BINGO_LLAMADAS = [
 
 function bingoArmarLlamada(nombre){
   const plantilla = BINGO_LLAMADAS[Math.floor(Math.random() * BINGO_LLAMADAS.length)];
-  return plantilla.replace('{nombre}', nombre);
+  const nombreResaltado = `<span class="bingo-nombre-resaltado">${nombre.toUpperCase()}</span>`;
+  return plantilla.replace('{nombre}', nombreResaltado);
 }
 
 function bingoTamanoCarton(cantidad){
@@ -324,7 +325,7 @@ function renderBingo(){
   const bolsa = bingo.bolsa || [];
   const sorteados = bingo.sorteados || [];
   const historialHTML = sorteados.length
-    ? sorteados.slice().reverse().map(n => `<span class="bingo-chip">${n}</span>`).join('')
+    ? sorteados.slice().reverse().map((n, i) => `<span class="bingo-chip${i === 0 ? ' bingo-chip-ultimo' : ''}">${n}</span>`).join('')
     : '<span class="bingo-chip bingo-chip-vacio">Todavía nada</span>';
   const bannerFinal = terminado ? `<div class="hero" style="margin-top:8px;"><h2>¡BINGO!</h2><p>Ganó ${cartonGanador.nombre} con el cartón lleno.</p></div>` : '';
 

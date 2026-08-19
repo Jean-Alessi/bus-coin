@@ -283,6 +283,9 @@ body{
   from{opacity:0; transform:translateY(6px) scale(.96);}
   to{opacity:1; transform:translateY(0) scale(1);}
 }
+.bingo-nombre-resaltado{
+  color:var(--orange); font-size:1.3em; font-weight:800; letter-spacing:.5px;
+}
 .bingo-sorteo .btn-primary{margin-top:0;}
 .bingo-espera{color:#C6D3E8; font-size:12px; margin:0;}
 .bingo-historial{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px;}
@@ -291,6 +294,7 @@ body{
   font-size:11px; font-weight:600; color:var(--navy);
 }
 .bingo-chip-vacio{color:var(--gray); font-weight:400;}
+.bingo-chip-ultimo{background:var(--orange); border-color:var(--orange); color:#fff;}
 .bingo-carton{background:#fff; border-radius:16px; padding:12px; margin-bottom:12px; border:1px solid #ECE9E1;}
 .bingo-carton-titulo{font-size:13px; font-weight:700; color:var(--navy); margin-bottom:8px; display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
 .bingo-badge{
