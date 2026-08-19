@@ -1,53 +1,26 @@
-let segmento = null;
-
 // Fichas ganadas jugando (trivia, diferencias, bingo) y fichas compradas con
 // dinero real quedan separadas a propósito: ningún juego de azar reparte algo
 // que se haya pagado, para no parecerse a un juego de azar regulado.
 let fichasJuego = 20;
 let fichasCompradas = 100;
 
-const contenidoPorSegmento = {
-  estudiantes: {
-    saludo: "Hola, Fede",
-    cards: [
-      { icon:"trivia", title:"Trivia veloz", sub:"Sumá puntos para el ranking", view:"trivia" },
-      { icon:"musica", title:"DJ en vivo", sub:"Votá y pagá el próximo tema", view:"dj" },
-      { icon:"trofeo", title:"Ranking del micro", sub:"¿Quién va primero hoy?", view:"ranking" },
-      { icon:"bingo", title:"Bingo de nombres", sub:"Sorteo con los pasajeros del micro", view:"bingo" },
-    ]
-  },
-  jubilados: {
-    saludo: "Buen día",
-    cards: [
-      { icon:"auriculares", title:"Cuento del día", sub:"Leyendas argentinas, en audio", view:"cuento" },
-      { icon:"trivia", title:"Trivia tranquila", sub:"Historia argentina, sin apuro", view:"trivia" },
-      { icon:"bingo", title:"Bingo de nombres", sub:"Sorteo con los pasajeros del micro", view:"bingo" },
-    ]
-  },
-  familia: {
-    saludo: "Hola, familia",
-    cards: [
-      { icon:"lupa", title:"Buscá las diferencias", sub:"Juego para todas las edades", view:"diferencias" },
-      { icon:"trivia", title:"Desafío en pareja", sub:"Vos vs tu pareja", view:"trivia" },
-      { icon:"trofeo", title:"Ranking familiar", sub:"Gómez vs Pérez", view:"ranking" },
-      { icon:"bingo", title:"Bingo de nombres", sub:"Sorteo con los pasajeros del micro", view:"bingo" },
-    ]
-  },
-  pareja: {
-    saludo: "Hola, ustedes dos",
-    cards: [
-      { icon:"chat", title:"Trivia en pareja", sub:"¿Cuánto se conocen de verdad?", view:"trivia" },
-      { icon:"trofeo", title:"Su historial", sub:"Racha de victorias juntos", view:"ranking" },
-      { icon:"bingo", title:"Bingo de nombres", sub:"Sorteo con los pasajeros del micro", view:"bingo" },
-    ]
-  }
-};
+const EMOJIS_DISPONIBLES = ['😊', '😎', '🤩', '😜', '🥳', '😇', '🤠', '🧐', '🤓', '💃', '🕺', '😴'];
 
-// ---- Identidad y ranking compartido: cada celular dice su nombre una vez,
-// y los puntos que gana se suman a una tabla en vivo en Firebase. ----
+const TARJETAS_HOME = [
+  { icon: "trivia", title: "Trivia", sub: "Elegí un tema y sumá puntos", view: "trivia" },
+  { icon: "bingo", title: "Bingo de nombres", sub: "Sorteo con los pasajeros del micro", view: "bingo" },
+  { icon: "trofeo", title: "Ranking del micro", sub: "¿Quién va primero hoy?", view: "ranking" },
+  { icon: "musica", title: "DJ en vivo", sub: "Votá y pagá el próximo tema", view: "dj" },
+  { icon: "lupa", title: "Buscá las diferencias", sub: "Juego para todas las edades", view: "diferencias" },
+  { icon: "auriculares", title: "Cuento del día", sub: "Leyendas argentinas, en audio", view: "cuento" },
+];
+
+// ---- Identidad y ranking compartido: cada celular dice su emoji, nombre y
+// asiento una vez, y los puntos que gana se suman a una tabla en vivo en Firebase. ----
 
 let miNombre = localStorage.getItem('mi-nombre') || '';
 let miAsiento = localStorage.getItem('mi-asiento') || '';
+let miEmoji = localStorage.getItem('mi-emoji') || '';
 let rankingPuntos = {};
 let rankingListener = null;
 
@@ -74,13 +47,21 @@ function rankingUnirse(){
 function actualizarBotonContinuar(){
   const nombreOk = document.getElementById('mi-nombre-input').value.trim().length > 0;
   const asientoOk = Number(document.getElementById('mi-asiento-input').value) > 0;
-  document.getElementById('btn-continuar').disabled = !(segmento && nombreOk && asientoOk);
+  document.getElementById('btn-continuar').disabled = !(miEmoji && nombreOk && asientoOk);
 }
 
-function selectSegment(seg){
-  segmento = seg;
-  document.querySelectorAll('.segment-card').forEach(c=>c.classList.remove('selected'));
-  document.querySelector(`.segment-card[data-seg="${seg}"]`).classList.add('selected');
+function renderEmojiGrid(){
+  const grid = document.getElementById('emoji-grid');
+  if(!grid) return;
+  grid.innerHTML = EMOJIS_DISPONIBLES.map(e =>
+    `<button class="emoji-opcion${e === miEmoji ? ' selected' : ''}" data-emoji="${e}" onclick="seleccionarEmoji('${e}')">${e}</button>`
+  ).join('');
+}
+
+function seleccionarEmoji(e){
+  miEmoji = e;
+  document.querySelectorAll('.emoji-opcion').forEach(b => b.classList.remove('selected'));
+  document.querySelector(`.emoji-opcion[data-emoji="${e}"]`).classList.add('selected');
   actualizarBotonContinuar();
 }
 
@@ -89,6 +70,7 @@ function goHome(){
   miAsiento = document.getElementById('mi-asiento-input').value.trim();
   localStorage.setItem('mi-nombre', miNombre);
   localStorage.setItem('mi-asiento', miAsiento);
+  localStorage.setItem('mi-emoji', miEmoji);
   rankingUnirse();
   bingoRegistrarPasajero(miAsiento, miNombre);
   showView('home');
@@ -97,11 +79,10 @@ function goHome(){
 }
 
 function renderHome(){
-  const data = contenidoPorSegmento[segmento] || contenidoPorSegmento.estudiantes;
-  document.getElementById('home-saludo').textContent = data.saludo;
+  document.getElementById('home-saludo').textContent = `${miEmoji} Hola, ${miNombre}`;
   const container = document.getElementById('home-content');
   container.innerHTML = '<div class="section-label">Para vos</div>';
-  data.cards.forEach(c=>{
+  TARJETAS_HOME.forEach(c=>{
     const div = document.createElement('div');
     div.className = 'card';
     div.onclick = ()=> showView(c.view);
@@ -192,8 +173,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.querySelectorAll('[data-icon]').forEach(el=>{
     el.innerHTML = icono(el.dataset.icon);
   });
+  renderEmojiGrid();
   const nombreInput = document.getElementById('mi-nombre-input');
   if(nombreInput && miNombre) nombreInput.value = miNombre;
   const asientoInput = document.getElementById('mi-asiento-input');
   if(asientoInput && miAsiento) asientoInput.value = miAsiento;
+  actualizarBotonContinuar();
 });

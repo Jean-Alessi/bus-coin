@@ -17,31 +17,10 @@
     <!-- ONBOARDING -->
     <div class="view active" id="view-onboard">
       <div class="hero">
-        <h2>¿Quién viaja hoy?</h2>
-        <p>Elegí tu perfil para armar tu experiencia en el micro.</p>
+        <h2>¿Con qué emoji te identificás?</h2>
+        <p>Elegí el que más se parezca a vos hoy.</p>
       </div>
-      <div class="grid2">
-        <div class="segment-card" data-seg="estudiantes" onclick="selectSegment('estudiantes')">
-          <div class="emoji-box" data-icon="graduacion"></div>
-          <h3>Estudiantes</h3>
-          <p>Trivia, ranking, música</p>
-        </div>
-        <div class="segment-card" data-seg="jubilados" onclick="selectSegment('jubilados')">
-          <div class="emoji-box" data-icon="libro"></div>
-          <h3>Jubilados</h3>
-          <p>Historias, bingo, calma</p>
-        </div>
-        <div class="segment-card" data-seg="familia" onclick="selectSegment('familia')">
-          <div class="emoji-box" data-icon="casa"></div>
-          <h3>Familia</h3>
-          <p>Juegos para todos</p>
-        </div>
-        <div class="segment-card" data-seg="pareja" onclick="selectSegment('pareja')">
-          <div class="emoji-box" data-icon="corazon"></div>
-          <h3>Pareja</h3>
-          <p>Desafíos de a dos</p>
-        </div>
-      </div>
+      <div class="emoji-grid" id="emoji-grid"></div>
       <div class="section-label">Tu grupo cerrado</div>
       <div class="card" style="cursor:default;">
         <div class="icon" data-icon="grupo"></div>
@@ -78,15 +57,10 @@
       <div class="app-header">
         <div>
           <h1>Trivia</h1>
-          <div class="sub" id="trivia-sub">Pregunta 1 de 3</div>
+          <div class="sub" id="trivia-sub">Elegí un tema</div>
         </div>
       </div>
-      <div class="progress-bar"><div class="progress-fill" id="trivia-progress" style="width:33%"></div></div>
-      <div class="question-box">
-        <div class="qnum" id="q-cat">CULTURA GENERAL</div>
-        <h3 id="q-text">¿En qué año se independizó Argentina?</h3>
-      </div>
-      <div id="q-options"></div>
+      <div id="trivia-content"></div>
     </div>
 
     <!-- RANKING -->

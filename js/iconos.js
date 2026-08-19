@@ -11,7 +11,12 @@ const ICONOS = {
   lupa: '<circle cx="10" cy="10" r="6"/><path d="m20 20-5.2-5.2"/>',
   chat: '<path d="M4 5h16v11H8l-4 4V5Z"/>',
   moneda: '<circle cx="9" cy="9" r="6"/><circle cx="15" cy="15" r="6"/>',
-  bingo: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'
+  bingo: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  estrella: '<path d="M12 2.5l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 17.4l-6.2 3.4 1.6-6.8-5.2-4.6 6.9-.6Z"/>',
+  pelota: '<circle cx="12" cy="12" r="9"/><path d="M12 6.5 15.5 9l-1.3 4.2H9.8L8.5 9Z"/><path d="M12 2.7v3.8M4.8 7.6l3.7 1.9M19.2 7.6l-3.7 1.9M7.3 20l1.6-4.6M16.7 20l-1.6-4.6"/>',
+  avion: '<path d="M2 12 22 4 14 22l-2-8-8-2Z"/>',
+  pata: '<circle cx="12" cy="15.5" r="4"/><circle cx="5.5" cy="9.5" r="2.2"/><circle cx="10" cy="5" r="2.2"/><circle cx="14.5" cy="5" r="2.2"/><circle cx="19" cy="9.5" r="2.2"/>',
+  reloj: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>'
 };
 
 function icono(nombre, size){

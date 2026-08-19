@@ -70,7 +70,7 @@ body{
 .chip-fichas-juego{background:var(--orange-light); color:var(--orange);}
 .chip-fichas-compradas{background:var(--navy); color:#fff;}
 
-/* ---- Onboarding: elegir grupo ---- */
+/* ---- Onboarding: elegir emoji ---- */
 .hero{
   background:var(--navy);
   border-radius:24px;
@@ -81,22 +81,14 @@ body{
 }
 .hero h2{font-size:20px; font-weight:600; margin-bottom:4px;}
 .hero p{font-size:13px; color:#C6D3E8; font-weight:400;}
-.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;}
-.segment-card{
-  background:#fff; border-radius:18px; padding:18px 14px;
-  border:2px solid transparent; cursor:pointer;
-  text-align:left; transition:.15s;
+.emoji-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px;}
+.emoji-opcion{
+  background:#fff; border-radius:16px; border:2px solid transparent;
+  padding:14px 0; font-size:26px; cursor:pointer; transition:.15s;
+  font-family:'Poppins',sans-serif;
 }
-.segment-card:hover{border-color:var(--orange);}
-.segment-card.selected{border-color:var(--orange); background:var(--orange-light);}
-.segment-card .emoji-box{
-  width:40px;height:40px;border-radius:12px;background:var(--orange-light);
-  display:flex;align-items:center;justify-content:center; margin-bottom:10px;
-  color:var(--orange);
-}
-.segment-card .emoji-box svg{width:20px; height:20px;}
-.segment-card h3{font-size:14px; font-weight:600; color:var(--navy); margin-bottom:2px;}
-.segment-card p{font-size:11px; color:var(--gray);}
+.emoji-opcion:hover{border-color:var(--orange);}
+.emoji-opcion.selected{border-color:var(--orange); background:var(--orange-light);}
 .btn-primary{
   background:var(--orange); color:#fff; border:none;
   padding:16px; border-radius:16px; font-size:15px; font-weight:600;
