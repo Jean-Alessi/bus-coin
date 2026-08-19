@@ -4,7 +4,7 @@ const BINGO_MIN_NOMBRES = 9;
 const BINGO_MAX_CARTONES = 200;
 // PIN para reclamar el rol de organizador. Es una traba simple, no seguridad
 // real (el código es público) — alcanza para que ningún pasajero lo toque sin querer.
-const BINGO_PIN_ORGANIZADOR = '1234';
+const BINGO_PIN_ORGANIZADOR = '2314';
 const BINGO_NOMBRES_EJEMPLO = ['Marcelo', 'Vos', 'Martín', 'Carmelo', 'Ana', 'Beto', 'Caro', 'Dani', 'Fede', 'Euge', 'Gonza', 'Male'];
 
 // Cantos con onda: cada sorteo arma una frase al azar en vez de mostrar el nombre pelado.
