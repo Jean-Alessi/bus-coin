@@ -56,8 +56,8 @@ function bingoTieneLinea(marcados, tamano){
   return diag1 || diag2;
 }
 
-// ---- Multi-celular: el grupo comparte el sorteo y la lista de cartones;
-// cada celular elige un número de cartón para seguir el suyo. ----
+// ---- Multi-celular: un organizador maneja el sorteo (no un pasajero cualquiera);
+// el resto de los celulares solo elige su cartón y mira los nombres en vivo. ----
 
 const BINGO_ROOM_ID = 'bingo-grupo';
 let miCarton = null;
@@ -68,34 +68,47 @@ let cartonesAsignados = {};
 function bingoRefEstado(){ return db.ref(`salas/${BINGO_ROOM_ID}/estado`); }
 function bingoRefAsientos(){ return db.ref(`salas/${BINGO_ROOM_ID}/asientos`); }
 
+function bingoEstadoVacio(){
+  return { fase: 'sin-organizador', organizadorId: null, nombres: [], cantidadCartones: 4, tamano: 0, cartones: [], bolsa: [], sorteados: [], ultimaLlamada: null, ganadorLinea: null, ganadorCartonLleno: null };
+}
+
 function bingoGuardar(){
   bingoRefEstado().set(bingo);
 }
 
-function bingoEntrarSala(){
+function bingoEsOrganizador(){
+  return !!bingo && bingo.organizadorId === idDispositivo();
+}
+
+function iniciarBingo(){
+  if(bingoListenerEstado){
+    if(bingo) renderBingo();
+    return;
+  }
   const guardado = localStorage.getItem('bingo-carton-' + BINGO_ROOM_ID);
   miCarton = guardado === null ? null : Number(guardado);
 
-  if(!bingoListenerAsientos){
-    bingoListenerAsientos = bingoRefAsientos().on('value', snap => {
-      cartonesAsignados = snap.val() || {};
-      if(miCarton !== null && cartonesAsignados[miCarton] && cartonesAsignados[miCarton] !== idDispositivo()){
-        miCarton = null;
-        localStorage.removeItem('bingo-carton-' + BINGO_ROOM_ID);
-      }
-      if(bingo) renderBingo();
-    });
-  }
-  if(!bingoListenerEstado){
-    bingoListenerEstado = bingoRefEstado().on('value', snap => {
-      const data = snap.val();
-      if(!data) return;
-      bingo = data;
-      renderBingo();
-    });
-  } else {
+  bingoListenerAsientos = bingoRefAsientos().on('value', snap => {
+    cartonesAsignados = snap.val() || {};
+    if(miCarton !== null && cartonesAsignados[miCarton] && cartonesAsignados[miCarton] !== idDispositivo()){
+      miCarton = null;
+      localStorage.removeItem('bingo-carton-' + BINGO_ROOM_ID);
+    }
+    if(bingo) renderBingo();
+  });
+
+  bingoListenerEstado = bingoRefEstado().on('value', snap => {
+    // Firebase no guarda arrays vacíos ni null: se completan los campos que
+    // falten con los valores por defecto para que el resto del código no rompa.
+    bingo = Object.assign(bingoEstadoVacio(), snap.val() || {});
     renderBingo();
-  }
+  });
+}
+
+function bingoSerOrganizador(){
+  bingo.organizadorId = idDispositivo();
+  bingo.fase = 'config-nombres';
+  bingoGuardar();
 }
 
 function bingoElegirCarton(id){
@@ -106,28 +119,13 @@ function bingoElegirCarton(id){
   });
 }
 
-function iniciarBingo(){
-  if(bingoListenerEstado){
-    if(bingo) renderBingo();
-    return;
-  }
-  bingoRefEstado().once('value').then(snap => {
-    const data = snap.val();
-    if(data){
-      bingoEntrarSala();
-      return;
-    }
-    bingo = { fase: 'config-nombres', nombres: [], cantidadCartones: 4, tamano: 0, cartones: [], bolsa: [], sorteados: [], ganadorLinea: null, ganadorCartonLleno: null };
-    renderBingo();
-  });
-}
-
 function bingoUsarNombresEjemplo(){
   const textarea = document.getElementById('bingo-nombres-input');
   if(textarea) textarea.value = BINGO_NOMBRES_EJEMPLO.join('\n');
 }
 
 function bingoConfirmarNombres(){
+  if(!bingoEsOrganizador()) return;
   const textarea = document.getElementById('bingo-nombres-input');
   const nombres = [...new Set(textarea.value.split('\n').map(n => n.trim()).filter(Boolean))];
   if(nombres.length < BINGO_MIN_NOMBRES){
@@ -136,12 +134,13 @@ function bingoConfirmarNombres(){
   }
   bingo.nombres = nombres;
   bingo.fase = 'config-cartones';
-  renderBingo();
+  bingoGuardar();
 }
 
 function bingoVolverANombres(){
+  if(!bingoEsOrganizador()) return;
   bingo.fase = 'config-nombres';
-  renderBingo();
+  bingoGuardar();
 }
 
 function bingoActualizarCantidad(valor){
@@ -150,11 +149,13 @@ function bingoActualizarCantidad(valor){
 }
 
 function bingoSetCantidad(n){
+  if(!bingoEsOrganizador()) return;
   bingo.cantidadCartones = Math.min(BINGO_MAX_CARTONES, Math.max(1, n));
   renderBingo();
 }
 
 function bingoArmarCartones(){
+  if(!bingoEsOrganizador()) return;
   const tamano = bingoTamanoCarton(bingo.nombres.length);
   if(!tamano){
     mostrarToast('Faltan nombres para armar el cartón');
@@ -177,10 +178,10 @@ function bingoArmarCartones(){
   bingo.ganadorCartonLleno = null;
   bingo.fase = 'jugando';
   bingoGuardar();
-  bingoEntrarSala();
 }
 
 function bingoSortear(){
+  if(!bingoEsOrganizador()) return;
   bingo.bolsa = bingo.bolsa || [];
   if(!bingo.bolsa.length) return;
   const nombre = bingo.bolsa.pop();
@@ -213,6 +214,7 @@ function bingoSortear(){
 }
 
 function bingoJugarDeNuevo(){
+  if(!bingoEsOrganizador()) return;
   bingo.fase = 'config-cartones';
   bingoGuardar();
   bingoRefAsientos().remove();
@@ -265,8 +267,30 @@ function renderBingo(){
   const container = document.getElementById('bingo-content');
   if(!container || !bingo) return;
 
+  if(bingo.fase === 'sin-organizador'){
+    container.innerHTML = `
+      <div class="hero" style="margin-top:8px;">
+        <h2>Bingo del micro</h2>
+        <p>Todavía nadie armó la partida. Si sos quien organiza el juego, arrancá acá; el resto de los celulares se va a actualizar solo apenas empiece.</p>
+      </div>
+      <button class="btn-primary" onclick="bingoSerOrganizador()">Soy el organizador, armar el bingo</button>`;
+    return;
+  }
+
+  if(bingo.fase === 'config-nombres' || bingo.fase === 'config-cartones'){
+    if(!bingoEsOrganizador()){
+      container.innerHTML = `
+        <div class="hero" style="margin-top:8px;">
+          <h2>El organizador está armando el bingo</h2>
+          <p>Esperá un toque, esta pantalla se actualiza sola apenas esté listo.</p>
+        </div>`;
+      return;
+    }
+  }
+
   if(bingo.fase === 'config-nombres'){
     container.innerHTML = `
+      <div class="section-label">Panel del organizador</div>
       <div class="hero" style="margin-top:8px;">
         <h2>¿Quiénes viajan hoy?</h2>
         <p>Anotá los nombres o apodos de los pasajeros, uno por línea. Necesitás al menos ${BINGO_MIN_NOMBRES}.</p>
@@ -280,6 +304,7 @@ function renderBingo(){
   if(bingo.fase === 'config-cartones'){
     const tamano = bingoTamanoCarton(bingo.nombres.length);
     container.innerHTML = `
+      <div class="section-label">Panel del organizador</div>
       <div class="hero" style="margin-top:8px;">
         <h2>¿Cuántos cartones armamos?</h2>
         <p>Se arman al azar con los ${bingo.nombres.length} nombres cargados (cartón de ${tamano}×${tamano}). Cada celular después elige el suyo.</p>
@@ -294,28 +319,44 @@ function renderBingo(){
   }
 
   // fase 'jugando' (incluye el estado de partida terminada con cartón lleno)
+  const terminado = !!bingo.ganadorCartonLleno;
+  const cartonGanador = terminado ? bingo.cartones.find(c => c.id === bingo.ganadorCartonLleno) : null;
+  const bolsa = bingo.bolsa || [];
+  const sorteados = bingo.sorteados || [];
+  const historialHTML = sorteados.length
+    ? sorteados.slice().reverse().map(n => `<span class="bingo-chip">${n}</span>`).join('')
+    : '<span class="bingo-chip bingo-chip-vacio">Todavía nada</span>';
+  const bannerFinal = terminado ? `<div class="hero" style="margin-top:8px;"><h2>¡BINGO!</h2><p>Ganó ${cartonGanador.nombre} con el cartón lleno.</p></div>` : '';
+
+  if(bingoEsOrganizador()){
+    container.innerHTML = `
+      <div class="section-label">Panel del organizador</div>
+      ${bannerFinal}
+      <div class="bingo-sorteo">
+        <div class="bingo-ultimo">${bingo.ultimaLlamada || '—'}</div>
+        ${terminado
+          ? `<button class="btn-primary" onclick="bingoJugarDeNuevo()">Jugar de nuevo</button>`
+          : `<button class="btn-primary" onclick="bingoSortear()" ${bolsa.length === 0 ? 'disabled' : ''}>Cantar nombre</button>`}
+      </div>
+      <div class="section-label">Ya salieron (${sorteados.length}/${bingo.nombres.length})</div>
+      <div class="bingo-historial">${historialHTML}</div>`;
+    return;
+  }
+
   if(miCarton === null){
     bingoRenderElegirCarton();
     return;
   }
 
   const miCartonData = bingo.cartones.find(c => c.id === miCarton);
-  const terminado = !!bingo.ganadorCartonLleno;
-  const cartonGanador = terminado ? bingo.cartones.find(c => c.id === bingo.ganadorCartonLleno) : null;
-  const bolsa = bingo.bolsa || [];
-  const sorteados = bingo.sorteados || [];
   container.innerHTML = `
     <div class="section-label">Tu cartón es el ${miCarton}</div>
-    ${terminado ? `<div class="hero" style="margin-top:8px;"><h2>¡BINGO!</h2><p>Ganó ${cartonGanador.nombre} con el cartón lleno.</p></div>` : ''}
+    ${bannerFinal}
     <div class="bingo-sorteo">
       <div class="bingo-ultimo">${bingo.ultimaLlamada || '—'}</div>
-      ${terminado
-        ? `<button class="btn-primary" onclick="bingoJugarDeNuevo()">Jugar de nuevo</button>`
-        : `<button class="btn-primary" onclick="bingoSortear()" ${bolsa.length === 0 ? 'disabled' : ''}>Cantar nombre</button>`}
+      <p class="bingo-espera">${terminado ? 'Esperá a que el organizador arranque otra partida.' : 'El organizador va cantando los nombres.'}</p>
     </div>
     <div class="section-label">Ya salieron (${sorteados.length}/${bingo.nombres.length})</div>
-    <div class="bingo-historial">${sorteados.length
-      ? sorteados.slice().reverse().map(n => `<span class="bingo-chip">${n}</span>`).join('')
-      : '<span class="bingo-chip bingo-chip-vacio">Todavía nada</span>'}</div>
+    <div class="bingo-historial">${historialHTML}</div>
     ${miCartonData ? bingoCartonHTML(miCartonData) : ''}`;
 }
