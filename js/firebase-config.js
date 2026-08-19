@@ -1,5 +1,5 @@
 // Conexión a Firebase Realtime Database: acá vive el estado compartido
-// (truco, etc.) para que varios celulares jueguen la misma partida en vivo.
+// (bingo, ranking, etc.) para que varios celulares jueguen lo mismo en vivo.
 const firebaseConfig = {
   apiKey: "AIzaSyBvNiRv5eLK2VKWujGbNqJxe9gdoRcf4ug",
   authDomain: "bus-coin-fb008.firebaseapp.com",

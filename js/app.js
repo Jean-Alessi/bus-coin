@@ -16,7 +16,6 @@ const contenidoPorSegmento = {
     cards: [
       { icon:"auriculares", title:"Cuento del día", sub:"Leyendas argentinas, en audio", view:"cuento" },
       { icon:"trivia", title:"Trivia tranquila", sub:"Historia argentina, sin apuro", view:"trivia" },
-      { icon:"cartas", title:"Truco con el grupo", sub:"Ranking cerrado, solo ustedes", view:"truco", modo:"equipos" },
       { icon:"bingo", title:"Bingo de nombres", sub:"Sorteo con los pasajeros del micro", view:"bingo" },
     ]
   },
@@ -33,7 +32,6 @@ const contenidoPorSegmento = {
     saludo: "Hola, ustedes dos",
     cards: [
       { icon:"chat", title:"Trivia en pareja", sub:"¿Cuánto se conocen de verdad?", view:"trivia" },
-      { icon:"cartas", title:"Truco de a dos", sub:"Cartas rápidas para pasar el rato", view:"truco", modo:"dos" },
       { icon:"trofeo", title:"Su historial", sub:"Racha de victorias juntos", view:"ranking" },
       { icon:"bingo", title:"Bingo de nombres", sub:"Sorteo con los pasajeros del micro", view:"bingo" },
     ]
@@ -96,13 +94,13 @@ function renderHome(){
   data.cards.forEach(c=>{
     const div = document.createElement('div');
     div.className = 'card';
-    div.onclick = ()=> showView(c.view, c.modo);
+    div.onclick = ()=> showView(c.view);
     div.innerHTML = `<div class="icon">${icono(c.icon)}</div><div class="txt"><h3>${c.title}</h3><p>${c.sub}</p></div>`;
     container.appendChild(div);
   });
 }
 
-function showView(name, modo){
+function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -110,7 +108,6 @@ function showView(name, modo){
   if(tab) tab.classList.add('active');
   if(name==='trivia'){ iniciarTrivia(); }
   if(name==='ranking'){ renderRanking(); }
-  if(name==='truco'){ iniciarTruco(modo); }
   if(name==='dj'){ iniciarDJ(); }
   if(name==='diferencias'){ iniciarDiferencias(); }
   if(name==='cuento'){ iniciarCuento(); }

@@ -193,40 +193,6 @@ body{
 }
 .toast.show{opacity:1; transform:translateY(0);}
 
-/* ---- Truco ---- */
-.truco-mesa{
-  display:flex; flex-wrap:wrap; justify-content:space-around; align-items:flex-start; gap:10px 6px;
-  background:#fff; border-radius:18px; padding:16px; margin-bottom:8px;
-  border:1px solid #ECE9E1;
-}
-.truco-mesa-slot{display:flex; flex-direction:column; align-items:center; gap:8px; min-width:72px;}
-.truco-mesa-nombre{font-size:11px; font-weight:600; color:var(--gray);}
-.carta-truco{
-  width:66px; height:92px; border-radius:9px; overflow:hidden;
-  box-shadow:0 2px 6px rgba(15,42,77,0.15);
-  display:flex; align-items:center; justify-content:center;
-}
-.carta-truco svg{display:block;}
-.truco-mano{display:flex; justify-content:center; gap:14px; margin-top:auto; padding:12px 0; flex-wrap:wrap;}
-.truco-mano .carta-truco{cursor:pointer; transition:.15s;}
-.truco-mano .carta-truco:hover{transform:translateY(-4px); border-color:var(--orange);}
-.truco-marcador{
-  display:flex; align-items:center; justify-content:center; gap:10px;
-  font-weight:700; font-size:14px; color:var(--navy); margin-bottom:10px;
-}
-.truco-marcador-meta{font-weight:500; font-size:11px; color:var(--gray);}
-.truco-apuesta-activa{
-  text-align:center; font-size:12px; font-weight:600; color:var(--orange);
-  margin-bottom:10px;
-}
-.apuestas-row{display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:14px;}
-.btn-apuesta{
-  border:none; border-radius:999px; padding:10px 16px; font-weight:600; font-size:13px;
-  background:var(--orange); color:#fff; cursor:pointer; transition:.15s;
-}
-.btn-apuesta:hover{opacity:.9;}
-.btn-apuesta.secondary{background:#fff; color:var(--navy); border:1.5px solid var(--navy);}
-
 /* ---- DJ en vivo ---- */
 .dj-item{
   background:#fff; border-radius:16px; padding:14px; margin-bottom:10px;
