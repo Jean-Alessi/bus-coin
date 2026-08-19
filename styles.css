@@ -273,7 +273,16 @@ body{
   font-family:'Poppins',sans-serif; cursor:pointer;
 }
 .bingo-sorteo{background:var(--navy); border-radius:18px; padding:20px; text-align:center; margin-bottom:16px;}
-.bingo-ultimo{color:#fff; font-size:22px; font-weight:700; margin-bottom:14px; min-height:28px; word-break:break-word;}
+.bingo-ultimo{
+  color:#fff; font-size:17px; font-weight:700; line-height:1.35;
+  margin-bottom:14px; min-height:44px; word-break:break-word;
+  display:flex; align-items:center; justify-content:center;
+  animation:bingo-llamada-pop .35s ease-out;
+}
+@keyframes bingo-llamada-pop{
+  from{opacity:0; transform:translateY(6px) scale(.96);}
+  to{opacity:1; transform:translateY(0) scale(1);}
+}
 .bingo-sorteo .btn-primary{margin-top:0;}
 .bingo-historial{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px;}
 .bingo-chip{

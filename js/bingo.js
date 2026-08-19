@@ -4,6 +4,30 @@ const BINGO_MIN_NOMBRES = 9;
 const BINGO_MAX_CARTONES = 200;
 const BINGO_NOMBRES_EJEMPLO = ['Marcelo', 'Vos', 'Martín', 'Carmelo', 'Ana', 'Beto', 'Caro', 'Dani', 'Fede', 'Euge', 'Gonza', 'Male'];
 
+// Cantos con onda: cada sorteo arma una frase al azar en vez de mostrar el nombre pelado.
+const BINGO_LLAMADAS = [
+  '¡Todos atentos, que se viene {nombre}!',
+  'Directo del bolillero: ¡{nombre}!',
+  '¡Aguante {nombre}, dale que va!',
+  'La ruta dice su nombre... ¡{nombre}!',
+  '¡Che, {nombre}! Justo vos.',
+  'Salió {nombre}, ¡que no se achique nadie!',
+  '¡Grande {nombre}!',
+  'Y el micro canta fuerte: ¡{nombre}!',
+  '¡{nombre} al humo!',
+  'Marcá bien, que salió... ¡{nombre}!',
+  '¡Ahí viene {nombre}, pisando fuerte!',
+  'El cartón tiembla: ¡{nombre}!',
+  '¡Todo el mundo mira su cartón... es {nombre}!',
+  'Sonó y dijo bien clarito: ¡{nombre}!',
+  '¡Vamo\' {nombre}, que hoy es tu día!',
+];
+
+function bingoArmarLlamada(nombre){
+  const plantilla = BINGO_LLAMADAS[Math.floor(Math.random() * BINGO_LLAMADAS.length)];
+  return plantilla.replace('{nombre}', nombre);
+}
+
 function bingoTamanoCarton(cantidad){
   if(cantidad >= 25) return 5;
   if(cantidad >= 16) return 4;
@@ -148,6 +172,7 @@ function bingoArmarCartones(){
   }
   bingo.bolsa = barajar(bingo.nombres);
   bingo.sorteados = [];
+  bingo.ultimaLlamada = null;
   bingo.ganadorLinea = null;
   bingo.ganadorCartonLleno = null;
   bingo.fase = 'jugando';
@@ -161,6 +186,7 @@ function bingoSortear(){
   const nombre = bingo.bolsa.pop();
   bingo.sorteados = bingo.sorteados || [];
   bingo.sorteados.push(nombre);
+  bingo.ultimaLlamada = bingoArmarLlamada(nombre);
   bingo.cartones.forEach(carton => {
     carton.marcados = carton.marcados || [];
     const idx = carton.nombres.indexOf(nombre);
@@ -282,10 +308,10 @@ function renderBingo(){
     <div class="section-label">Tu cartón es el ${miCarton}</div>
     ${terminado ? `<div class="hero" style="margin-top:8px;"><h2>¡BINGO!</h2><p>Ganó ${cartonGanador.nombre} con el cartón lleno.</p></div>` : ''}
     <div class="bingo-sorteo">
-      <div class="bingo-ultimo">${sorteados.length ? sorteados[sorteados.length - 1] : '—'}</div>
+      <div class="bingo-ultimo">${bingo.ultimaLlamada || '—'}</div>
       ${terminado
         ? `<button class="btn-primary" onclick="bingoJugarDeNuevo()">Jugar de nuevo</button>`
-        : `<button class="btn-primary" onclick="bingoSortear()" ${bolsa.length === 0 ? 'disabled' : ''}>Sortear nombre</button>`}
+        : `<button class="btn-primary" onclick="bingoSortear()" ${bolsa.length === 0 ? 'disabled' : ''}>Cantar nombre</button>`}
     </div>
     <div class="section-label">Ya salieron (${sorteados.length}/${bingo.nombres.length})</div>
     <div class="bingo-historial">${sorteados.length
