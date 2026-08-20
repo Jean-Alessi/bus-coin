@@ -268,7 +268,15 @@ body{
 }
 .bingo-roster-item span:first-child{color:var(--navy); font-weight:600;}
 .bingo-roster-item.bingo-roster-listo{border-color:#3B9B5A;}
-.bingo-roster-item.bingo-roster-listo span:last-child{color:#3B9B5A; font-weight:700;}
+.bingo-roster-derecha{display:flex; align-items:center; gap:8px;}
+.bingo-roster-item.bingo-roster-listo .bingo-roster-derecha span{color:#3B9B5A; font-weight:700;}
+.btn-eliminar-pasajero{
+  background:none; border:1.5px solid #D9534F; color:#D9534F; border-radius:50%;
+  width:22px; height:22px; font-size:12px; line-height:1; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  font-family:'Poppins',sans-serif;
+}
+.btn-eliminar-pasajero:hover{background:#D9534F; color:#fff;}
 .btn-organizador-link{
   display:block; width:100%; background:var(--navy); color:#fff; border:none;
   border-radius:14px; padding:12px; font-size:13px; font-weight:600;

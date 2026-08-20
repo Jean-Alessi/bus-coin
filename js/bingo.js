@@ -9,8 +9,8 @@ let bingoMostrandoPin = false;
 const BINGO_PIN_ORGANIZADOR = '2314';
 const BINGO_CANTIDAD_CARTON = 9;
 const BINGO_TAMANO_CARTON = 3;
-// Si son menos de 9 pasajeros, se completa el cartón con números para poder jugar igual.
-const BINGO_NUMEROS_EXTRA = Array.from({ length: 40 }, (_, i) => String(i + 1));
+// Si son menos de 9 pasajeros, se completa el cartón con números (0 al 99, como en un bingo real).
+const BINGO_NUMEROS_EXTRA = Array.from({ length: 100 }, (_, i) => String(i));
 
 // Cantos con onda: cada sorteo arma una frase al azar en vez de mostrar el nombre pelado.
 const BINGO_LLAMADAS = [
@@ -85,6 +85,13 @@ function bingoEsOrganizador(){
 // Se llama una vez, al entrar a la app con nombre + asiento (ver goHome en app.js).
 function bingoRegistrarPasajero(asiento, nombre){
   bingoRefPasajeros().child(String(asiento)).set(nombre);
+}
+
+// El organizador saca a quien se colgó o se arrepintió de jugar (solo antes de empezar).
+function bingoEliminarPasajero(asiento){
+  if(!bingoEsOrganizador()) return;
+  bingoRefPasajeros().child(String(asiento)).remove();
+  bingoRefCartones().child(String(asiento)).remove();
 }
 
 let bingoListenersListos = false;
@@ -275,7 +282,10 @@ function renderBingoOrganizador(container){
         const listo = bingoCartones[a] && bingoCartones[a].nombres && bingoCartones[a].nombres.length === BINGO_CANTIDAD_CARTON;
         return `<div class="bingo-roster-item ${listo ? 'bingo-roster-listo' : ''}">
           <span>Asiento ${a} — ${bingoPasajeros[a]}</span>
-          <span>${listo ? '✓ Listo' : 'Armando cartón...'}</span>
+          <span class="bingo-roster-derecha">
+            <span>${listo ? '✓ Listo' : 'Armando cartón...'}</span>
+            <button class="btn-eliminar-pasajero" onclick="bingoEliminarPasajero('${a}')" title="Sacar del bingo">✕</button>
+          </span>
         </div>`;
       }).join('')
       : '<p style="color:var(--gray);font-size:13px;">Todavía no entró nadie con su nombre y asiento.</p>';
