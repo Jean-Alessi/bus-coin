@@ -187,11 +187,13 @@ function bingoArmarBolsa(){
   return barajar([...items]);
 }
 
+// El organizador decide cuándo arrancar: no espera a que todos completen su
+// cartón (por si son menos de 9, alguien se cuelga, o no quiere jugar).
+// Quien no llegó a armar el suyo simplemente queda sin cartón, sin trabar al resto.
 function bingoEmpezarJuego(){
   if(!bingoEsOrganizador()) return;
   const asientos = Object.keys(bingoPasajeros);
-  const todosCompletos = asientos.length > 0 && asientos.every(a => bingoCartones[a] && bingoCartones[a].nombres && bingoCartones[a].nombres.length === BINGO_CANTIDAD_CARTON);
-  if(!todosCompletos) return;
+  if(!asientos.length) return;
   bingo.bolsa = bingoArmarBolsa();
   bingo.sorteados = [];
   bingo.ultimaLlamada = null;
@@ -293,9 +295,9 @@ function renderBingo(){
 }
 
 function renderBingoOrganizador(container){
-  const asientos = bingoOrdenAsientos(bingoPasajeros);
+  // El organizador no juega, así que no cuenta como "pasajero esperando armar cartón".
+  const asientos = bingoOrdenAsientos(bingoPasajeros).filter(a => a !== String(miAsiento));
   const completos = asientos.filter(a => bingoCartones[a] && bingoCartones[a].nombres && bingoCartones[a].nombres.length === BINGO_CANTIDAD_CARTON);
-  const todosCompletos = asientos.length > 0 && completos.length === asientos.length;
 
   if(bingo.fase === 'esperando'){
     const listaHTML = asientos.length
@@ -314,10 +316,10 @@ function renderBingoOrganizador(container){
       <div class="section-label">Panel del organizador</div>
       <div class="hero" style="margin-top:8px;">
         <h2>Esperando los cartones</h2>
-        <p>${completos.length} de ${asientos.length} pasajeros ya armaron su cartón de ${BINGO_CANTIDAD_CARTON} nombres.</p>
+        <p>${completos.length} de ${asientos.length} pasajeros ya armaron su cartón de ${BINGO_CANTIDAD_CARTON} nombres. Empezá cuando quieras, no hace falta que estén todos.</p>
       </div>
       <div class="bingo-roster">${listaHTML}</div>
-      <button class="btn-primary" onclick="bingoEmpezarJuego()" ${todosCompletos ? '' : 'disabled'}>Empezar el bingo</button>
+      <button class="btn-primary" onclick="bingoEmpezarJuego()" ${asientos.length ? '' : 'disabled'}>Empezar el bingo</button>
       <p class="link-chico" onclick="bingoCerrarSesionOrganizador()">Cerrar sesión de organizador</p>`;
     return;
   }
