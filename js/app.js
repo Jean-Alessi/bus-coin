@@ -8,7 +8,7 @@ const EMOJIS_DISPONIBLES = ['😊', '😎', '🤩', '😜', '🥳', '😇', '�
 
 const TARJETAS_HOME = [
   { icon: "trivia", title: "Trivia", sub: "Elegí un tema y sumá puntos", view: "trivia" },
-  { icon: "bingo", title: "Bingo de nombres", sub: "Sorteo con los pasajeros del micro", view: "bingo" },
+  { icon: "bingo", title: "Bingo", sub: "Números del 00 al 99, con su significado", view: "bingo" },
   { icon: "trofeo", title: "Ranking del micro", sub: "¿Quién va primero hoy?", view: "ranking" },
   { icon: "musica", title: "DJ en vivo", sub: "Votá y pagá el próximo tema", view: "dj" },
   { icon: "lupa", title: "Buscá las diferencias", sub: "Juego para todas las edades", view: "diferencias" },

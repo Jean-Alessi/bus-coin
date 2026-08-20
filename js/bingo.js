@@ -9,32 +9,30 @@ let bingoMostrandoPin = false;
 const BINGO_PIN_ORGANIZADOR = '2314';
 const BINGO_CANTIDAD_CARTON = 9;
 const BINGO_TAMANO_CARTON = 3;
-// Si son menos de 9 pasajeros, se completa el cartón con números (0 al 99, como en un bingo real).
-const BINGO_NUMEROS_EXTRA = Array.from({ length: 100 }, (_, i) => String(i));
+// Números del cartón: 00 al 99, como en un bingo/lotería tradicional.
+const BINGO_NUMEROS = Array.from({ length: 100 }, (_, i) => String(i).padStart(2, '0'));
 
-// Cantos con onda: cada sorteo arma una frase al azar en vez de mostrar el nombre pelado.
-const BINGO_LLAMADAS = [
-  '¡Todos atentos, que se viene {nombre}!',
-  'Directo del bolillero: ¡{nombre}!',
-  '¡Aguante {nombre}, dale que va!',
-  'La ruta dice su nombre... ¡{nombre}!',
-  '¡Che, {nombre}! Justo vos.',
-  'Salió {nombre}, ¡que no se achique nadie!',
-  '¡Grande {nombre}!',
-  'Y el micro canta fuerte: ¡{nombre}!',
-  '¡{nombre} al humo!',
-  'Marcá bien, que salió... ¡{nombre}!',
-  '¡Ahí viene {nombre}, pisando fuerte!',
-  'El cartón tiembla: ¡{nombre}!',
-  '¡Todo el mundo mira su cartón... es {nombre}!',
-  'Sonó y dijo bien clarito: ¡{nombre}!',
-  '¡Vamo\' {nombre}, que hoy es tu día!',
+// Significado de cada número al estilo de las loterías populares (libro de los
+// sueños): se canta el número y, al lado, su significado.
+const BINGO_SIGNIFICADOS = [
+  'el huevo', 'el sol', 'la luna', 'el gato', 'la casa', 'el perro', 'la serpiente', 'la suerte',
+  'el dinero', 'el viaje', 'el pez', 'los mellizos', 'el reloj', 'la mala suerte', 'la fiesta', 'la niña',
+  'el vino', 'la discusión', 'el engaño', 'el cura', 'el político', 'el marinero', 'el loco', 'la mujer',
+  'el toro', 'el auto', 'la mentira', 'el general', 'el casamiento', 'el café', 'el árbol', 'el rey',
+  'el avión', 'la cruz', 'el corazón', 'la abeja', 'el cementerio', 'el barco', 'el ladrón', 'el sombrero',
+  'el caballo', 'el policía', 'el pan', 'el fuego', 'los dientes', 'la lluvia', 'el vecino', 'el preso',
+  'el muerto', 'el chancho', 'el tren', 'la bandera', 'el baile', 'la carta', 'el dinero perdido', 'el tesoro',
+  'el robo', 'el regalo', 'el barrio', 'el teléfono', 'la vejez', 'el mar', 'la tormenta', 'la escuela',
+  'el trabajo', 'la familia', 'el chisme', 'el terreno', 'el vestido', 'el amor', 'el fantasma', 'la sorpresa',
+  'el regreso', 'el pájaro', 'el puente', 'el sueño', 'el espejo', 'la suerte doble', 'el paraguas', 'el camino',
+  'la montaña', 'el río', 'el desierto', 'la estrella', 'el reloj de arena', 'el fuego lento', 'el invierno', 'el verano',
+  'el manantial', 'el otoño', 'la primavera', 'el anillo', 'la boda', 'el bebé', 'la escalera', 'el puerto',
+  'la brújula', 'el faro', 'el ancla', 'el horizonte',
 ];
 
-function bingoArmarLlamada(nombre){
-  const plantilla = BINGO_LLAMADAS[Math.floor(Math.random() * BINGO_LLAMADAS.length)];
-  const nombreResaltado = `<span class="bingo-nombre-resaltado">${nombre.toUpperCase()}</span>`;
-  return plantilla.replace('{nombre}', nombreResaltado);
+function bingoArmarLlamada(numero){
+  const significado = BINGO_SIGNIFICADOS[Number(numero)] || '';
+  return `<span class="bingo-numero-resaltado">${numero}</span><span class="bingo-numero-significado">${significado}</span>`;
 }
 
 // Línea = fila, columna o cualquiera de las dos diagonales completa (cartón fijo de 3x3).
@@ -59,10 +57,10 @@ function bingoTieneLinea(marcados){
 }
 
 // ---- Multi-celular: cada pasajero entra con su nombre + asiento (ya elegidos
-// al principio, en el onboarding) y arma su propio cartón eligiendo 9 nombres
-// de la lista de todo el grupo. El organizador no puede empezar hasta que
-// todos terminen. Ser organizador es una marca local del celular (vía PIN),
-// no depende de quién llegó primero ni se pierde si se reinicia la partida. ----
+// al principio, en el onboarding) y arma su propio cartón eligiendo 9 números
+// del 00 al 99. El organizador puede empezar cuando quiera, sin esperar a
+// que todos completen. Ser organizador es una marca local del celular (vía
+// PIN), no depende de quién llegó primero ni se pierde si se reinicia la partida. ----
 
 function bingoRefEstado(){ return db.ref(`salas/${codigoViaje}/bingo/estado`); }
 function bingoRefPasajeros(){ return db.ref(`salas/${codigoViaje}/bingo/pasajeros`); }
@@ -141,60 +139,27 @@ function bingoIntentarSerOrganizador(){
   renderBingo();
 }
 
-// Si dos pasajeros se llaman igual, se les suma el asiento para diferenciarlos
-// (ej. "Ana (asiento 4)" y "Ana (asiento 9)"); si el nombre es único queda tal cual.
-function bingoNombreConAsiento(asiento){
-  const nombre = bingoPasajeros[asiento];
-  const repetido = Object.keys(bingoPasajeros).filter(a => bingoPasajeros[a] === nombre).length > 1;
-  return repetido ? `${nombre} (asiento ${asiento})` : nombre;
-}
-
-// La selección guarda tokens, no el texto final: "n:<asiento>" para nombres y
-// "#<numero>" para números. Así, aunque dos pasajeros se llamen igual, elegir
-// uno u otro nunca se confunde (se resuelven recién al confirmar el cartón).
-function bingoToggleSeleccion(valor){
-  const idx = bingoSeleccion.indexOf(valor);
+function bingoToggleNumero(numero){
+  const idx = bingoSeleccion.indexOf(numero);
   if(idx !== -1){
     bingoSeleccion.splice(idx, 1);
   } else if(bingoSeleccion.length < BINGO_CANTIDAD_CARTON){
-    bingoSeleccion.push(valor);
+    bingoSeleccion.push(numero);
   }
   renderBingo();
 }
 
-function bingoToggleNombre(asiento){
-  bingoToggleSeleccion('n:' + asiento);
-}
-
-function bingoToggleNumero(numero){
-  bingoToggleSeleccion('#' + numero);
-}
-
 function bingoConfirmarCarton(){
   if(bingoSeleccion.length !== BINGO_CANTIDAD_CARTON || !miAsiento) return;
-  const nombres = barajar(bingoSeleccion.map(v => {
-    if(v.startsWith('#')) return v.slice(1);
-    return bingoNombreConAsiento(v.slice(2));
-  }));
-  bingoRefCartones().child(String(miAsiento)).set({ nombres, marcados: [] });
+  const numeros = barajar(bingoSeleccion.slice());
+  bingoRefCartones().child(String(miAsiento)).set({ nombres: numeros, marcados: [] });
 }
 
-// La bolsa incluye a todos los pasajeros (con el asiento sumado si el nombre
-// se repite) más cualquier número que alguien haya usado para completar su cartón.
-function bingoArmarBolsa(){
-  const items = new Set(Object.keys(bingoPasajeros).map(a => bingoNombreConAsiento(a)));
-  Object.values(bingoCartones).forEach(c => (c.nombres || []).forEach(n => items.add(n)));
-  return barajar([...items]);
-}
-
-// El organizador decide cuándo arrancar: no espera a que todos completen su
-// cartón (por si son menos de 9, alguien se cuelga, o no quiere jugar).
-// Quien no llegó a armar el suyo simplemente queda sin cartón, sin trabar al resto.
 function bingoEmpezarJuego(){
   if(!bingoEsOrganizador()) return;
   const asientos = Object.keys(bingoPasajeros);
   if(!asientos.length) return;
-  bingo.bolsa = bingoArmarBolsa();
+  bingo.bolsa = barajar(BINGO_NUMEROS.slice());
   bingo.sorteados = [];
   bingo.ultimaLlamada = null;
   bingo.ganadorLinea = null;
@@ -207,15 +172,15 @@ function bingoSortear(){
   if(!bingoEsOrganizador()) return;
   bingo.bolsa = bingo.bolsa || [];
   if(!bingo.bolsa.length) return;
-  const nombre = bingo.bolsa.pop();
+  const numero = bingo.bolsa.pop();
   bingo.sorteados = bingo.sorteados || [];
-  bingo.sorteados.push(nombre);
-  bingo.ultimaLlamada = bingoArmarLlamada(nombre);
+  bingo.sorteados.push(numero);
+  bingo.ultimaLlamada = bingoArmarLlamada(numero);
 
   Object.keys(bingoCartones).forEach(asiento => {
     const carton = bingoCartones[asiento];
     carton.marcados = carton.marcados || [];
-    const idx = carton.nombres.indexOf(nombre);
+    const idx = carton.nombres.indexOf(numero);
     if(idx !== -1 && !carton.marcados.includes(idx)) carton.marcados.push(idx);
   });
 
@@ -243,7 +208,7 @@ function bingoSortear(){
 function bingoJugarDeNuevo(){
   if(!bingoEsOrganizador()) return;
   Object.values(bingoCartones).forEach(c => { c.marcados = []; });
-  bingo.bolsa = bingoArmarBolsa();
+  bingo.bolsa = barajar(BINGO_NUMEROS.slice());
   bingo.sorteados = [];
   bingo.ultimaLlamada = null;
   bingo.ganadorLinea = null;
@@ -316,7 +281,7 @@ function renderBingoOrganizador(container){
       <div class="section-label">Panel del organizador</div>
       <div class="hero" style="margin-top:8px;">
         <h2>Esperando los cartones</h2>
-        <p>${completos.length} de ${asientos.length} pasajeros ya armaron su cartón de ${BINGO_CANTIDAD_CARTON} nombres. Empezá cuando quieras, no hace falta que estén todos.</p>
+        <p>${completos.length} de ${asientos.length} pasajeros ya armaron su cartón de ${BINGO_CANTIDAD_CARTON} números. Empezá cuando quieras, no hace falta que estén todos.</p>
       </div>
       <div class="bingo-roster">${listaHTML}</div>
       <button class="btn-primary" onclick="bingoEmpezarJuego()" ${asientos.length ? '' : 'disabled'}>Empezar el bingo</button>
@@ -339,9 +304,9 @@ function renderBingoOrganizador(container){
       <div class="bingo-ultimo">${bingo.ultimaLlamada || '—'}</div>
       ${terminado
         ? `<button class="btn-primary" onclick="bingoJugarDeNuevo()">Jugar de nuevo</button>`
-        : `<button class="btn-primary" onclick="bingoSortear()" ${bolsa.length === 0 ? 'disabled' : ''}>Cantar nombre</button>`}
+        : `<button class="btn-primary" onclick="bingoSortear()" ${bolsa.length === 0 ? 'disabled' : ''}>Cantar número</button>`}
     </div>
-    <div class="section-label">Ya salieron (${sorteados.length}/${Object.keys(bingoPasajeros).length})</div>
+    <div class="section-label">Ya salieron (${sorteados.length}/${BINGO_NUMEROS.length})</div>
     <div class="bingo-historial">${historialHTML}</div>
     <p class="link-chico" onclick="bingoCerrarSesionOrganizador()">Cerrar sesión de organizador</p>`;
 }
@@ -356,29 +321,18 @@ function renderBingoPasajero(container){
   const tengoCartonCompleto = !!(miCarton && miCarton.nombres && miCarton.nombres.length === BINGO_CANTIDAD_CARTON);
 
   if(bingo.fase === 'esperando' && !tengoCartonCompleto){
-    const asientosDisponibles = bingoOrdenAsientos(bingoPasajeros);
-    const faltan = BINGO_CANTIDAD_CARTON - asientosDisponibles.length;
-    const itemNombre = (asiento) => {
-      const marcado = bingoSeleccion.includes('n:' + asiento);
-      return `<div class="bingo-nombre-item ${marcado ? 'bingo-nombre-elegido' : ''}" onclick="bingoToggleNombre('${asiento}')">${bingoNombreConAsiento(asiento)}</div>`;
-    };
     const itemNumero = (n) => {
-      const marcado = bingoSeleccion.includes('#' + n);
+      const marcado = bingoSeleccion.includes(n);
       return `<div class="bingo-nombre-item ${marcado ? 'bingo-nombre-elegido' : ''}" onclick="bingoToggleNumero('${n}')">${n}</div>`;
     };
-    const seccionNumeros = faltan > 0
-      ? `<div class="section-label">Como son menos de ${BINGO_CANTIDAD_CARTON} pasajeros, completá con números</div>
-         <div class="bingo-lista-nombres">${BINGO_NUMEROS_EXTRA.map(itemNumero).join('')}</div>`
-      : '';
     container.innerHTML = `
       ${bingoPinHTML()}
       <div class="hero" style="margin-top:8px;">
         <h2>Armá tu cartón</h2>
-        <p>Elegí exactamente ${BINGO_CANTIDAD_CARTON} nombres o números para tu cartón. Vas a jugar con el asiento ${miAsiento}.</p>
+        <p>Elegí exactamente ${BINGO_CANTIDAD_CARTON} números del 00 al 99. Vas a jugar con el asiento ${miAsiento}.</p>
       </div>
       <div class="section-label">Elegidos: ${bingoSeleccion.length}/${BINGO_CANTIDAD_CARTON}</div>
-      <div class="bingo-lista-nombres">${asientosDisponibles.length ? asientosDisponibles.map(itemNombre).join('') : '<p style="color:var(--gray);font-size:13px;">Todavía no hay otros pasajeros anotados.</p>'}</div>
-      ${seccionNumeros}
+      <div class="bingo-lista-nombres">${BINGO_NUMEROS.map(itemNumero).join('')}</div>
       <button class="btn-primary" onclick="bingoConfirmarCarton()" ${bingoSeleccion.length === BINGO_CANTIDAD_CARTON ? '' : 'disabled'}>Confirmar mi cartón</button>`;
     return;
   }
@@ -409,9 +363,9 @@ function renderBingoPasajero(container){
     ${bannerFinal}
     <div class="bingo-sorteo">
       <div class="bingo-ultimo">${bingo.ultimaLlamada || '—'}</div>
-      <p class="bingo-espera">${terminado ? 'Esperá a que el organizador arranque otra partida.' : 'El organizador va cantando los nombres.'}</p>
+      <p class="bingo-espera">${terminado ? 'Esperá a que el organizador arranque otra partida.' : 'El organizador va cantando los números.'}</p>
     </div>
-    <div class="section-label">Ya salieron (${sorteados.length}/${Object.keys(bingoPasajeros).length})</div>
+    <div class="section-label">Ya salieron (${sorteados.length}/${BINGO_NUMEROS.length})</div>
     <div class="bingo-historial">${historialHTML}</div>
     ${miCarton ? bingoCartonHTML(String(miAsiento), `Tu cartón (asiento ${miAsiento})`, miCarton) : ''}`;
 }

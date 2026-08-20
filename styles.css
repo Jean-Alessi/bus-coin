@@ -290,17 +290,19 @@ body{
 .rank-asiento{font-size:11px; font-weight:500; color:var(--gray);}
 .bingo-sorteo{background:var(--navy); border-radius:18px; padding:20px; text-align:center; margin-bottom:16px;}
 .bingo-ultimo{
-  color:#fff; font-size:17px; font-weight:700; line-height:1.35;
-  margin-bottom:14px; min-height:44px; word-break:break-word;
-  display:flex; align-items:center; justify-content:center;
+  display:flex; align-items:baseline; justify-content:center; gap:10px; flex-wrap:wrap;
+  margin-bottom:14px; min-height:56px;
   animation:bingo-llamada-pop .35s ease-out;
 }
 @keyframes bingo-llamada-pop{
   from{opacity:0; transform:translateY(6px) scale(.96);}
   to{opacity:1; transform:translateY(0) scale(1);}
 }
-.bingo-nombre-resaltado{
-  color:var(--orange); font-size:1.3em; font-weight:800; letter-spacing:.5px;
+.bingo-numero-resaltado{
+  color:var(--orange); font-size:2.4em; font-weight:800; letter-spacing:.5px; line-height:1;
+}
+.bingo-numero-significado{
+  color:#C6D3E8; font-size:15px; font-weight:500; text-transform:capitalize;
 }
 .bingo-sorteo .btn-primary{margin-top:0;}
 .bingo-espera{color:#C6D3E8; font-size:12px; margin:0;}
@@ -321,8 +323,8 @@ body{
 .bingo-badge-full{background:var(--orange); color:#fff;}
 .bingo-grid{display:grid; gap:4px;}
 .bingo-celda{
-  aspect-ratio:1; background:var(--cream); border-radius:6px; display:flex; align-items:center;
-  justify-content:center; text-align:center; font-size:10px; font-weight:600; color:var(--navy);
-  padding:2px; overflow:hidden; word-break:break-word; line-height:1.15; transition:.15s;
+  aspect-ratio:1; background:var(--cream); border-radius:8px; display:flex; align-items:center;
+  justify-content:center; text-align:center; font-size:36px; font-weight:700; color:var(--navy);
+  padding:2px; overflow:hidden; transition:.15s;
 }
 .bingo-celda.bingo-marcada{background:var(--orange); color:#fff;}
