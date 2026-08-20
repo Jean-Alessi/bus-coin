@@ -18,11 +18,12 @@
     <div class="view active" id="view-codigo-viaje">
       <div class="hero">
         <h2>¿A qué viaje te sumás?</h2>
-        <p>Ingresá el código que te pasó el organizador. Si estás por empezar un viaje nuevo, generá uno.</p>
+        <p>Ingresá el código que te pasó el organizador.</p>
       </div>
       <input type="text" id="codigo-viaje-input" class="bingo-input-numero" style="width:100%; text-transform:uppercase;" placeholder="Código del viaje" oninput="actualizarBotonCodigoViaje()">
-      <button class="btn-ghost" onclick="generarCodigoViaje()">Generar código nuevo</button>
       <button class="btn-primary" id="btn-continuar-codigo" disabled onclick="confirmarCodigoViaje()">Continuar</button>
+      <p class="link-chico" onclick="mostrarGenerarCodigo()">¿Sos el organizador y estás por empezar un viaje nuevo?</p>
+      <div id="generar-codigo-content"></div>
       <p class="link-chico" onclick="mostrarAdminViajes()">🔧 Administrar viajes</p>
       <div id="admin-viajes-content"></div>
     </div>

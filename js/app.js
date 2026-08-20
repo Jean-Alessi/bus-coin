@@ -34,6 +34,42 @@ function generarCodigoViaje(){
   actualizarBotonCodigoViaje();
 }
 
+// Generar un código nuevo queda atrás del PIN: si cualquiera pudiera tocarlo,
+// un pasajero se manda solo a un viaje vacío sin querer. Escribir un código
+// ya existente, en cambio, lo puede hacer cualquiera (eso es "unirse").
+let mostrandoPinCodigoNuevo = false;
+
+function mostrarGenerarCodigo(){
+  mostrandoPinCodigoNuevo = true;
+  renderPinCodigoNuevo();
+}
+
+function renderPinCodigoNuevo(){
+  const cont = document.getElementById('generar-codigo-content');
+  if(!cont) return;
+  if(!mostrandoPinCodigoNuevo){ cont.innerHTML = ''; return; }
+  cont.innerHTML = `
+    <div class="bingo-pin-box">
+      <input type="password" id="pin-codigo-nuevo-input" class="bingo-input-numero" inputmode="numeric" maxlength="4" placeholder="PIN del organizador">
+      <button class="btn-primary" onclick="confirmarGenerarCodigo()">Generar código nuevo</button>
+      <p id="pin-codigo-nuevo-error" class="bingo-pin-error"></p>
+    </div>`;
+}
+
+function confirmarGenerarCodigo(){
+  const input = document.getElementById('pin-codigo-nuevo-input');
+  const pin = input ? input.value.trim() : '';
+  const error = document.getElementById('pin-codigo-nuevo-error');
+  if(pin !== BINGO_PIN_ORGANIZADOR){
+    if(error) error.textContent = 'PIN incorrecto';
+    return;
+  }
+  localStorage.setItem('bingo-organizador', 'si');
+  generarCodigoViaje();
+  mostrandoPinCodigoNuevo = false;
+  renderPinCodigoNuevo();
+}
+
 function actualizarBotonCodigoViaje(){
   const val = document.getElementById('codigo-viaje-input').value.trim();
   document.getElementById('btn-continuar-codigo').disabled = val.length === 0;
