@@ -80,6 +80,13 @@ function bingoEsOrganizador(){
   return localStorage.getItem('bingo-organizador') === 'si';
 }
 
+// Deja de ser organizador en ESTE celular/navegador (útil para volver a probar
+// la vista de pasajero, o si se marcó por error). No afecta a otros dispositivos.
+function bingoCerrarSesionOrganizador(){
+  localStorage.removeItem('bingo-organizador');
+  renderBingo();
+}
+
 // Se llama una vez, al entrar a la app con nombre + asiento (ver goHome en app.js).
 function bingoRegistrarPasajero(asiento, nombre){
   bingoRefPasajeros().child(String(asiento)).set(nombre);
@@ -310,7 +317,8 @@ function renderBingoOrganizador(container){
         <p>${completos.length} de ${asientos.length} pasajeros ya armaron su cartón de ${BINGO_CANTIDAD_CARTON} nombres.</p>
       </div>
       <div class="bingo-roster">${listaHTML}</div>
-      <button class="btn-primary" onclick="bingoEmpezarJuego()" ${todosCompletos ? '' : 'disabled'}>Empezar el bingo</button>`;
+      <button class="btn-primary" onclick="bingoEmpezarJuego()" ${todosCompletos ? '' : 'disabled'}>Empezar el bingo</button>
+      <p class="link-chico" onclick="bingoCerrarSesionOrganizador()">Cerrar sesión de organizador</p>`;
     return;
   }
 
@@ -332,7 +340,8 @@ function renderBingoOrganizador(container){
         : `<button class="btn-primary" onclick="bingoSortear()" ${bolsa.length === 0 ? 'disabled' : ''}>Cantar nombre</button>`}
     </div>
     <div class="section-label">Ya salieron (${sorteados.length}/${Object.keys(bingoPasajeros).length})</div>
-    <div class="bingo-historial">${historialHTML}</div>`;
+    <div class="bingo-historial">${historialHTML}</div>
+    <p class="link-chico" onclick="bingoCerrarSesionOrganizador()">Cerrar sesión de organizador</p>`;
 }
 
 function renderBingoPasajero(container){
