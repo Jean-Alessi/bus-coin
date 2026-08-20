@@ -15,8 +15,106 @@ const TARJETAS_HOME = [
   { icon: "auriculares", title: "Cuento del día", sub: "Leyendas argentinas, en audio", view: "cuento" },
 ];
 
+// ---- Código de viaje: agrupa Bingo/Ranking/DJ bajo un mismo código, para
+// poder arrancar un viaje nuevo (pasajeros y nombres nuevos) sin mezclarlo
+// con datos de un viaje anterior, y para poder borrar viajes ya terminados. ----
+
+let codigoViaje = '';
+
+function leerCodigoViajeDeURL(){
+  const params = new URLSearchParams(location.search);
+  return (params.get('viaje') || '').toUpperCase().trim();
+}
+
+function generarCodigoViaje(){
+  const letras = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sin 0/O/1/I para que no se confundan al leerlo
+  let codigo = '';
+  for(let i = 0; i < 5; i++) codigo += letras[Math.floor(Math.random() * letras.length)];
+  document.getElementById('codigo-viaje-input').value = codigo;
+  actualizarBotonCodigoViaje();
+}
+
+function actualizarBotonCodigoViaje(){
+  const val = document.getElementById('codigo-viaje-input').value.trim();
+  document.getElementById('btn-continuar-codigo').disabled = val.length === 0;
+}
+
+function confirmarCodigoViaje(){
+  codigoViaje = document.getElementById('codigo-viaje-input').value.trim().toUpperCase();
+  localStorage.setItem('codigo-viaje', codigoViaje);
+  showView('onboard');
+}
+
+function copiarLinkViaje(){
+  if(!codigoViaje) return;
+  const url = `${location.origin}${location.pathname}?viaje=${encodeURIComponent(codigoViaje)}`;
+  navigator.clipboard.writeText(url).then(() => mostrarToast('Link del viaje copiado'));
+}
+
+// ---- Administración de viajes: mismo PIN que el organizador del Bingo,
+// para listar y borrar viajes ya terminados. ----
+
+let adminMostrandoPin = false;
+
+function mostrarAdminViajes(){
+  adminMostrandoPin = true;
+  renderAdminViajes();
+}
+
+function renderAdminViajes(){
+  const cont = document.getElementById('admin-viajes-content');
+  if(!cont) return;
+  if(localStorage.getItem('bingo-organizador') !== 'si'){
+    if(!adminMostrandoPin){ cont.innerHTML = ''; return; }
+    cont.innerHTML = `
+      <div class="bingo-pin-box">
+        <input type="password" id="admin-pin-input" class="bingo-input-numero" inputmode="numeric" maxlength="4" placeholder="PIN de administrador">
+        <button class="btn-primary" onclick="verificarPinAdmin()">Entrar</button>
+        <p id="admin-pin-error" class="bingo-pin-error"></p>
+      </div>`;
+    return;
+  }
+  cont.innerHTML = '<p style="color:var(--gray);font-size:13px;">Cargando viajes...</p>';
+  db.ref('salas').once('value').then(snap => {
+    const datos = snap.val() || {};
+    const codigos = Object.keys(datos);
+    if(!codigos.length){
+      cont.innerHTML = '<p style="color:var(--gray);font-size:13px;">Todavía no hay viajes guardados.</p>';
+      return;
+    }
+    cont.innerHTML = `<div class="section-label">Viajes guardados</div>` + codigos.map(c => {
+      const pasajeros = Object.keys((datos[c].ranking && datos[c].ranking.puntos) || {}).length;
+      return `<div class="bingo-roster-item">
+        <span>${c}</span>
+        <span class="bingo-roster-derecha">
+          <span>${pasajeros} pasajero${pasajeros === 1 ? '' : 's'}</span>
+          <button class="btn-eliminar-pasajero" onclick="eliminarViaje('${c}')" title="Eliminar viaje">✕</button>
+        </span>
+      </div>`;
+    }).join('');
+  });
+}
+
+function verificarPinAdmin(){
+  const input = document.getElementById('admin-pin-input');
+  const pin = input ? input.value.trim() : '';
+  const error = document.getElementById('admin-pin-error');
+  if(pin !== BINGO_PIN_ORGANIZADOR){
+    if(error) error.textContent = 'PIN incorrecto';
+    return;
+  }
+  localStorage.setItem('bingo-organizador', 'si');
+  renderAdminViajes();
+}
+
+function eliminarViaje(codigo){
+  db.ref('salas/' + codigo).remove().then(() => renderAdminViajes());
+}
+
 // ---- Identidad y ranking compartido: cada celular dice su emoji, nombre y
-// asiento una vez, y los puntos que gana se suman a una tabla en vivo en Firebase. ----
+// asiento una vez, y los puntos que gana se suman a una tabla en vivo en Firebase.
+// Se guarda por asiento (no por nombre) para que dos pasajeros con el mismo
+// nombre no se mezclen en una sola fila. ----
 
 let miNombre = localStorage.getItem('mi-nombre') || '';
 let miAsiento = localStorage.getItem('mi-asiento') || '';
@@ -24,17 +122,13 @@ let miEmoji = localStorage.getItem('mi-emoji') || '';
 let rankingPuntos = {};
 let rankingListener = null;
 
-function rankingClave(nombre){
-  return nombre.trim().replace(/[.#$\[\]\/]/g, '_');
-}
-
-function rankingRefPuntos(){ return db.ref('salas/ranking-grupo/puntos'); }
+function rankingRefPuntos(){ return db.ref('salas/' + codigoViaje + '/ranking/puntos'); }
 
 function rankingUnirse(){
-  if(!miNombre) return;
-  const ref = rankingRefPuntos().child(rankingClave(miNombre));
+  if(!miNombre || !miAsiento) return;
+  const ref = rankingRefPuntos().child(String(miAsiento));
   ref.once('value').then(snap => {
-    if(snap.val() == null) ref.set(0);
+    if(snap.val() == null) ref.set({ nombre: miNombre, pts: 0 });
   });
   if(!rankingListener){
     rankingListener = rankingRefPuntos().on('value', snap => {
@@ -80,6 +174,7 @@ function goHome(){
 
 function renderHome(){
   document.getElementById('home-saludo').textContent = `${miEmoji} Hola, ${miNombre}`;
+  document.getElementById('home-viaje').textContent = `Viaje ${codigoViaje} · copiar link`;
   const container = document.getElementById('home-content');
   container.innerHTML = '<div class="section-label">Para vos</div>';
   TARJETAS_HOME.forEach(c=>{
@@ -108,15 +203,14 @@ function showView(name){
 function renderRanking(){
   const list = document.getElementById('ranking-list');
   if(!list) return;
-  const miClave = rankingClave(miNombre);
   const filas = Object.keys(rankingPuntos)
-    .map(clave => ({ nombre: clave, pts: rankingPuntos[clave], me: clave === miClave }))
+    .map(asiento => ({ asiento, nombre: rankingPuntos[asiento].nombre, pts: rankingPuntos[asiento].pts, me: asiento === String(miAsiento) }))
     .sort((a,b)=> b.pts - a.pts);
   list.innerHTML = filas.length ? '' : '<p style="color:var(--gray);font-size:13px;">Todavía nadie sumó puntos.</p>';
   filas.forEach((r,i)=>{
     const div = document.createElement('div');
     div.className = 'rank-row' + (r.me ? ' me' : '');
-    div.innerHTML = `<div class="rank-num">${i+1}</div><div class="rank-avatar">${r.nombre.slice(0,2).toUpperCase()}</div><div class="rank-name">${r.me ? 'Vos' : r.nombre}</div><div class="rank-pts">${r.pts} pts</div>`;
+    div.innerHTML = `<div class="rank-num">${i+1}</div><div class="rank-avatar">${r.nombre.slice(0,2).toUpperCase()}</div><div class="rank-name">${r.me ? 'Vos' : r.nombre} <span class="rank-asiento">· asiento ${r.asiento}</span></div><div class="rank-pts">${r.pts} pts</div>`;
     list.appendChild(div);
   });
 }
@@ -149,10 +243,11 @@ function actualizarFichasEnPantalla(){
 function ganarFichas(cantidad){
   fichasJuego += cantidad;
   actualizarFichasEnPantalla();
-  if(miNombre){
-    const clave = rankingClave(miNombre);
-    rankingPuntos[clave] = (rankingPuntos[clave] || 0) + cantidad;
-    rankingRefPuntos().child(clave).set(rankingPuntos[clave]);
+  if(miNombre && miAsiento){
+    const asiento = String(miAsiento);
+    const puntosActuales = (rankingPuntos[asiento] && rankingPuntos[asiento].pts) || 0;
+    rankingPuntos[asiento] = { nombre: miNombre, pts: puntosActuales + cantidad };
+    rankingRefPuntos().child(asiento).set(rankingPuntos[asiento]);
   }
 }
 
@@ -179,4 +274,16 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const asientoInput = document.getElementById('mi-asiento-input');
   if(asientoInput && miAsiento) asientoInput.value = miAsiento;
   actualizarBotonContinuar();
+
+  const codigoURL = leerCodigoViajeDeURL();
+  const codigoInput = document.getElementById('codigo-viaje-input');
+  if(codigoURL){
+    // Se abrió con un link compartido (?viaje=CODIGO): entra directo, sin pedir el código a mano.
+    codigoViaje = codigoURL;
+    localStorage.setItem('codigo-viaje', codigoViaje);
+    showView('onboard');
+  } else if(codigoInput){
+    codigoInput.value = localStorage.getItem('codigo-viaje') || '';
+    actualizarBotonCodigoViaje();
+  }
 });

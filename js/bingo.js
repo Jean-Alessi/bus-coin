@@ -64,11 +64,9 @@ function bingoTieneLinea(marcados){
 // todos terminen. Ser organizador es una marca local del celular (vía PIN),
 // no depende de quién llegó primero ni se pierde si se reinicia la partida. ----
 
-const BINGO_ROOM_ID = 'bingo-grupo';
-
-function bingoRefEstado(){ return db.ref(`salas/${BINGO_ROOM_ID}/estado`); }
-function bingoRefPasajeros(){ return db.ref(`salas/${BINGO_ROOM_ID}/pasajeros`); }
-function bingoRefCartones(){ return db.ref(`salas/${BINGO_ROOM_ID}/cartones`); }
+function bingoRefEstado(){ return db.ref(`salas/${codigoViaje}/bingo/estado`); }
+function bingoRefPasajeros(){ return db.ref(`salas/${codigoViaje}/bingo/pasajeros`); }
+function bingoRefCartones(){ return db.ref(`salas/${codigoViaje}/bingo/cartones`); }
 
 function bingoEstadoVacio(){
   return { fase: 'esperando', bolsa: [], sorteados: [], ultimaLlamada: null, ganadorLinea: null, ganadorCartonLleno: null };
@@ -136,8 +134,17 @@ function bingoIntentarSerOrganizador(){
   renderBingo();
 }
 
-// Los números se guardan en la selección con un prefijo "#" para no confundirse
-// con un nombre real (ej. si alguien se llama "7"); se saca al confirmar el cartón.
+// Si dos pasajeros se llaman igual, se les suma el asiento para diferenciarlos
+// (ej. "Ana (asiento 4)" y "Ana (asiento 9)"); si el nombre es único queda tal cual.
+function bingoNombreConAsiento(asiento){
+  const nombre = bingoPasajeros[asiento];
+  const repetido = Object.keys(bingoPasajeros).filter(a => bingoPasajeros[a] === nombre).length > 1;
+  return repetido ? `${nombre} (asiento ${asiento})` : nombre;
+}
+
+// La selección guarda tokens, no el texto final: "n:<asiento>" para nombres y
+// "#<numero>" para números. Así, aunque dos pasajeros se llamen igual, elegir
+// uno u otro nunca se confunde (se resuelven recién al confirmar el cartón).
 function bingoToggleSeleccion(valor){
   const idx = bingoSeleccion.indexOf(valor);
   if(idx !== -1){
@@ -148,20 +155,27 @@ function bingoToggleSeleccion(valor){
   renderBingo();
 }
 
+function bingoToggleNombre(asiento){
+  bingoToggleSeleccion('n:' + asiento);
+}
+
 function bingoToggleNumero(numero){
   bingoToggleSeleccion('#' + numero);
 }
 
 function bingoConfirmarCarton(){
   if(bingoSeleccion.length !== BINGO_CANTIDAD_CARTON || !miAsiento) return;
-  const nombres = barajar(bingoSeleccion.map(v => v.startsWith('#') ? v.slice(1) : v));
+  const nombres = barajar(bingoSeleccion.map(v => {
+    if(v.startsWith('#')) return v.slice(1);
+    return bingoNombreConAsiento(v.slice(2));
+  }));
   bingoRefCartones().child(String(miAsiento)).set({ nombres, marcados: [] });
 }
 
-// La bolsa incluye a todos los pasajeros más cualquier número que alguien
-// haya usado para completar su cartón (si el grupo era chico).
+// La bolsa incluye a todos los pasajeros (con el asiento sumado si el nombre
+// se repite) más cualquier número que alguien haya usado para completar su cartón.
 function bingoArmarBolsa(){
-  const items = new Set(Object.values(bingoPasajeros));
+  const items = new Set(Object.keys(bingoPasajeros).map(a => bingoNombreConAsiento(a)));
   Object.values(bingoCartones).forEach(c => (c.nombres || []).forEach(n => items.add(n)));
   return barajar([...items]);
 }
@@ -331,11 +345,11 @@ function renderBingoPasajero(container){
   const tengoCartonCompleto = !!(miCarton && miCarton.nombres && miCarton.nombres.length === BINGO_CANTIDAD_CARTON);
 
   if(bingo.fase === 'esperando' && !tengoCartonCompleto){
-    const nombres = Object.values(bingoPasajeros);
-    const faltan = BINGO_CANTIDAD_CARTON - nombres.length;
-    const itemNombre = (n) => {
-      const marcado = bingoSeleccion.includes(n);
-      return `<div class="bingo-nombre-item ${marcado ? 'bingo-nombre-elegido' : ''}" onclick="bingoToggleSeleccion(${JSON.stringify(n)})">${n}</div>`;
+    const asientosDisponibles = bingoOrdenAsientos(bingoPasajeros);
+    const faltan = BINGO_CANTIDAD_CARTON - asientosDisponibles.length;
+    const itemNombre = (asiento) => {
+      const marcado = bingoSeleccion.includes('n:' + asiento);
+      return `<div class="bingo-nombre-item ${marcado ? 'bingo-nombre-elegido' : ''}" onclick="bingoToggleNombre('${asiento}')">${bingoNombreConAsiento(asiento)}</div>`;
     };
     const itemNumero = (n) => {
       const marcado = bingoSeleccion.includes('#' + n);
@@ -352,7 +366,7 @@ function renderBingoPasajero(container){
         <p>Elegí exactamente ${BINGO_CANTIDAD_CARTON} nombres o números para tu cartón. Vas a jugar con el asiento ${miAsiento}.</p>
       </div>
       <div class="section-label">Elegidos: ${bingoSeleccion.length}/${BINGO_CANTIDAD_CARTON}</div>
-      <div class="bingo-lista-nombres">${nombres.length ? nombres.map(itemNombre).join('') : '<p style="color:var(--gray);font-size:13px;">Todavía no hay otros pasajeros anotados.</p>'}</div>
+      <div class="bingo-lista-nombres">${asientosDisponibles.length ? asientosDisponibles.map(itemNombre).join('') : '<p style="color:var(--gray);font-size:13px;">Todavía no hay otros pasajeros anotados.</p>'}</div>
       ${seccionNumeros}
       <button class="btn-primary" onclick="bingoConfirmarCarton()" ${bingoSeleccion.length === BINGO_CANTIDAD_CARTON ? '' : 'disabled'}>Confirmar mi cartón</button>`;
     return;

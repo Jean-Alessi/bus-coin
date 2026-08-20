@@ -14,8 +14,21 @@
   <div class="screen">
     <div class="statusbar">Busmac Viajes — prototipo</div>
 
+    <!-- CÓDIGO DE VIAJE -->
+    <div class="view active" id="view-codigo-viaje">
+      <div class="hero">
+        <h2>¿A qué viaje te sumás?</h2>
+        <p>Ingresá el código que te pasó el organizador. Si estás por empezar un viaje nuevo, generá uno.</p>
+      </div>
+      <input type="text" id="codigo-viaje-input" class="bingo-input-numero" style="width:100%; text-transform:uppercase;" placeholder="Código del viaje" oninput="actualizarBotonCodigoViaje()">
+      <button class="btn-ghost" onclick="generarCodigoViaje()">Generar código nuevo</button>
+      <button class="btn-primary" id="btn-continuar-codigo" disabled onclick="confirmarCodigoViaje()">Continuar</button>
+      <p class="link-chico" onclick="mostrarAdminViajes()">🔧 Administrar viajes</p>
+      <div id="admin-viajes-content"></div>
+    </div>
+
     <!-- ONBOARDING -->
-    <div class="view active" id="view-onboard">
+    <div class="view" id="view-onboard">
       <div class="hero">
         <h2>¿Con qué emoji te identificás?</h2>
         <p>Elegí el que más se parezca a vos hoy.</p>
@@ -41,7 +54,7 @@
       <div class="app-header">
         <div>
           <h1 id="home-saludo">Hola</h1>
-          <div class="sub">Grupo Los Rieleros</div>
+          <div class="sub" id="home-viaje" onclick="copiarLinkViaje()" style="text-decoration:underline; cursor:pointer;">Viaje</div>
         </div>
         <div class="chips-fichas">
           <div class="chip-fichas chip-fichas-juego">JUGADAS <span id="fichas-juego-count">20</span></div>

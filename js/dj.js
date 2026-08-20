@@ -14,7 +14,7 @@ const CANCIONES_INICIALES = [
 // elegir un asiento, cualquier celular puede votar o priorizar.
 let djListener = null;
 
-function djRefEstado(){ return db.ref('salas/dj-vivo/estado'); }
+function djRefEstado(){ return db.ref(`salas/${codigoViaje}/dj/estado`); }
 
 function djGuardar(){
   djRefEstado().set(dj);
