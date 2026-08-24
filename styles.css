@@ -134,6 +134,16 @@ body{
 .option.correct{border-color:#3B9B5A; background:#EAF7EE; color:#256B3A;}
 .option.wrong{border-color:#D34C3D; background:#FCECEA; color:#9E3226;}
 
+/* ---- Acertijos ---- */
+.acertijo-respuesta{
+  background:#EAF7EE; border:1.5px solid #3B9B5A; border-radius:16px;
+  padding:16px; margin-bottom:16px;
+}
+.acertijo-respuesta .section-label{margin-top:0; color:#256B3A;}
+.acertijo-respuesta p{font-size:16px; font-weight:700; color:#256B3A;}
+.acertijo-botones{display:flex; flex-direction:column; gap:10px;}
+.acertijo-botones .btn-ghost{margin-top:0;}
+
 /* ---- Ranking ---- */
 .rank-row{
   display:flex; align-items:center; gap:12px; background:#fff;

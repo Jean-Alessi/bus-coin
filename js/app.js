@@ -8,6 +8,7 @@ const EMOJIS_DISPONIBLES = ['😊', '😎', '🤩', '😜', '🥳', '😇', '�
 
 const TARJETAS_HOME = [
   { icon: "trivia", title: "Trivia", sub: "Elegí un tema y sumá puntos", view: "trivia" },
+  { icon: "interrogacion", title: "Acertijos", sub: "Pensá en grupo antes de rendirte", view: "acertijos" },
   { icon: "bingo", title: "Bingo", sub: "Números del 00 al 99, con su significado", view: "bingo" },
   { icon: "trofeo", title: "Ranking del micro", sub: "¿Quién va primero hoy?", view: "ranking" },
   { icon: "musica", title: "DJ en vivo", sub: "Votá y pagá el próximo tema", view: "dj" },
@@ -229,6 +230,7 @@ function showView(name){
   const tab = document.querySelector(`.tab[data-tab="${name}"]`);
   if(tab) tab.classList.add('active');
   if(name==='trivia'){ iniciarTrivia(); }
+  if(name==='acertijos'){ iniciarAcertijos(); }
   if(name==='ranking'){ renderRanking(); }
   if(name==='dj'){ iniciarDJ(); }
   if(name==='diferencias'){ iniciarDiferencias(); }
