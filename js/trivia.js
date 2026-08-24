@@ -219,10 +219,11 @@ function responder(i){
     else if(idx === i) o.classList.add('wrong');
   });
   if(i === p.correcta){
-    ganarFichas(10);
-    mostrarToast('+10 fichas por acertar');
+    ganarFichas(15);
+    mostrarToast('+15 fichas por acertar');
   } else {
-    mostrarToast('Esa no era... seguí sumando en la próxima');
+    ganarFichas(-10);
+    mostrarToast('-10 fichas... esa no era');
   }
   setTimeout(() => {
     if(qIndex < preguntasSesion.length - 1){

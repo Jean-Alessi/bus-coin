@@ -1,8 +1,9 @@
-// Fichas ganadas jugando (trivia, diferencias, bingo) y fichas compradas con
-// dinero real quedan separadas a propósito: ningún juego de azar reparte algo
-// que se haya pagado, para no parecerse a un juego de azar regulado.
-let fichasJuego = 20;
-let fichasCompradas = 100;
+// Fichas coin: no se compran con plata, todos arrancan con las mismas.
+// Se ganan o se pierden jugando (respuestas correctas suman, incorrectas
+// restan) y sirven para canjear premios reales en la Tienda. Como nadie paga
+// para jugar, esto es una promoción de fidelización gratuita, no un juego de
+// azar — por eso ahora el Bingo también puede sumar sin problema.
+let fichasCoin = 1000;
 
 const EMOJIS_DISPONIBLES = ['😊', '😎', '🤩', '😜', '🥳', '😇', '🤠', '🧐', '🤓', '💃', '🕺', '😴'];
 
@@ -236,6 +237,7 @@ function showView(name){
   if(name==='diferencias'){ iniciarDiferencias(); }
   if(name==='cuento'){ iniciarCuento(); }
   if(name==='bingo'){ iniciarBingo(); }
+  if(name==='tienda'){ renderTienda(); }
 }
 
 function renderRanking(){
@@ -246,54 +248,47 @@ function renderRanking(){
     .sort((a,b)=> b.pts - a.pts);
   list.innerHTML = filas.length ? '' : '<p style="color:var(--gray);font-size:13px;">Todavía nadie sumó puntos.</p>';
   filas.forEach((r,i)=>{
+    const premio = (typeof PREMIOS_RANKING !== 'undefined') ? PREMIOS_RANKING[i] : null;
     const div = document.createElement('div');
     div.className = 'rank-row' + (r.me ? ' me' : '');
-    div.innerHTML = `<div class="rank-num">${i+1}</div><div class="rank-avatar">${r.nombre.slice(0,2).toUpperCase()}</div><div class="rank-name">${r.me ? 'Vos' : r.nombre} <span class="rank-asiento">· asiento ${r.asiento}</span></div><div class="rank-pts">${r.pts} pts</div>`;
+    div.innerHTML = `<div class="rank-num">${premio ? premio.medalla : i+1}</div><div class="rank-avatar">${r.nombre.slice(0,2).toUpperCase()}</div><div class="rank-name">${r.me ? 'Vos' : r.nombre} <span class="rank-asiento">· asiento ${r.asiento}</span>${premio ? `<span class="rank-premio">${premio.premio}</span>` : ''}</div><div class="rank-pts">${r.pts} pts</div>`;
     list.appendChild(div);
   });
 }
 
 function totalFichas(){
-  return fichasJuego + fichasCompradas;
+  return fichasCoin;
 }
 
 function alcanzanFichas(cantidad){
-  return totalFichas() >= cantidad;
+  return fichasCoin >= cantidad;
 }
 
-// Gasta primero las fichas ganadas jugando y recién después las compradas.
 function gastarFichas(cantidad){
   if(!alcanzanFichas(cantidad)) return false;
-  const deJuego = Math.min(fichasJuego, cantidad);
-  fichasJuego -= deJuego;
-  fichasCompradas -= (cantidad - deJuego);
+  fichasCoin -= cantidad;
   actualizarFichasEnPantalla();
   return true;
 }
 
 function actualizarFichasEnPantalla(){
-  const elJuego = document.getElementById('fichas-juego-count');
-  if(elJuego) elJuego.textContent = fichasJuego;
-  const elCompradas = document.getElementById('fichas-compradas-count');
-  if(elCompradas) elCompradas.textContent = fichasCompradas;
+  const el = document.getElementById('fichas-coin-count');
+  if(el) el.textContent = fichasCoin;
 }
 
+// Suma o resta fichas jugando (positivo si acertaste, negativo si no);
+// nunca deja el saldo en negativo. Todos los juegos usan esto, Bingo incluido,
+// y también actualiza el Ranking en vivo con el mismo número.
 function ganarFichas(cantidad){
-  fichasJuego += cantidad;
+  fichasCoin = Math.max(0, fichasCoin + cantidad);
   actualizarFichasEnPantalla();
-  if(miNombre && miAsiento){
-    const asiento = String(miAsiento);
-    const puntosActuales = (rankingPuntos[asiento] && rankingPuntos[asiento].pts) || 0;
-    rankingPuntos[asiento] = { nombre: miNombre, pts: puntosActuales + cantidad };
-    rankingRefPuntos().child(asiento).set(rankingPuntos[asiento]);
-  }
+  if(!miNombre || !miAsiento) return;
+  const asiento = String(miAsiento);
+  const puntosActuales = (rankingPuntos[asiento] && rankingPuntos[asiento].pts) || 0;
+  rankingPuntos[asiento] = { nombre: miNombre, pts: Math.max(0, puntosActuales + cantidad) };
+  rankingRefPuntos().child(asiento).set(rankingPuntos[asiento]);
 }
 
-function comprarFichas(cantidad){
-  fichasCompradas += cantidad;
-  actualizarFichasEnPantalla();
-  mostrarToast(`Sumaste ${cantidad} fichas`);
-}
 
 function mostrarToast(msg){
   const t = document.getElementById('toast');

@@ -61,14 +61,12 @@ body{
 }
 .app-header h1{font-size:18px; font-weight:600; color:var(--navy);}
 .app-header .sub{font-size:12px; color:var(--gray); font-weight:400; margin-top:2px;}
-.chips-fichas{display:flex; flex-direction:column; gap:4px; align-items:flex-end; flex-shrink:0;}
 .chip-fichas{
-  display:flex; align-items:center; gap:5px;
-  padding:4px 10px; border-radius:20px;
-  font-size:10px; font-weight:700; letter-spacing:.3px; white-space:nowrap;
+  display:flex; align-items:center; gap:5px; flex-shrink:0;
+  padding:6px 12px; border-radius:20px;
+  font-size:12px; font-weight:700; letter-spacing:.3px; white-space:nowrap;
 }
 .chip-fichas-juego{background:var(--orange-light); color:var(--orange);}
-.chip-fichas-compradas{background:var(--navy); color:#fff;}
 
 /* ---- Onboarding: elegir emoji ---- */
 .hero{
@@ -141,6 +139,9 @@ body{
 }
 .acertijo-respuesta .section-label{margin-top:0; color:#256B3A;}
 .acertijo-respuesta p{font-size:16px; font-weight:700; color:#256B3A;}
+.acertijo-respuesta.acertijo-respuesta-neutra{background:#fff; border-color:#ECE9E1;}
+.acertijo-respuesta.acertijo-respuesta-neutra .section-label{color:var(--gray);}
+.acertijo-respuesta.acertijo-respuesta-neutra p{color:var(--navy);}
 .acertijo-botones{display:flex; flex-direction:column; gap:10px;}
 .acertijo-botones .btn-ghost{margin-top:0;}
 
@@ -157,8 +158,9 @@ body{
   color:#fff; display:flex; align-items:center; justify-content:center;
   font-size:12px; font-weight:600; flex-shrink:0;
 }
-.rank-name{flex:1; font-size:13px; font-weight:600; color:var(--navy);}
+.rank-name{flex:1; font-size:13px; font-weight:600; color:var(--navy); display:flex; flex-direction:column; gap:1px;}
 .rank-pts{font-size:13px; font-weight:700; color:var(--orange);}
+.rank-premio{font-size:11px; font-weight:600; color:var(--orange);}
 
 /* ---- Tienda ---- */
 .tienda-nota{font-size:12px; color:var(--gray); line-height:1.5; margin-bottom:14px;}
@@ -174,6 +176,15 @@ body{
   border-radius:12px; font-size:12px; font-weight:600; font-family:'Poppins',sans-serif;
   cursor:pointer;
 }
+.pack .buy:disabled{background:#D9DEE6; color:#9AA3B0; cursor:not-allowed;}
+.pack-podio{background:var(--orange-light); border-color:var(--orange);}
+.pack-podio .info p{color:var(--navy);}
+.canje-resultado{
+  background:var(--orange-light); border:1.5px solid var(--orange); border-radius:16px;
+  padding:16px; margin-bottom:16px;
+}
+.canje-resultado h3{font-size:14px; font-weight:700; color:var(--navy); margin-bottom:4px;}
+.canje-resultado p{font-size:13px; color:var(--navy);}
 
 /* ---- Nav inferior ---- */
 .tabbar{

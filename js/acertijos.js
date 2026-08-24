@@ -1,7 +1,6 @@
 let acertijoIndex = 0;
 let acertijosSesion = [];
-let acertijoRevelado = false;
-let acertijoConfirmando = false;
+let acertijoFase = 'jugando'; // 'jugando' | 'confirmando' | 'revelado' | 'acertado'
 let acertijoDesafioActual = '';
 const ACERTIJOS_POR_SESION = 8;
 
@@ -32,7 +31,7 @@ const ACERTIJOS = [
   { pregunta: 'Cuantas más capas me sacan, más lágrimas provoco. ¿Qué soy?', respuesta: 'Una cebolla' },
   { pregunta: 'Cuantas más bocas me guardan, menos tiempo duro. ¿Qué soy?', respuesta: 'Un secreto' },
   { pregunta: 'Cuanto más me contestás, más aparezco. ¿Qué soy?', respuesta: 'Una pregunta' },
-  { pregunta: 'Tengo doce hermanos, pero ninguno dura lo mismo. ¿Qué soy?', respuesta: 'Un año (los meses)' },
+  { pregunta: 'Tengo doce hermanos, pero ninguno dura lo mismo. ¿Qué soy?', respuesta: 'Un año' },
   { pregunta: 'Tengo teclas blancas y negras, pero no soy una computadora. ¿Qué soy?', respuesta: 'Un piano' },
   { pregunta: 'Tengo dos caras pero una sola cabeza. ¿Qué soy?', respuesta: 'Una moneda' },
   { pregunta: 'Tengo hojas pero no soy un árbol, tengo lomo pero no camino. ¿Qué soy?', respuesta: 'Un libro' },
@@ -43,11 +42,29 @@ const ACERTIJOS = [
   { pregunta: 'Cuanto más avanzás, más chico me pongo, hasta que desaparezco cuando llegás. ¿Qué soy?', respuesta: 'Lo que falta del viaje' },
 ];
 
+// Compara sin importar mayúsculas, tildes ni artículos ("un/una/el/la"), y
+// acepta que escriban solo la parte clave de la respuesta (ej. "boleto"
+// alcanza para "Un boleto de micro").
+function normalizarRespuestaAcertijo(s){
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\b(el|la|los|las|un|una|unos|unas|de)\b/g, ' ')
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function esRespuestaCorrecta(intento, respuesta){
+  const a = normalizarRespuestaAcertijo(intento);
+  const b = normalizarRespuestaAcertijo(respuesta);
+  if(!a) return false;
+  return a === b || b.includes(a) || a.includes(b);
+}
+
 function iniciarAcertijos(){
   acertijosSesion = barajar(ACERTIJOS).slice(0, ACERTIJOS_POR_SESION);
   acertijoIndex = 0;
-  acertijoRevelado = false;
-  acertijoConfirmando = false;
+  acertijoFase = 'jugando';
   renderAcertijo();
 }
 
@@ -57,17 +74,21 @@ function renderAcertijo(){
   const cont = document.getElementById('acertijos-content');
 
   let abajoHTML;
-  if(acertijoRevelado){
+  if(acertijoFase === 'acertado'){
     abajoHTML = `
       <div class="acertijo-respuesta">
+        <div class="section-label">¡Correcto!</div>
+        <p>${a.respuesta}</p>
+      </div>
+      <button class="btn-primary" onclick="siguienteAcertijo()">Siguiente acertijo</button>`;
+  } else if(acertijoFase === 'revelado'){
+    abajoHTML = `
+      <div class="acertijo-respuesta acertijo-respuesta-neutra">
         <div class="section-label">Respuesta</div>
         <p>${a.respuesta}</p>
       </div>
-      <div class="acertijo-botones">
-        <button class="btn-primary" onclick="responderAcertijo(true)">✅ Lo sacamos</button>
-        <button class="btn-ghost" onclick="responderAcertijo(false)">😅 Nos ganó este</button>
-      </div>`;
-  } else if(acertijoConfirmando){
+      <button class="btn-primary" onclick="siguienteAcertijo()">Siguiente acertijo</button>`;
+  } else if(acertijoFase === 'confirmando'){
     abajoHTML = `
       <div class="hero" style="margin-top:8px;">
         <h2>${acertijoDesafioActual}</h2>
@@ -77,7 +98,10 @@ function renderAcertijo(){
         <button class="btn-ghost" onclick="cancelarRevelarAcertijo()">No, seguimos pensando</button>
       </div>`;
   } else {
-    abajoHTML = `<button class="btn-primary" onclick="pedirRevelarAcertijo()">Mostrar respuesta</button>`;
+    abajoHTML = `
+      <input type="text" id="acertijo-respuesta-input" class="bingo-input-numero" style="width:100%; margin-top:0;" placeholder="Escribí la respuesta" onkeydown="if(event.key==='Enter') comprobarAcertijo();">
+      <button class="btn-primary" onclick="comprobarAcertijo()">Comprobar respuesta</button>
+      <p class="link-chico" onclick="pedirRevelarAcertijo()">No sabemos, mostrar respuesta</p>`;
   }
 
   cont.innerHTML = `
@@ -87,31 +111,46 @@ function renderAcertijo(){
       <h3>${a.pregunta}</h3>
     </div>
     ${abajoHTML}`;
+
+  if(acertijoFase === 'jugando'){
+    const input = document.getElementById('acertijo-respuesta-input');
+    if(input) input.focus();
+  }
+}
+
+function comprobarAcertijo(){
+  const input = document.getElementById('acertijo-respuesta-input');
+  const intento = input ? input.value : '';
+  const a = acertijosSesion[acertijoIndex];
+  if(esRespuestaCorrecta(intento, a.respuesta)){
+    ganarFichas(15);
+    mostrarToast('+15 fichas, ¡la sacaron!');
+    acertijoFase = 'acertado';
+  } else {
+    ganarFichas(-5);
+    mostrarToast('-5 fichas, esa no es... ¡probá de nuevo!');
+  }
+  renderAcertijo();
 }
 
 function pedirRevelarAcertijo(){
   acertijoDesafioActual = ACERTIJO_DESAFIOS[Math.floor(Math.random() * ACERTIJO_DESAFIOS.length)];
-  acertijoConfirmando = true;
+  acertijoFase = 'confirmando';
   renderAcertijo();
 }
 
 function confirmarRevelarAcertijo(){
-  acertijoConfirmando = false;
-  acertijoRevelado = true;
+  acertijoFase = 'revelado';
   renderAcertijo();
 }
 
 function cancelarRevelarAcertijo(){
-  acertijoConfirmando = false;
+  acertijoFase = 'jugando';
   renderAcertijo();
 }
 
-function responderAcertijo(acerto){
-  if(acerto){
-    ganarFichas(10);
-    mostrarToast('+10 fichas por acertarlo');
-  }
-  acertijoRevelado = false;
+function siguienteAcertijo(){
+  acertijoFase = 'jugando';
   if(acertijoIndex < acertijosSesion.length - 1){
     acertijoIndex++;
     renderAcertijo();

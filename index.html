@@ -57,10 +57,7 @@
           <h1 id="home-saludo">Hola</h1>
           <div class="sub" id="home-viaje" onclick="copiarLinkViaje()" style="text-decoration:underline; cursor:pointer;">Viaje</div>
         </div>
-        <div class="chips-fichas">
-          <div class="chip-fichas chip-fichas-juego">JUGADAS <span id="fichas-juego-count">20</span></div>
-          <div class="chip-fichas chip-fichas-compradas">COMPRADAS <span id="fichas-compradas-count">100</span></div>
-        </div>
+        <div class="chip-fichas chip-fichas-juego">FICHAS <span id="fichas-coin-count">1000</span></div>
       </div>
 
       <div id="home-content"></div>
@@ -147,28 +144,11 @@
     <div class="view" id="view-tienda">
       <div class="app-header">
         <div>
-          <h1>Tienda de fichas</h1>
-          <div class="sub">Se usan solo dentro de la app</div>
+          <h1>Tienda</h1>
+          <div class="sub">Canjeá lo que ganaste jugando</div>
         </div>
       </div>
-      <p class="tienda-nota">Las fichas que comprás acá quedan separadas de las que ganás jugando (trivia, bingo). Nunca se mezclan, pero las dos sirven para lo de abajo.</p>
-      <div class="pack">
-        <div class="info"><h3>Pack chico</h3><p>50 fichas</p></div>
-        <button class="buy" onclick="comprarFichas(50)">$1.000</button>
-      </div>
-      <div class="pack">
-        <div class="info"><h3>Pack viaje</h3><p>150 fichas</p></div>
-        <button class="buy" onclick="comprarFichas(150)">$2.500</button>
-      </div>
-      <div class="pack">
-        <div class="info"><h3>Pack a fondo</h3><p>350 fichas</p></div>
-        <button class="buy" onclick="comprarFichas(350)">$5.000</button>
-      </div>
-      <div class="section-label">Con tus fichas podés</div>
-      <div class="card" style="cursor:default;">
-        <div class="icon" data-icon="musica"></div>
-        <div class="txt"><h3>Priorizar un tema</h3><p>20 fichas por canción</p></div>
-      </div>
+      <div id="tienda-content"></div>
     </div>
 
     <div class="toast" id="toast"></div>
@@ -192,6 +172,7 @@
 <script src="js/diferencias.js"></script>
 <script src="js/cuento.js"></script>
 <script src="js/bingo.js"></script>
+<script src="js/tienda.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>
