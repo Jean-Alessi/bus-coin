@@ -1,5 +1,5 @@
 // Valija Express: 20 segundos para armar la valija con hasta 10 objetos de
-// los 30 que se muestran (10 correctos para el destino + 20 señuelos). Cada
+// los 20 que se muestran (10 correctos para el destino + 10 señuelos). Cada
 // correcto suma 10 fichas; los incorrectos no restan, pero ocupan uno de los
 // 10 lugares disponibles, así que elegir mal sí "cuesta" sin hacer perder
 // fichas a nadie. Armar la valija perfecta (10/10) da un bonus de +20.
@@ -114,7 +114,7 @@ function prepararRondaValija(){
   const item = valijaOrden[valijaIndex];
   const esSorpresa = item === 'sorpresa';
   const base = esSorpresa ? VALIJA_DESTINOS[Math.floor(Math.random() * VALIJA_DESTINOS.length)] : VALIJA_DESTINOS[item];
-  const incorrectos = barajar(VALIJA_POOL.filter(x => !base.correctos.includes(x))).slice(0, 20);
+  const incorrectos = barajar(VALIJA_POOL.filter(x => !base.correctos.includes(x))).slice(0, 10);
   const opciones = barajar(base.correctos.concat(incorrectos));
 
   valijaDestinoActual = {
