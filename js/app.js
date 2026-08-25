@@ -23,23 +23,16 @@ const TARJETAS_HOME = [
 
 let codigoViaje = '';
 
-// Se pone en true justo al generar un código nuevo (organizador) y se apaga
-// apenas alguien toca el campo a mano, para saber si hay que CREAR el
-// código en Firebase o VALIDAR que ya exista antes de dejar entrar.
-let codigoRecienGenerado = false;
-
 function leerCodigoViajeDeURL(){
   const params = new URLSearchParams(location.search);
   return (params.get('viaje') || '').toUpperCase().trim();
 }
 
-function generarCodigoViaje(){
+function codigoAlAzar(){
   const letras = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sin 0/O/1/I para que no se confundan al leerlo
   let codigo = '';
   for(let i = 0; i < 5; i++) codigo += letras[Math.floor(Math.random() * letras.length)];
-  document.getElementById('codigo-viaje-input').value = codigo;
-  codigoRecienGenerado = true;
-  actualizarBotonCodigoViaje();
+  return codigo;
 }
 
 // Generar un código nuevo queda atrás del PIN: si cualquiera pudiera tocarlo,
@@ -58,24 +51,42 @@ function renderPinCodigoNuevo(){
   if(!mostrandoPinCodigoNuevo){ cont.innerHTML = ''; return; }
   cont.innerHTML = `
     <div class="bingo-pin-box">
+      <input type="text" id="codigo-personalizado-input" class="bingo-input-numero" style="text-transform:uppercase;" placeholder="Código a elección (opcional)">
       <input type="password" id="pin-codigo-nuevo-input" class="bingo-input-numero" inputmode="numeric" maxlength="4" placeholder="PIN del organizador">
-      <button class="btn-primary" onclick="confirmarGenerarCodigo()">Generar código nuevo</button>
+      <button class="btn-primary" onclick="confirmarGenerarCodigo()">Crear código de viaje</button>
       <p id="pin-codigo-nuevo-error" class="bingo-pin-error"></p>
     </div>`;
 }
 
+// El organizador puede elegir su propio código (ej. el nombre del viaje) o
+// dejarlo vacío para que se genere uno al azar. Si el código elegido ya
+// está en uso por otro viaje, avisa para que pruebe con otro.
 function confirmarGenerarCodigo(){
-  const input = document.getElementById('pin-codigo-nuevo-input');
-  const pin = input ? input.value.trim() : '';
+  const pinInput = document.getElementById('pin-codigo-nuevo-input');
+  const pin = pinInput ? pinInput.value.trim() : '';
   const error = document.getElementById('pin-codigo-nuevo-error');
+  if(error) error.textContent = '';
   if(pin !== BINGO_PIN_ORGANIZADOR){
     if(error) error.textContent = 'PIN incorrecto';
     return;
   }
-  localStorage.setItem('bingo-organizador', 'si');
-  generarCodigoViaje();
-  mostrandoPinCodigoNuevo = false;
-  renderPinCodigoNuevo();
+  const personalizadoInput = document.getElementById('codigo-personalizado-input');
+  const personalizado = personalizadoInput ? personalizadoInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+  const codigo = personalizado || codigoAlAzar();
+
+  db.ref('salas/' + codigo + '/creado').once('value').then(snap => {
+    if(snap.val() != null){
+      if(error) error.textContent = 'Ese código ya está en uso, elegí otro.';
+      return;
+    }
+    localStorage.setItem('bingo-organizador', 'si');
+    codigoViaje = codigo;
+    localStorage.setItem('codigo-viaje', codigoViaje);
+    db.ref('salas/' + codigoViaje + '/creado').set(Date.now());
+    mostrandoPinCodigoNuevo = false;
+    renderPinCodigoNuevo();
+    showView('onboard');
+  });
 }
 
 function actualizarBotonCodigoViaje(){
@@ -91,15 +102,6 @@ function confirmarCodigoViaje(){
   const error = document.getElementById('codigo-viaje-error');
   if(error) error.textContent = '';
   if(!codigo) return;
-
-  if(codigoRecienGenerado){
-    codigoViaje = codigo;
-    codigoRecienGenerado = false;
-    localStorage.setItem('codigo-viaje', codigoViaje);
-    db.ref('salas/' + codigoViaje + '/creado').set(Date.now());
-    showView('onboard');
-    return;
-  }
 
   db.ref('salas/' + codigo + '/creado').once('value').then(snap => {
     if(snap.val() == null){

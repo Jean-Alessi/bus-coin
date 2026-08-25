@@ -20,7 +20,7 @@
         <h2>¿A qué viaje te sumás?</h2>
         <p>Ingresá el código que te pasó el organizador.</p>
       </div>
-      <input type="text" id="codigo-viaje-input" class="bingo-input-numero" style="width:100%; text-transform:uppercase;" placeholder="Código del viaje" oninput="codigoRecienGenerado=false; actualizarBotonCodigoViaje();">
+      <input type="text" id="codigo-viaje-input" class="bingo-input-numero" style="width:100%; text-transform:uppercase;" placeholder="Código del viaje" oninput="actualizarBotonCodigoViaje()">
       <button class="btn-primary" id="btn-continuar-codigo" disabled onclick="confirmarCodigoViaje()">Continuar</button>
       <p id="codigo-viaje-error" class="bingo-pin-error"></p>
       <p class="link-chico" onclick="mostrarGenerarCodigo()">¿Sos el organizador y estás por empezar un viaje nuevo?</p>
