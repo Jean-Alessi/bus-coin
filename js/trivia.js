@@ -1,7 +1,7 @@
 let temaActual = null;
 let qIndex = 0;
 let preguntasSesion = [];
-const PREGUNTAS_POR_SESION = 8;
+const PREGUNTAS_POR_SESION = 20;
 
 const TEMAS = {
   cultura: {
@@ -219,11 +219,10 @@ function responder(i){
     else if(idx === i) o.classList.add('wrong');
   });
   if(i === p.correcta){
-    ganarFichas(15);
-    mostrarToast('+15 fichas por acertar', 'gain');
+    ganarFichas(5);
+    mostrarToast('+5 fichas por acertar', 'gain');
   } else {
-    ganarFichas(-10);
-    mostrarToast('-10 fichas... esa no era', 'loss');
+    mostrarToast('Esa no era... ¡a la próxima!');
   }
   setTimeout(() => {
     if(qIndex < preguntasSesion.length - 1){
@@ -232,7 +231,7 @@ function responder(i){
     } else {
       renderResultadoSesion();
     }
-  }, 2400);
+  }, 1800);
 }
 
 function renderResultadoSesion(){

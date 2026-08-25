@@ -2,7 +2,7 @@ let acertijoIndex = 0;
 let acertijosSesion = [];
 let acertijoFase = 'jugando'; // 'jugando' | 'confirmando' | 'revelado' | 'acertado'
 let acertijoDesafioActual = '';
-const ACERTIJOS_POR_SESION = 8;
+const ACERTIJOS_POR_SESION = 20;
 
 const ACERTIJO_DESAFIOS = [
   '¿Ya te das por vencido?',
@@ -151,12 +151,11 @@ function comprobarAcertijo(){
   const intento = input ? input.value : '';
   const a = acertijosSesion[acertijoIndex];
   if(esRespuestaCorrecta(intento, a.respuesta)){
-    ganarFichas(15);
-    mostrarToast('+15 fichas, ¡la sacaron!', 'gain');
+    ganarFichas(5);
+    mostrarToast('+5 fichas, ¡la sacaron!', 'gain');
     acertijoFase = 'acertado';
   } else {
-    ganarFichas(-5);
-    mostrarToast('-5 fichas, esa no es... ¡probá de nuevo!', 'loss');
+    mostrarToast('Esa no es... ¡probá de nuevo!');
   }
   renderAcertijo();
 }

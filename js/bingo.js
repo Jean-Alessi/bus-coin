@@ -35,27 +35,6 @@ function bingoArmarLlamada(numero){
   return `<span class="bingo-numero-resaltado">${numero}</span><span class="bingo-numero-significado">${significado}</span>`;
 }
 
-// Línea = fila, columna o cualquiera de las dos diagonales completa (cartón fijo de 3x3).
-function bingoTieneLinea(marcados){
-  const t = BINGO_TAMANO_CARTON;
-  for(let f = 0; f < t; f++){
-    let completa = true;
-    for(let c = 0; c < t; c++){ if(!marcados.includes(f * t + c)){ completa = false; break; } }
-    if(completa) return true;
-  }
-  for(let c = 0; c < t; c++){
-    let completa = true;
-    for(let f = 0; f < t; f++){ if(!marcados.includes(f * t + c)){ completa = false; break; } }
-    if(completa) return true;
-  }
-  let diag1 = true, diag2 = true;
-  for(let i = 0; i < t; i++){
-    if(!marcados.includes(i * t + i)) diag1 = false;
-    if(!marcados.includes(i * t + (t - 1 - i))) diag2 = false;
-  }
-  return diag1 || diag2;
-}
-
 // ---- Multi-celular: cada pasajero entra con su nombre + asiento (ya elegidos
 // al principio, en el onboarding) y arma su propio cartón eligiendo 9 números
 // del 00 al 99. El organizador puede empezar cuando quiera, sin esperar a
@@ -67,7 +46,7 @@ function bingoRefPasajeros(){ return db.ref(`salas/${codigoViaje}/bingo/pasajero
 function bingoRefCartones(){ return db.ref(`salas/${codigoViaje}/bingo/cartones`); }
 
 function bingoEstadoVacio(){
-  return { fase: 'esperando', bolsa: [], sorteados: [], ultimaLlamada: null, ganadorLinea: null, ganadorCartonLleno: null };
+  return { fase: 'esperando', bolsa: [], sorteados: [], ultimaLlamada: null, ganadorCartonLleno: null };
 }
 
 function bingoGuardarEstado(){
@@ -162,7 +141,6 @@ function bingoEmpezarJuego(){
   bingo.bolsa = barajar(BINGO_NUMEROS.slice());
   bingo.sorteados = [];
   bingo.ultimaLlamada = null;
-  bingo.ganadorLinea = null;
   bingo.ganadorCartonLleno = null;
   bingo.fase = 'jugando';
   bingoGuardarEstado();
@@ -184,20 +162,12 @@ function bingoSortear(){
     if(idx !== -1 && !carton.marcados.includes(idx)) carton.marcados.push(idx);
   });
 
-  if(!bingo.ganadorLinea){
-    const asientoGanador = Object.keys(bingoCartones).find(a => bingoTieneLinea(bingoCartones[a].marcados || []));
-    if(asientoGanador){
-      bingo.ganadorLinea = asientoGanador;
-      ganarFichas(5);
-      mostrarToast(`¡Línea (chingüina) para ${bingoPasajeros[asientoGanador]}! +5 fichas`, 'gain');
-    }
-  }
   if(!bingo.ganadorCartonLleno){
     const asientoGanador = Object.keys(bingoCartones).find(a => (bingoCartones[a].marcados || []).length === BINGO_CANTIDAD_CARTON);
     if(asientoGanador){
       bingo.ganadorCartonLleno = asientoGanador;
-      ganarFichas(20);
-      mostrarToast(`¡BINGO para ${bingoPasajeros[asientoGanador]}! +20 fichas`, 'gain');
+      ganarFichas(100);
+      mostrarToast(`¡BINGO para ${bingoPasajeros[asientoGanador]}! +100 fichas`, 'gain');
     }
   }
   bingoGuardarEstado();
@@ -211,7 +181,6 @@ function bingoJugarDeNuevo(){
   bingo.bolsa = barajar(BINGO_NUMEROS.slice());
   bingo.sorteados = [];
   bingo.ultimaLlamada = null;
-  bingo.ganadorLinea = null;
   bingo.ganadorCartonLleno = null;
   bingo.fase = 'jugando';
   bingoGuardarEstado();
@@ -221,7 +190,6 @@ function bingoJugarDeNuevo(){
 function bingoCartonHTML(asiento, titulo, carton){
   const marcados = carton.marcados || [];
   const badges = [];
-  if(bingo.ganadorLinea === asiento) badges.push('<span class="bingo-badge">Línea</span>');
   if(bingo.ganadorCartonLleno === asiento) badges.push('<span class="bingo-badge bingo-badge-full">¡BINGO!</span>');
   return `
     <div class="bingo-carton">

@@ -1,65 +1,125 @@
-// Catálogo de premios: se pagan solo con fichas ganadas jugando (nunca con
-// plata), pensado para que quieran volver a viajar con Busmac.
-const CATALOGO_PREMIOS = [
-  { id: 'desc5', nombre: '5% de descuento en tu próximo viaje', costo: 500 },
-  { id: 'gorra', nombre: 'Gorra Busmac', costo: 700 },
-  { id: 'desc10', nombre: '10% de descuento en tu próximo viaje', costo: 900 },
-  { id: 'remera', nombre: 'Remera Busmac', costo: 1200 },
-];
+// Premios del viaje: el organizador define hasta 4 premios para ese viaje
+// puntual y, cuando quiere, habilita la elección. En orden de ranking
+// (1° a 4°) cada uno va eligiendo el premio que quiera de los que van
+// quedando; al último ya no le queda otra opción que el que sobró. Todo se
+// sincroniza en Firebase para que cada pasajero vea su turno en su celular.
 
-let ultimoCanje = null;
+const PREMIOS_DEFAULT = ['Viaje gratis', '50% de descuento en tu próximo viaje', 'Remera Busmac', 'Caja de Bon o Bon'];
 
-// Premios del podio: no se canjean con fichas, se ganan por puesto en el
-// Ranking final del viaje (se entregan cuando el organizador cierra el viaje
-// y arranca uno nuevo con otro código). Editable acá según lo que ofrezca
-// Busmac en cada viaje.
-const PREMIOS_RANKING = [
-  { puesto: 1, medalla: '🥇', premio: 'Viaje gratis', detalle: 'A elección, para el próximo viaje' },
-  { puesto: 2, medalla: '🥈', premio: '50% de descuento', detalle: 'En el viaje que elijas' },
-  { puesto: 3, medalla: '🥉', premio: 'Remera Busmac', detalle: '' },
-  { puesto: 4, medalla: '🎖️', premio: 'Caja de Bon o Bon', detalle: 'Premio consuelo' },
-];
+let premiosState = { lista: PREMIOS_DEFAULT.slice(), habilitado: false, orden: null, elecciones: {} };
+let premiosListenersListos = false;
 
-function renderTienda(){
-  const cont = document.getElementById('tienda-content');
-  if(!cont) return;
-  cont.innerHTML = `
-    <p class="tienda-nota">Jugar es gratis. Ganás fichas acertando en Trivia, Acertijos y Buscá las diferencias (y sumando en el Bingo), y las canjeás acá por premios reales.</p>
-    ${ultimoCanje ? `
-      <div class="canje-resultado">
-        <h3>¡Canjeaste ${ultimoCanje.nombre}!</h3>
-        <p>Mostrale este código al organizador: <strong>${ultimoCanje.codigo}</strong></p>
-      </div>` : ''}
-    <div class="section-label">Premios del ranking final</div>
-    <p class="tienda-nota" style="margin-top:-6px;">Al terminar el viaje, los primeros puestos del Ranking se llevan estos premios.</p>
-    ${PREMIOS_RANKING.map(p => `
-      <div class="pack pack-podio">
-        <div class="info"><h3>${p.medalla} ${p.puesto}° puesto — ${p.premio}</h3><p>${p.detalle}</p></div>
-      </div>`).join('')}
-    <div class="section-label">Catálogo de premios</div>
-    ${CATALOGO_PREMIOS.map(p => {
-      const alcanza = alcanzanFichas(p.costo);
-      return `<div class="pack">
-        <div class="info"><h3>${p.nombre}</h3><p>${p.costo} fichas</p></div>
-        <button class="buy" ${alcanza ? '' : 'disabled'} onclick="canjearPremio('${p.id}')">Canjear</button>
-      </div>`;
-    }).join('')}
-    <div class="section-label">Con tus fichas también podés</div>
-    <div class="card" style="cursor:default;">
-      <div class="icon" data-icon="musica"></div>
-      <div class="txt"><h3>Priorizar un tema en el DJ</h3><p>20 fichas por canción</p></div>
-    </div>`;
+function premiosRef(){ return db.ref('salas/' + codigoViaje + '/premios'); }
+
+function iniciarPremios(){
+  if(premiosListenersListos){ renderPremiosViaje(); return; }
+  premiosListenersListos = true;
+  premiosRef().on('value', snap => {
+    const val = snap.val() || {};
+    premiosState = {
+      lista: (val.lista && val.lista.length === 4) ? val.lista : PREMIOS_DEFAULT.slice(),
+      habilitado: !!val.habilitado,
+      orden: val.orden || null,
+      elecciones: val.elecciones || {},
+    };
+    renderPremiosViaje();
+  });
 }
 
-function canjearPremio(id){
-  const premio = CATALOGO_PREMIOS.find(p => p.id === id);
-  if(!premio) return;
-  if(!gastarFichas(premio.costo)){
-    mostrarToast('Todavía no juntaste suficientes fichas para este premio');
+function guardarListaPremios(){
+  const valores = [0, 1, 2, 3].map(i => {
+    const el = document.getElementById('premio-input-' + i);
+    const v = el ? el.value.trim() : '';
+    return v || PREMIOS_DEFAULT[i];
+  });
+  premiosRef().child('lista').set(valores);
+  mostrarToast('Premios guardados');
+}
+
+// Congela quiénes son el 1° a 4° puesto en este momento, para que el orden
+// de elección no cambie aunque alguien siga sumando fichas mientras eligen.
+// Lee el ranking directo de Firebase (no el caché local) para no quedarse
+// con datos viejos si justo llegó un punto nuevo.
+function habilitarEleccionPremios(){
+  if(!bingoEsOrganizador()) return;
+  rankingRefPuntos().once('value').then(snap => {
+    const puntos = snap.val() || {};
+    const orden = Object.keys(puntos)
+      .filter(a => puntos[a])
+      .sort((a, b) => (puntos[b].pts || 0) - (puntos[a].pts || 0))
+      .slice(0, 4);
+    if(!orden.length){
+      mostrarToast('Todavía no hay nadie en el ranking');
+      return;
+    }
+    premiosRef().update({ habilitado: true, orden });
+  });
+}
+
+function elegirPremio(indexPremio){
+  const turnoIndex = Object.keys(premiosState.elecciones).length;
+  const turnoAsiento = premiosState.orden ? premiosState.orden[turnoIndex] : null;
+  if(String(turnoAsiento) !== String(miAsiento)) return;
+  if(premiosState.elecciones[String(miAsiento)] != null) return;
+  premiosRef().child('elecciones').child(String(miAsiento)).set(indexPremio);
+}
+
+function renderPremiosViaje(){
+  const cont = document.getElementById('tienda-content');
+  if(!cont) return;
+
+  const lista = premiosState.lista;
+  const esOrganizador = bingoEsOrganizador();
+
+  if(!premiosState.habilitado){
+    const editorHTML = esOrganizador ? `
+      <div class="section-label">Editá los premios de este viaje</div>
+      ${lista.map((p, i) => `<input type="text" id="premio-input-${i}" class="bingo-input-numero" style="width:100%;" value="${p.replace(/"/g, '&quot;')}">`).join('')}
+      <button class="btn-ghost" onclick="guardarListaPremios()">Guardar premios</button>
+      <button class="btn-primary" onclick="habilitarEleccionPremios()">Habilitar elección de premios</button>` : '';
+
+    cont.innerHTML = `
+      <p class="tienda-nota">Jugá y sumá fichas en Trivia, Acertijos y Bingo. Al terminar el viaje, del 1° al 4° puesto del ranking eligen premio en orden.</p>
+      <div class="section-label">Premios de este viaje</div>
+      ${lista.map(p => `<div class="pack pack-podio"><div class="info"><h3>${p}</h3></div></div>`).join('')}
+      ${editorHTML}`;
     return;
   }
-  const codigo = 'BUS-' + Math.random().toString(36).slice(2, 6).toUpperCase();
-  ultimoCanje = { nombre: premio.nombre, codigo };
-  mostrarToast(`¡Canjeaste ${premio.nombre}!`);
-  renderTienda();
+
+  const orden = premiosState.orden || [];
+  const turnoIndex = Object.keys(premiosState.elecciones).length;
+  const turnoAsiento = orden[turnoIndex];
+  const elegidosIdx = new Set(Object.keys(premiosState.elecciones).map(a => premiosState.elecciones[a]));
+
+  const filasHTML = orden.map((asiento, i) => {
+    const nombre = (rankingPuntos[asiento] && rankingPuntos[asiento].nombre) || ('Asiento ' + asiento);
+    const eligio = premiosState.elecciones[asiento];
+    let estado;
+    if(eligio != null) estado = `Eligió: ${lista[eligio]}`;
+    else if(i === turnoIndex) estado = 'Eligiendo ahora...';
+    else estado = 'Esperando su turno';
+    return `<div class="bingo-roster-item ${eligio != null ? 'bingo-roster-listo' : ''}">
+      <span>${MEDALLAS_RANKING[i] || (i + 1) + '°'} ${nombre}</span>
+      <span class="bingo-roster-derecha"><span>${estado}</span></span>
+    </div>`;
+  }).join('');
+
+  let miTurnoHTML = '';
+  if(turnoAsiento != null && String(turnoAsiento) === String(miAsiento) && premiosState.elecciones[String(miAsiento)] == null){
+    const disponibles = lista.map((p, i) => ({ p, i })).filter(o => !elegidosIdx.has(o.i));
+    miTurnoHTML = `
+      <div class="hero" style="margin-top:8px;">
+        <h2>¡Te tocó elegir!</h2>
+        <p>${disponibles.length === 1 ? 'Te queda el último premio disponible.' : 'Elegí el premio que quieras de los que quedan.'}</p>
+      </div>
+      ${disponibles.map(o => `<button class="btn-primary" style="margin-top:8px;" onclick="elegirPremio(${o.i})">${o.p}</button>`).join('')}`;
+  }
+
+  const terminado = Object.keys(premiosState.elecciones).length >= orden.length;
+
+  cont.innerHTML = `
+    <div class="section-label">Elección de premios</div>
+    ${miTurnoHTML}
+    <div class="bingo-roster">${filasHTML}</div>
+    ${terminado ? '<p class="tienda-nota">Ya eligieron todos. ¡Felicitaciones a los ganadores!</p>' : ''}`;
 }

@@ -1,9 +1,9 @@
-// Fichas coin: no se compran con plata, todos arrancan con las mismas.
-// Se ganan o se pierden jugando (respuestas correctas suman, incorrectas
-// restan) y sirven para canjear premios reales en la Tienda. Como nadie paga
-// para jugar, esto es una promoción de fidelización gratuita, no un juego de
-// azar — por eso ahora el Bingo también puede sumar sin problema.
-let fichasCoin = 1000;
+// Fichas coin: no se compran con plata, todos arrancan en cero. Solo suben
+// jugando (respuesta correcta o ganar el Bingo); un error no resta nada, no
+// hay riesgo, solo premio por acertar. Sirven para el ranking del viaje y
+// para elegir premio al final. Como nadie paga para jugar, esto es una
+// promoción de fidelización gratuita, no un juego de azar.
+let fichasCoin = 0;
 
 const EMOJIS_DISPONIBLES = ['😊', '😎', '🤩', '😜', '🥳', '😇', '🤠', '🧐', '🤓', '💃', '🕺', '😴'];
 
@@ -12,9 +12,6 @@ const TARJETAS_HOME = [
   { icon: "interrogacion", title: "Acertijos", sub: "Pensá en grupo antes de rendirte", view: "acertijos" },
   { icon: "bingo", title: "Bingo", sub: "Números del 00 al 99, con su significado", view: "bingo" },
   { icon: "trofeo", title: "Ranking del micro", sub: "¿Quién va primero hoy?", view: "ranking" },
-  { icon: "musica", title: "DJ en vivo", sub: "Votá y pagá el próximo tema", view: "dj" },
-  { icon: "lupa", title: "Buscá las diferencias", sub: "Juego para todas las edades", view: "diferencias" },
-  { icon: "auriculares", title: "Cuento del día", sub: "Leyendas argentinas, en audio", view: "cuento" },
 ];
 
 // ---- Código de viaje: agrupa Bingo/Ranking/DJ bajo un mismo código, para
@@ -238,6 +235,7 @@ function goHome(){
   bingoRegistrarPasajero(miAsiento, miNombre);
   showView('home');
   document.getElementById('tabbar').style.display = 'flex';
+  actualizarFichasEnPantalla();
   renderHome();
 }
 
@@ -264,12 +262,11 @@ function showView(name){
   if(name==='trivia'){ iniciarTrivia(); }
   if(name==='acertijos'){ iniciarAcertijos(); }
   if(name==='ranking'){ renderRanking(); }
-  if(name==='dj'){ iniciarDJ(); }
-  if(name==='diferencias'){ iniciarDiferencias(); }
-  if(name==='cuento'){ iniciarCuento(); }
   if(name==='bingo'){ iniciarBingo(); }
-  if(name==='tienda'){ renderTienda(); }
+  if(name==='tienda'){ iniciarPremios(); }
 }
+
+const MEDALLAS_RANKING = ['🥇', '🥈', '🥉'];
 
 function renderRanking(){
   const list = document.getElementById('ranking-list');
@@ -279,10 +276,9 @@ function renderRanking(){
     .sort((a,b)=> b.pts - a.pts);
   list.innerHTML = filas.length ? '' : '<p style="color:var(--gray);font-size:13px;">Todavía nadie sumó puntos.</p>';
   filas.forEach((r,i)=>{
-    const premio = (typeof PREMIOS_RANKING !== 'undefined') ? PREMIOS_RANKING[i] : null;
     const div = document.createElement('div');
     div.className = 'rank-row' + (r.me ? ' me' : '');
-    div.innerHTML = `<div class="rank-num">${premio ? premio.medalla : i+1}</div><div class="rank-avatar">${r.nombre.slice(0,2).toUpperCase()}</div><div class="rank-name">${r.me ? 'Vos' : r.nombre} <span class="rank-asiento">· asiento ${r.asiento}</span>${premio ? `<span class="rank-premio">${premio.premio}</span>` : ''}</div><div class="rank-pts">${r.pts} pts</div>`;
+    div.innerHTML = `<div class="rank-num">${MEDALLAS_RANKING[i] || i+1}</div><div class="rank-avatar">${r.nombre.slice(0,2).toUpperCase()}</div><div class="rank-name">${r.me ? 'Vos' : r.nombre} <span class="rank-asiento">· asiento ${r.asiento}</span></div><div class="rank-pts">${r.pts} pts</div>`;
     list.appendChild(div);
   });
 }

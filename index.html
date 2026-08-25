@@ -50,7 +50,7 @@
           <h1 id="home-saludo">Hola</h1>
           <div class="sub" id="home-viaje" onclick="copiarLinkViaje()" style="text-decoration:underline; cursor:pointer;">Viaje</div>
         </div>
-        <div class="chip-fichas chip-fichas-juego">FICHAS <span id="fichas-coin-count">1000</span></div>
+        <div class="chip-fichas chip-fichas-juego">FICHAS <span id="fichas-coin-count">0</span></div>
       </div>
 
       <div id="home-content"></div>
@@ -72,7 +72,7 @@
       <div class="app-header">
         <div>
           <h1>Acertijos</h1>
-          <div class="sub" id="acertijos-sub">Acertijo 1 de 8</div>
+          <div class="sub" id="acertijos-sub">Acertijo 1 de 20</div>
         </div>
       </div>
       <div id="acertijos-content"></div>
@@ -83,7 +83,7 @@
       <div class="app-header">
         <div>
           <h1>Ranking</h1>
-          <div class="sub">Los Rieleros — solo tu grupo</div>
+          <div class="sub">Solo tu grupo, en este viaje</div>
         </div>
       </div>
       <div id="ranking-list"></div>
@@ -100,45 +100,12 @@
       <div id="bingo-content"></div>
     </div>
 
-    <!-- CUENTO DEL DÍA -->
-    <div class="view" id="view-cuento">
-      <div class="app-header">
-        <div>
-          <h1>Cuento del día</h1>
-          <div class="sub">Leyendas argentinas, en audio</div>
-        </div>
-      </div>
-      <div id="cuento-content"></div>
-    </div>
-
-    <!-- BUSCÁ LAS DIFERENCIAS -->
-    <div class="view" id="view-diferencias">
-      <div class="app-header">
-        <div>
-          <h1>Buscá las diferencias</h1>
-          <div class="sub">Tocá donde cambia algo</div>
-        </div>
-      </div>
-      <div id="diferencias-content"></div>
-    </div>
-
-    <!-- DJ EN VIVO -->
-    <div class="view" id="view-dj">
-      <div class="app-header">
-        <div>
-          <h1>DJ en vivo</h1>
-          <div class="sub">Votá y pagá el próximo tema</div>
-        </div>
-      </div>
-      <div id="dj-content"></div>
-    </div>
-
-    <!-- TIENDA -->
+    <!-- PREMIOS -->
     <div class="view" id="view-tienda">
       <div class="app-header">
         <div>
-          <h1>Tienda</h1>
-          <div class="sub">Canjeá lo que ganaste jugando</div>
+          <h1>Premios</h1>
+          <div class="sub">Los primeros del ranking eligen premio</div>
         </div>
       </div>
       <div id="tienda-content"></div>
@@ -150,7 +117,7 @@
       <button class="tab active" onclick="showView('home')" data-tab="home"><span class="dot" data-icon="casa"></span>Inicio</button>
       <button class="tab" onclick="showView('trivia')" data-tab="trivia"><span class="dot" data-icon="trivia"></span>Juegos</button>
       <button class="tab" onclick="showView('ranking')" data-tab="ranking"><span class="dot" data-icon="trofeo"></span>Ranking</button>
-      <button class="tab" onclick="showView('tienda')" data-tab="tienda"><span class="dot" data-icon="moneda"></span>Tienda</button>
+      <button class="tab" onclick="showView('tienda')" data-tab="tienda"><span class="dot" data-icon="moneda"></span>Premios</button>
     </div>
   </div>
 </div>
@@ -161,9 +128,6 @@
 <script src="js/iconos.js"></script>
 <script src="js/trivia.js"></script>
 <script src="js/acertijos.js"></script>
-<script src="js/dj.js"></script>
-<script src="js/diferencias.js"></script>
-<script src="js/cuento.js"></script>
 <script src="js/bingo.js"></script>
 <script src="js/tienda.js"></script>
 <script src="js/app.js"></script>
