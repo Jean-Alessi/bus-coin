@@ -23,6 +23,11 @@ const TARJETAS_HOME = [
 
 let codigoViaje = '';
 
+// Se pone en true justo al generar un código nuevo (organizador) y se apaga
+// apenas alguien toca el campo a mano, para saber si hay que CREAR el
+// código en Firebase o VALIDAR que ya exista antes de dejar entrar.
+let codigoRecienGenerado = false;
+
 function leerCodigoViajeDeURL(){
   const params = new URLSearchParams(location.search);
   return (params.get('viaje') || '').toUpperCase().trim();
@@ -33,6 +38,7 @@ function generarCodigoViaje(){
   let codigo = '';
   for(let i = 0; i < 5; i++) codigo += letras[Math.floor(Math.random() * letras.length)];
   document.getElementById('codigo-viaje-input').value = codigo;
+  codigoRecienGenerado = true;
   actualizarBotonCodigoViaje();
 }
 
@@ -77,10 +83,33 @@ function actualizarBotonCodigoViaje(){
   document.getElementById('btn-continuar-codigo').disabled = val.length === 0;
 }
 
+// Solo se puede entrar con un código que un organizador haya generado de
+// verdad (marcado en Firebase con "creado"): así nadie tipea cualquier cosa
+// y arranca sin querer un viaje fantasma separado del resto.
 function confirmarCodigoViaje(){
-  codigoViaje = document.getElementById('codigo-viaje-input').value.trim().toUpperCase();
-  localStorage.setItem('codigo-viaje', codigoViaje);
-  showView('onboard');
+  const codigo = document.getElementById('codigo-viaje-input').value.trim().toUpperCase();
+  const error = document.getElementById('codigo-viaje-error');
+  if(error) error.textContent = '';
+  if(!codigo) return;
+
+  if(codigoRecienGenerado){
+    codigoViaje = codigo;
+    codigoRecienGenerado = false;
+    localStorage.setItem('codigo-viaje', codigoViaje);
+    db.ref('salas/' + codigoViaje + '/creado').set(Date.now());
+    showView('onboard');
+    return;
+  }
+
+  db.ref('salas/' + codigo + '/creado').once('value').then(snap => {
+    if(snap.val() == null){
+      if(error) error.textContent = 'Ese código no existe. Pedile el código al organizador del viaje.';
+      return;
+    }
+    codigoViaje = codigo;
+    localStorage.setItem('codigo-viaje', codigoViaje);
+    showView('onboard');
+  });
 }
 
 function copiarLinkViaje(){
@@ -320,10 +349,20 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const codigoURL = leerCodigoViajeDeURL();
   const codigoInput = document.getElementById('codigo-viaje-input');
   if(codigoURL){
-    // Se abrió con un link compartido (?viaje=CODIGO): entra directo, sin pedir el código a mano.
-    codigoViaje = codigoURL;
-    localStorage.setItem('codigo-viaje', codigoViaje);
-    showView('onboard');
+    // Se abrió con un link compartido (?viaje=CODIGO): valida contra Firebase
+    // antes de entrar directo, por si el código ya no existe.
+    db.ref('salas/' + codigoURL + '/creado').once('value').then(snap => {
+      if(snap.val() != null){
+        codigoViaje = codigoURL;
+        localStorage.setItem('codigo-viaje', codigoViaje);
+        showView('onboard');
+      } else if(codigoInput){
+        codigoInput.value = codigoURL;
+        actualizarBotonCodigoViaje();
+        const error = document.getElementById('codigo-viaje-error');
+        if(error) error.textContent = 'Ese código ya no existe. Pedile uno nuevo al organizador.';
+      }
+    });
   } else if(codigoInput){
     codigoInput.value = localStorage.getItem('codigo-viaje') || '';
     actualizarBotonCodigoViaje();

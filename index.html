@@ -20,8 +20,9 @@
         <h2>¿A qué viaje te sumás?</h2>
         <p>Ingresá el código que te pasó el organizador.</p>
       </div>
-      <input type="text" id="codigo-viaje-input" class="bingo-input-numero" style="width:100%; text-transform:uppercase;" placeholder="Código del viaje" oninput="actualizarBotonCodigoViaje()">
+      <input type="text" id="codigo-viaje-input" class="bingo-input-numero" style="width:100%; text-transform:uppercase;" placeholder="Código del viaje" oninput="codigoRecienGenerado=false; actualizarBotonCodigoViaje();">
       <button class="btn-primary" id="btn-continuar-codigo" disabled onclick="confirmarCodigoViaje()">Continuar</button>
+      <p id="codigo-viaje-error" class="bingo-pin-error"></p>
       <p class="link-chico" onclick="mostrarGenerarCodigo()">¿Sos el organizador y estás por empezar un viaje nuevo?</p>
       <div id="generar-codigo-content"></div>
       <p class="link-chico" onclick="mostrarAdminViajes()">🔧 Administrar viajes</p>
@@ -35,14 +36,6 @@
         <p>Elegí el que más se parezca a vos hoy.</p>
       </div>
       <div class="emoji-grid" id="emoji-grid"></div>
-      <div class="section-label">Tu grupo cerrado</div>
-      <div class="card" style="cursor:default;">
-        <div class="icon" data-icon="grupo"></div>
-        <div class="txt">
-          <h3>Los Rieleros</h3>
-          <p>4 integrantes ya sumados</p>
-        </div>
-      </div>
       <div class="section-label">¿Y vos, cómo te llamás?</div>
       <input type="text" id="mi-nombre-input" class="bingo-input-numero" style="width:100%;" placeholder="Tu nombre o apodo" oninput="actualizarBotonContinuar()">
       <div class="section-label">¿En qué asiento vas?</div>
