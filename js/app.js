@@ -13,6 +13,7 @@ const TARJETAS_JUEGOS = [
   { icon: "rompecabezas", title: "Pensamiento lateral", sub: "Resolvé el caso a puro sí o no", view: "pensamiento" },
   { icon: "libro", title: "Ahorcado", sub: "Adiviná la palabra letra por letra", view: "ahorcado" },
   { icon: "lupa", title: "4+1", sub: "4 imágenes, 1 palabra", view: "cuatrouno" },
+  { icon: "valija", title: "Valija Express", sub: "20 segundos para armar la valija", view: "valija" },
   { icon: "bingo", title: "Bingo", sub: "Números del 00 al 99, con su significado", view: "bingo" },
 ];
 
@@ -270,7 +271,7 @@ function renderJuegos(){
 
 // Trivia, Acertijos y Bingo se entran desde el menú "Juegos" del tabbar, así
 // que esa pestaña queda marcada activa aunque ya estés adentro de uno de ellos.
-const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'bingo'];
+const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'bingo'];
 
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -285,6 +286,7 @@ function showView(name){
   if(name==='pensamiento'){ iniciarPensamiento(); }
   if(name==='ahorcado'){ iniciarAhorcado(); }
   if(name==='cuatrouno'){ iniciarCuatrouno(); }
+  if(name==='valija'){ iniciarValija(); }
   if(name==='ranking'){ renderRanking(); }
   if(name==='bingo'){ iniciarBingo(); }
   if(name==='tienda'){ iniciarPremios(); }
