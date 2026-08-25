@@ -220,10 +220,10 @@ function responder(i){
   });
   if(i === p.correcta){
     ganarFichas(15);
-    mostrarToast('+15 fichas por acertar');
+    mostrarToast('+15 fichas por acertar', 'gain');
   } else {
     ganarFichas(-10);
-    mostrarToast('-10 fichas... esa no era');
+    mostrarToast('-10 fichas... esa no era', 'loss');
   }
   setTimeout(() => {
     if(qIndex < preguntasSesion.length - 1){
@@ -232,7 +232,7 @@ function responder(i){
     } else {
       renderResultadoSesion();
     }
-  }, 1200);
+  }, 2400);
 }
 
 function renderResultadoSesion(){

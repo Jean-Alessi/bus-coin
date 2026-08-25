@@ -144,6 +144,7 @@ body{
 .acertijo-respuesta.acertijo-respuesta-neutra p{color:var(--navy);}
 .acertijo-botones{display:flex; flex-direction:column; gap:10px;}
 .acertijo-botones .btn-ghost{margin-top:0;}
+.acertijo-imagen{font-size:56px; text-align:center; line-height:1.3; margin-bottom:10px;}
 
 /* ---- Ranking ---- */
 .rank-row{
@@ -202,12 +203,14 @@ body{
 
 .toast{
   position:absolute; bottom:90px; left:20px; right:20px;
-  background:var(--navy); color:#fff; padding:12px 16px; border-radius:14px;
-  font-size:12px; font-weight:500; text-align:center;
-  opacity:0; transform:translateY(10px); transition:.25s;
-  pointer-events:none;
+  background:var(--navy); color:#fff; padding:16px 18px; border-radius:16px;
+  font-size:15px; font-weight:700; text-align:center;
+  opacity:0; transform:translateY(10px) scale(.96); transition:.25s;
+  pointer-events:none; box-shadow:0 8px 24px rgba(15,42,77,0.35);
 }
-.toast.show{opacity:1; transform:translateY(0);}
+.toast.show{opacity:1; transform:translateY(0) scale(1);}
+.toast.toast-gain{background:#256B3A;}
+.toast.toast-loss{background:#9E3226;}
 
 /* ---- DJ en vivo ---- */
 .dj-item{

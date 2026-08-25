@@ -42,13 +42,40 @@ const ACERTIJOS = [
   { pregunta: 'Cuanto más avanzás, más chico me pongo, hasta que desaparezco cuando llegás. ¿Qué soy?', respuesta: 'Lo que falta del viaje' },
 ];
 
-// Compara sin importar mayúsculas, tildes ni artículos ("un/una/el/la"), y
-// acepta que escriban solo la parte clave de la respuesta (ej. "boleto"
-// alcanza para "Un boleto de micro").
+// Acertijos con imagen: la pista es un emoji grande en vez de (o además de)
+// texto, para que se pueda resolver mirando en vez de leyendo.
+const ACERTIJOS_IMAGEN = [
+  { imagen: '🚌🎫', pregunta: '¿Qué representa esta imagen?', respuesta: 'Un boleto de micro' },
+  { imagen: '🗺️🧭', pregunta: '¿Qué representa esta imagen?', respuesta: 'Un mapa' },
+  { imagen: '🔑🚪', pregunta: '¿Qué representa esta imagen?', respuesta: 'Una llave' },
+  { imagen: '🌙⭐', pregunta: '¿Qué representa esta imagen?', respuesta: 'La noche' },
+  { imagen: '☂️🌧️', pregunta: '¿Qué representa esta imagen?', respuesta: 'Un paraguas' },
+  { imagen: '🎂⏳', pregunta: '¿Qué representa esta imagen?', respuesta: 'Un año' },
+  { imagen: '☕🥐', pregunta: '¿Qué representa esta imagen?', respuesta: 'El desayuno' },
+  { imagen: '🎒👕', pregunta: '¿Qué representa esta imagen?', respuesta: 'El equipaje' },
+];
+
+const TODOS_ACERTIJOS = ACERTIJOS.concat(ACERTIJOS_IMAGEN);
+
+// Palabras que no aportan a la respuesta clave: artículos, preposiciones,
+// pronombres y adjetivos numerales/de cantidad. Así "un secreto" también
+// vale si escriben "el secreto", "secretos" (con "una" de más), etc., o si
+// se cuelan de más palabras de relleno alrededor de la palabra importante.
+const PALABRAS_VACIAS_ACERTIJO = [
+  'el','la','los','las','un','una','unos','unas','al','del','lo',
+  'a','ante','bajo','cabe','con','contra','de','desde','durante','en','entre','hacia','hasta','mediante','para','por','segun','sin','so','sobre','tras','excepto','salvo',
+  'yo','tu','vos','ella','ello','nosotros','nosotras','vosotros','vosotras','ellos','ellas','me','te','se','nos','os','le','les','esto','eso','aquello','este','esta','estos','estas','ese','esa','esos','esas','aquel','aquella','aquellos','aquellas','que','quien','quienes','cual','cuales','cuyo','cuya','cuyos','cuyas','mi','mis','su','sus','nuestro','nuestra','nuestros','nuestras','vuestro','vuestra','vuestros','vuestras',
+  'uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce','primero','primera','segundo','segunda','tercero','tercera','cuarto','cuarta','quinto','quinta','mucho','mucha','muchos','muchas','poco','poca','pocos','pocas','varios','varias','algun','alguna','algunos','algunas','ningun','ninguna','ambos','ambas','cada','todo','toda','todos','todas','tanto','tanta','tantos','tantas',
+];
+const REGEX_PALABRAS_VACIAS_ACERTIJO = new RegExp('\\b(' + [...new Set(PALABRAS_VACIAS_ACERTIJO)].join('|') + ')\\b', 'g');
+
+// Compara sin importar mayúsculas, tildes ni palabras de relleno (artículos,
+// preposiciones, pronombres, numerales), y acepta que escriban solo la parte
+// clave de la respuesta (ej. "boleto" alcanza para "Un boleto de micro").
 function normalizarRespuestaAcertijo(s){
   return s.toLowerCase()
     .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/\b(el|la|los|las|un|una|unos|unas|de)\b/g, ' ')
+    .replace(REGEX_PALABRAS_VACIAS_ACERTIJO, ' ')
     .replace(/[^a-z0-9\s]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
@@ -62,7 +89,7 @@ function esRespuestaCorrecta(intento, respuesta){
 }
 
 function iniciarAcertijos(){
-  acertijosSesion = barajar(ACERTIJOS).slice(0, ACERTIJOS_POR_SESION);
+  acertijosSesion = barajar(TODOS_ACERTIJOS).slice(0, ACERTIJOS_POR_SESION);
   acertijoIndex = 0;
   acertijoFase = 'jugando';
   renderAcertijo();
@@ -101,13 +128,14 @@ function renderAcertijo(){
     abajoHTML = `
       <input type="text" id="acertijo-respuesta-input" class="bingo-input-numero" style="width:100%; margin-top:0;" placeholder="Escribí la respuesta" onkeydown="if(event.key==='Enter') comprobarAcertijo();">
       <button class="btn-primary" onclick="comprobarAcertijo()">Comprobar respuesta</button>
-      <p class="link-chico" onclick="pedirRevelarAcertijo()">No sabemos, mostrar respuesta</p>`;
+      <button class="btn-ghost" onclick="pedirRevelarAcertijo()">No sabemos, mostrar respuesta</button>`;
   }
 
   cont.innerHTML = `
     <div class="progress-bar"><div class="progress-fill" style="width:${((acertijoIndex + 1) / acertijosSesion.length) * 100}%"></div></div>
     <div class="question-box">
       <div class="qnum">PENSÁ EN GRUPO</div>
+      ${a.imagen ? `<div class="acertijo-imagen">${a.imagen}</div>` : ''}
       <h3>${a.pregunta}</h3>
     </div>
     ${abajoHTML}`;
@@ -124,11 +152,11 @@ function comprobarAcertijo(){
   const a = acertijosSesion[acertijoIndex];
   if(esRespuestaCorrecta(intento, a.respuesta)){
     ganarFichas(15);
-    mostrarToast('+15 fichas, ¡la sacaron!');
+    mostrarToast('+15 fichas, ¡la sacaron!', 'gain');
     acertijoFase = 'acertado';
   } else {
     ganarFichas(-5);
-    mostrarToast('-5 fichas, esa no es... ¡probá de nuevo!');
+    mostrarToast('-5 fichas, esa no es... ¡probá de nuevo!', 'loss');
   }
   renderAcertijo();
 }

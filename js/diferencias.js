@@ -31,15 +31,15 @@ function tocarCeldaDiferencia(pos){
   if(diferencias.encontradas.has(pos)) return;
   if(!diferencias.posiciones.has(pos)){
     ganarFichas(-5);
-    mostrarToast('-5 fichas, ahí no hay diferencia');
+    mostrarToast('-5 fichas, ahí no hay diferencia', 'loss');
     return;
   }
   diferencias.encontradas.add(pos);
   ganarFichas(10);
   if(diferencias.encontradas.size === diferencias.posiciones.size){
-    mostrarToast('¡Las encontraste todas! +10 fichas');
+    mostrarToast('¡Las encontraste todas! +10 fichas', 'gain');
   } else {
-    mostrarToast('+10 fichas, ¡esa es una diferencia!');
+    mostrarToast('+10 fichas, ¡esa es una diferencia!', 'gain');
   }
   renderDiferencias();
 }

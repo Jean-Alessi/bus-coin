@@ -290,11 +290,20 @@ function ganarFichas(cantidad){
 }
 
 
-function mostrarToast(msg){
+let toastTimer = null;
+
+// tipo: 'gain' (sumaste fichas), 'loss' (perdiste fichas) o vacío (neutro).
+// Dura más y se resalta con color para que dé tiempo a leerlo antes de
+// pasar a la siguiente pregunta.
+function mostrarToast(msg, tipo){
   const t = document.getElementById('toast');
   t.textContent = msg;
+  t.classList.remove('toast-gain', 'toast-loss');
+  if(tipo === 'gain') t.classList.add('toast-gain');
+  if(tipo === 'loss') t.classList.add('toast-loss');
   t.classList.add('show');
-  setTimeout(()=> t.classList.remove('show'), 1800);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 2600);
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{

@@ -189,7 +189,7 @@ function bingoSortear(){
     if(asientoGanador){
       bingo.ganadorLinea = asientoGanador;
       ganarFichas(5);
-      mostrarToast(`¡Línea (chingüina) para ${bingoPasajeros[asientoGanador]}! +5 fichas`);
+      mostrarToast(`¡Línea (chingüina) para ${bingoPasajeros[asientoGanador]}! +5 fichas`, 'gain');
     }
   }
   if(!bingo.ganadorCartonLleno){
@@ -197,7 +197,7 @@ function bingoSortear(){
     if(asientoGanador){
       bingo.ganadorCartonLleno = asientoGanador;
       ganarFichas(20);
-      mostrarToast(`¡BINGO para ${bingoPasajeros[asientoGanador]}! +20 fichas`);
+      mostrarToast(`¡BINGO para ${bingoPasajeros[asientoGanador]}! +20 fichas`, 'gain');
     }
   }
   bingoGuardarEstado();
