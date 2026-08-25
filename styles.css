@@ -146,6 +146,25 @@ body{
 .acertijo-botones .btn-ghost{margin-top:0;}
 .acertijo-imagen{font-size:56px; text-align:center; line-height:1.3; margin-bottom:10px;}
 
+/* ---- Pensamiento lateral ---- */
+.pens-dibujo{display:flex; justify-content:center; margin-bottom:10px;}
+.pens-historia{font-size:13px; color:var(--navy); line-height:1.5; margin-top:8px;}
+.pens-preguntas{display:flex; flex-direction:column; gap:8px; margin-bottom:6px;}
+.pens-pregunta-btn{
+  display:flex; justify-content:space-between; align-items:center; gap:8px;
+  background:#fff; border:1.5px solid #ECE9E1; border-radius:12px;
+  padding:10px 12px; font-size:12.5px; color:var(--navy); font-weight:500;
+  font-family:'Poppins',sans-serif; cursor:pointer; text-align:left;
+}
+.pens-pregunta-btn:hover{border-color:var(--orange);}
+.pens-pregunta-btn .pens-costo{color:var(--orange); font-weight:700; font-size:11px; flex-shrink:0;}
+.pens-pregunta{
+  display:flex; justify-content:space-between; align-items:center; gap:8px;
+  background:var(--cream); border:1.5px solid #ECE9E1; border-radius:12px;
+  padding:10px 12px; font-size:12.5px; color:var(--gray); font-weight:500;
+}
+.pens-pregunta .pens-pregunta-resp{color:var(--navy); font-weight:700; flex-shrink:0;}
+
 /* ---- Ranking ---- */
 .rank-row{
   display:flex; align-items:center; gap:12px; background:#fff;

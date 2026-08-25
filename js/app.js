@@ -10,6 +10,7 @@ const EMOJIS_DISPONIBLES = ['😊', '😎', '🤩', '😜', '🥳', '😇', '�
 const TARJETAS_JUEGOS = [
   { icon: "trivia", title: "Trivia", sub: "Elegí un tema y sumá puntos", view: "trivia" },
   { icon: "interrogacion", title: "Acertijos", sub: "Pensá en grupo antes de rendirte", view: "acertijos" },
+  { icon: "rompecabezas", title: "Pensamiento lateral", sub: "Resolvé el caso a puro sí o no", view: "pensamiento" },
   { icon: "bingo", title: "Bingo", sub: "Números del 00 al 99, con su significado", view: "bingo" },
 ];
 
@@ -267,7 +268,7 @@ function renderJuegos(){
 
 // Trivia, Acertijos y Bingo se entran desde el menú "Juegos" del tabbar, así
 // que esa pestaña queda marcada activa aunque ya estés adentro de uno de ellos.
-const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'bingo'];
+const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'bingo'];
 
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -279,6 +280,7 @@ function showView(name){
   if(name==='juegos'){ renderJuegos(); }
   if(name==='trivia'){ iniciarTrivia(); }
   if(name==='acertijos'){ iniciarAcertijos(); }
+  if(name==='pensamiento'){ iniciarPensamiento(); }
   if(name==='ranking'){ renderRanking(); }
   if(name==='bingo'){ iniciarBingo(); }
   if(name==='tienda'){ iniciarPremios(); }

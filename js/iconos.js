@@ -17,7 +17,8 @@ const ICONOS = {
   avion: '<path d="M2 12 22 4 14 22l-2-8-8-2Z"/>',
   pata: '<circle cx="12" cy="15.5" r="4"/><circle cx="5.5" cy="9.5" r="2.2"/><circle cx="10" cy="5" r="2.2"/><circle cx="14.5" cy="5" r="2.2"/><circle cx="19" cy="9.5" r="2.2"/>',
   reloj: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
-  interrogacion: '<path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7v.5"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="9"/>'
+  interrogacion: '<path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7v.5"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="9"/>',
+  rompecabezas: '<path d="M4 9h3.2a1.8 1.8 0 1 1 3.6 0H14V4.8a1.8 1.8 0 1 1 3.6 0V9H20v3.2a1.8 1.8 0 1 0 0 3.6V20h-3.2a1.8 1.8 0 1 0-3.6 0H9v-4.2a1.8 1.8 0 1 0-3.6 0H4V9Z"/>'
 };
 
 function icono(nombre, size){
