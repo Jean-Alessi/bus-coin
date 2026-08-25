@@ -165,6 +165,21 @@ body{
 }
 .pens-pregunta .pens-pregunta-resp{color:var(--navy); font-weight:700; flex-shrink:0;}
 
+/* ---- Ahorcado ---- */
+.ahorcado-dibujo{display:flex; justify-content:center; margin-bottom:8px;}
+.ahorcado-palabra{font-size:22px; font-weight:700; letter-spacing:4px; color:var(--navy); margin-bottom:8px; word-break:break-all;}
+.ahorcado-vidas{font-size:12px; color:var(--gray);}
+.ahorcado-teclado{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:16px;}
+.ahorcado-tecla{
+  background:#fff; border:1.5px solid #ECE9E1; border-radius:8px; padding:8px 0;
+  font-size:13px; font-weight:700; color:var(--navy); cursor:pointer;
+  font-family:'Poppins',sans-serif;
+}
+.ahorcado-tecla:hover:not(:disabled){border-color:var(--orange);}
+.ahorcado-tecla:disabled{cursor:not-allowed;}
+.ahorcado-tecla-correcta{background:#EAF7EE; border-color:#3B9B5A; color:#256B3A;}
+.ahorcado-tecla-incorrecta{background:#FCECEA; border-color:#D34C3D; color:#9E3226;}
+
 /* ---- Ranking ---- */
 .rank-row{
   display:flex; align-items:center; gap:12px; background:#fff;
