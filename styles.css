@@ -216,10 +216,12 @@ body{
 .valija-timer{font-size:26px; font-weight:800; color:var(--navy); flex-shrink:0; transition:.2s;}
 .valija-timer.valija-timer-urgente{color:#D34C3D; animation:valija-pulso .6s infinite;}
 @keyframes valija-pulso{0%,100%{transform:scale(1);} 50%{transform:scale(1.15);}}
-.valija-consigna{font-size:11.5px; color:var(--gray); line-height:1.35; margin:2px 0 8px;}
+.valija-consigna{font-size:13px; color:var(--navy); line-height:1.4; margin:2px 0 8px; font-weight:500;}
+.valija-visual{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+.valija-visual-emoji{font-size:34px; flex-shrink:0; line-height:1;}
 .valija-contenido{
-  min-height:26px; background:#fff; border:1.5px dashed #ECE9E1; border-radius:12px;
-  display:flex; flex-wrap:wrap; gap:5px; align-items:center; padding:6px 8px; margin-bottom:8px;
+  flex:1; min-height:34px; background:#fff; border:1.5px dashed #ECE9E1; border-radius:12px;
+  display:flex; flex-wrap:wrap; gap:5px; align-items:center; padding:6px 8px;
 }
 .valija-contenido-badge{font-size:11px; font-weight:700; color:var(--navy); margin-right:2px;}
 .valija-chip{
@@ -227,10 +229,10 @@ body{
   padding:3px 9px; font-size:10.5px; font-weight:600;
 }
 .valija-chip-vacio{background:none; color:var(--gray); font-weight:400;}
-.valija-items{display:grid; grid-template-columns:1fr 1fr; gap:6px;}
+.valija-items{display:grid; grid-template-columns:1fr 1fr; gap:5px;}
 .valija-item{
   background:#fff; border:1.5px solid #ECE9E1; border-radius:10px;
-  padding:8px 6px; font-size:11.5px; font-weight:600; color:var(--navy); line-height:1.2;
+  padding:6px 6px; font-size:11px; font-weight:600; color:var(--navy); line-height:1.15;
   cursor:pointer; font-family:'Poppins',sans-serif; text-align:center;
 }
 .valija-item:hover{border-color:var(--orange);}
@@ -286,11 +288,12 @@ body{
 .tab .dot svg{width:18px; height:18px;}
 
 .toast{
-  position:absolute; bottom:90px; left:20px; right:20px;
+  position:absolute; top:56px; left:20px; right:20px;
   background:var(--navy); color:#fff; padding:16px 18px; border-radius:16px;
   font-size:15px; font-weight:700; text-align:center;
-  opacity:0; transform:translateY(10px) scale(.96); transition:.25s;
+  opacity:0; transform:translateY(-10px) scale(.96); transition:.25s;
   pointer-events:none; box-shadow:0 8px 24px rgba(15,42,77,0.35);
+  z-index:20;
 }
 .toast.show{opacity:1; transform:translateY(0) scale(1);}
 .toast.toast-gain{background:#256B3A;}

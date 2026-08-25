@@ -29,7 +29,8 @@ let cuatrounoOrden = [];
 let cuatrounoIndex = 0;
 let cuatrounoFichas = [];
 let cuatrounoConstruida = [];
-let cuatrounoFase = 'jugando'; // 'jugando' | 'acertado'
+let cuatrounoFase = 'jugando'; // 'jugando' | 'confirmando' | 'revelado' | 'acertado'
+let cuatrounoDesafioActual = '';
 
 function iniciarCuatrouno(){
   cuatrounoOrden = barajar(CUATROUNO_PALABRAS.map((_, i) => i));
@@ -76,6 +77,22 @@ function comprobarCuatrouno(){
   renderCuatrouno();
 }
 
+function pedirRevelarCuatrouno(){
+  cuatrounoDesafioActual = ACERTIJO_DESAFIOS[Math.floor(Math.random() * ACERTIJO_DESAFIOS.length)];
+  cuatrounoFase = 'confirmando';
+  renderCuatrouno();
+}
+
+function confirmarRevelarCuatrouno(){
+  cuatrounoFase = 'revelado';
+  renderCuatrouno();
+}
+
+function cancelarRevelarCuatrouno(){
+  cuatrounoFase = 'jugando';
+  renderCuatrouno();
+}
+
 function siguienteCuatrouno(){
   if(cuatrounoIndex < cuatrounoOrden.length - 1){
     cuatrounoIndex++;
@@ -99,6 +116,22 @@ function renderCuatrouno(){
         <p>${p.palabra}</p>
       </div>
       <button class="btn-primary" onclick="siguienteCuatrouno()">Siguiente palabra</button>`;
+  } else if(cuatrounoFase === 'revelado'){
+    abajoHTML = `
+      <div class="acertijo-respuesta acertijo-respuesta-neutra">
+        <div class="section-label">Era</div>
+        <p>${p.palabra}</p>
+      </div>
+      <button class="btn-primary" onclick="siguienteCuatrouno()">Siguiente palabra</button>`;
+  } else if(cuatrounoFase === 'confirmando'){
+    abajoHTML = `
+      <div class="hero" style="margin-top:8px;">
+        <h2>${cuatrounoDesafioActual}</h2>
+      </div>
+      <div class="acertijo-botones">
+        <button class="btn-primary" onclick="confirmarRevelarCuatrouno()">Sí, mostrame la palabra</button>
+        <button class="btn-ghost" onclick="cancelarRevelarCuatrouno()">No, seguimos pensando</button>
+      </div>`;
   } else {
     const fichasHTML = cuatrounoFichas.map((f, i) =>
       `<button class="cuatrouno-ficha ${f.usada ? 'cuatrouno-ficha-usada' : ''}" ${f.usada ? 'disabled' : ''} onclick="tocarFichaCuatrouno(${i})">${f.letra}</button>`
@@ -109,7 +142,8 @@ function renderCuatrouno(){
       <div class="cuatrouno-acciones">
         <button class="btn-ghost" onclick="borrarUltimaCuatrouno()">Borrar última</button>
         <button class="btn-primary" onclick="comprobarCuatrouno()">Comprobar</button>
-      </div>`;
+      </div>
+      <button class="btn-ghost" onclick="pedirRevelarCuatrouno()">No sabemos, mostrar palabra</button>`;
   }
 
   cont.innerHTML = `

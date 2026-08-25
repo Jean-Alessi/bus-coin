@@ -223,9 +223,12 @@ function renderValija(){
       <div class="valija-timer ${urgente ? 'valija-timer-urgente' : ''}">${valijaTiempoRestante}</div>
     </div>
     <p class="valija-consigna">${d.consigna}</p>
-    <div class="valija-contenido">
-      <span class="valija-contenido-badge">🧳 ${valijaSeleccionados.size}/10</span>
-      ${contenidoHTML}
+    <div class="valija-visual">
+      <span class="valija-visual-emoji">🧳</span>
+      <div class="valija-contenido">
+        <span class="valija-contenido-badge">${valijaSeleccionados.size}/10</span>
+        ${contenidoHTML}
+      </div>
     </div>
     <div class="valija-items">${itemsHTML}</div>`;
 }
