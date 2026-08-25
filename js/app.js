@@ -7,12 +7,15 @@ let fichasCoin = 0;
 
 const EMOJIS_DISPONIBLES = ['😊', '😎', '🤩', '😜', '🥳', '😇', '🤠', '🧐', '🤓', '💃', '🕺', '😴'];
 
-const TARJETAS_HOME = [
+const TARJETAS_JUEGOS = [
   { icon: "trivia", title: "Trivia", sub: "Elegí un tema y sumá puntos", view: "trivia" },
   { icon: "interrogacion", title: "Acertijos", sub: "Pensá en grupo antes de rendirte", view: "acertijos" },
   { icon: "bingo", title: "Bingo", sub: "Números del 00 al 99, con su significado", view: "bingo" },
-  { icon: "trofeo", title: "Ranking del micro", sub: "¿Quién va primero hoy?", view: "ranking" },
 ];
+
+const TARJETAS_HOME = TARJETAS_JUEGOS.concat([
+  { icon: "trofeo", title: "Ranking del micro", sub: "¿Quién va primero hoy?", view: "ranking" },
+]);
 
 // ---- Código de viaje: agrupa Bingo/Ranking/DJ bajo un mismo código, para
 // poder arrancar un viaje nuevo (pasajeros y nombres nuevos) sin mezclarlo
@@ -239,12 +242,9 @@ function goHome(){
   renderHome();
 }
 
-function renderHome(){
-  document.getElementById('home-saludo').textContent = `${miEmoji} Hola, ${miNombre}`;
-  document.getElementById('home-viaje').textContent = `Viaje ${codigoViaje} · copiar link`;
-  const container = document.getElementById('home-content');
-  container.innerHTML = '<div class="section-label">Para vos</div>';
-  TARJETAS_HOME.forEach(c=>{
+function renderTarjetas(lista, contenedorId){
+  const container = document.getElementById(contenedorId);
+  lista.forEach(c=>{
     const div = document.createElement('div');
     div.className = 'card';
     div.onclick = ()=> showView(c.view);
@@ -253,12 +253,30 @@ function renderHome(){
   });
 }
 
+function renderHome(){
+  document.getElementById('home-saludo').textContent = `${miEmoji} Hola, ${miNombre}`;
+  document.getElementById('home-viaje').textContent = `Viaje ${codigoViaje} · copiar link`;
+  document.getElementById('home-content').innerHTML = '<div class="section-label">Para vos</div>';
+  renderTarjetas(TARJETAS_HOME, 'home-content');
+}
+
+function renderJuegos(){
+  document.getElementById('juegos-content').innerHTML = '';
+  renderTarjetas(TARJETAS_JUEGOS, 'juegos-content');
+}
+
+// Trivia, Acertijos y Bingo se entran desde el menú "Juegos" del tabbar, así
+// que esa pestaña queda marcada activa aunque ya estés adentro de uno de ellos.
+const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'bingo'];
+
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  const tab = document.querySelector(`.tab[data-tab="${name}"]`);
+  const tabName = TABS_HIJOS_DE_JUEGOS.includes(name) ? 'juegos' : name;
+  const tab = document.querySelector(`.tab[data-tab="${tabName}"]`);
   if(tab) tab.classList.add('active');
+  if(name==='juegos'){ renderJuegos(); }
   if(name==='trivia'){ iniciarTrivia(); }
   if(name==='acertijos'){ iniciarAcertijos(); }
   if(name==='ranking'){ renderRanking(); }
