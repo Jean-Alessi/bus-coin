@@ -206,26 +206,31 @@ body{
 .cuatrouno-acciones .btn-ghost{margin-top:0;}
 
 /* ---- Valija Express ---- */
-.valija-timer{
-  font-size:44px; font-weight:800; color:var(--navy); text-align:center;
-  margin-bottom:4px; transition:.2s;
+.valija-topbar{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:6px;}
+.valija-topbar-info{display:flex; align-items:center; gap:6px; min-width:0;}
+.valija-topbar-emoji{font-size:22px; flex-shrink:0; line-height:1;}
+.valija-topbar-destino{
+  font-size:15px; font-weight:700; color:var(--navy);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
+.valija-timer{font-size:26px; font-weight:800; color:var(--navy); flex-shrink:0; transition:.2s;}
 .valija-timer.valija-timer-urgente{color:#D34C3D; animation:valija-pulso .6s infinite;}
 @keyframes valija-pulso{0%,100%{transform:scale(1);} 50%{transform:scale(1.15);}}
-.valija-dibujo{font-size:48px; text-align:center; margin-bottom:8px;}
+.valija-consigna{font-size:11.5px; color:var(--gray); line-height:1.35; margin:2px 0 8px;}
 .valija-contenido{
-  min-height:44px; background:#fff; border:1.5px dashed #ECE9E1; border-radius:14px;
-  display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:8px 10px; margin-bottom:14px;
+  min-height:26px; background:#fff; border:1.5px dashed #ECE9E1; border-radius:12px;
+  display:flex; flex-wrap:wrap; gap:5px; align-items:center; padding:6px 8px; margin-bottom:8px;
 }
+.valija-contenido-badge{font-size:11px; font-weight:700; color:var(--navy); margin-right:2px;}
 .valija-chip{
   background:var(--orange-light); color:var(--orange); border-radius:999px;
-  padding:5px 12px; font-size:12px; font-weight:600;
+  padding:3px 9px; font-size:10.5px; font-weight:600;
 }
 .valija-chip-vacio{background:none; color:var(--gray); font-weight:400;}
-.valija-items{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+.valija-items{display:grid; grid-template-columns:1fr 1fr; gap:6px;}
 .valija-item{
-  background:#fff; border:1.5px solid #ECE9E1; border-radius:12px;
-  padding:12px 8px; font-size:12.5px; font-weight:600; color:var(--navy);
+  background:#fff; border:1.5px solid #ECE9E1; border-radius:10px;
+  padding:8px 6px; font-size:11.5px; font-weight:600; color:var(--navy); line-height:1.2;
   cursor:pointer; font-family:'Poppins',sans-serif; text-align:center;
 }
 .valija-item:hover{border-color:var(--orange);}

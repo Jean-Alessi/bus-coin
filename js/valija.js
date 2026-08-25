@@ -215,14 +215,18 @@ function renderValija(){
     : '<span class="valija-chip valija-chip-vacio">Vacía</span>';
 
   cont.innerHTML = `
-    <div class="hero" style="margin-top:8px;">
-      <h2>${d.emoji} ${d.destino}</h2>
-      <p>${d.consigna}</p>
+    <div class="valija-topbar">
+      <div class="valija-topbar-info">
+        <span class="valija-topbar-emoji">${d.emoji}</span>
+        <span class="valija-topbar-destino">${d.destino}</span>
+      </div>
+      <div class="valija-timer ${urgente ? 'valija-timer-urgente' : ''}">${valijaTiempoRestante}</div>
     </div>
-    <div class="valija-timer ${urgente ? 'valija-timer-urgente' : ''}">${valijaTiempoRestante}</div>
-    <div class="valija-dibujo">🧳</div>
-    <div class="valija-contenido">${contenidoHTML}</div>
-    <div class="section-label">Elegidos: ${valijaSeleccionados.size}/10</div>
+    <p class="valija-consigna">${d.consigna}</p>
+    <div class="valija-contenido">
+      <span class="valija-contenido-badge">🧳 ${valijaSeleccionados.size}/10</span>
+      ${contenidoHTML}
+    </div>
     <div class="valija-items">${itemsHTML}</div>`;
 }
 
