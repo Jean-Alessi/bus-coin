@@ -60,17 +60,22 @@ function adivinarLetraAhorcado(letra){
   const palabra = ahorcadoPalabraActual();
 
   if(!palabra.includes(letra)){
+    reproducirTono('incorrecto');
     ahorcadoErrores++;
     if(ahorcadoErrores >= AHORCADO_ERRORES_MAX){
       ahorcadoFase = 'perdido';
+      reproducirTono('fin');
       mostrarToast('Se acabaron los intentos...');
     }
   } else {
     const completa = palabra.split('').every(ch => ahorcadoLetrasAdivinadas.has(ch));
     if(completa){
+      reproducirTono('bonus');
       ganarFichas(10);
       mostrarToast('+10 fichas, ¡la adivinaste!', 'gain');
       ahorcadoFase = 'ganado';
+    } else {
+      reproducirTono('correcto');
     }
   }
   renderAhorcado();

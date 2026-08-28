@@ -363,11 +363,13 @@ function comprobarPensamiento(){
   const intento = input ? input.value : '';
   const p = pensActual();
   if(esRespuestaCorrecta(intento, p.clave)){
+    reproducirTono('correcto');
     const puntos = Math.max(0, 10 - pensPreguntasUsadas.size);
     ganarFichas(puntos);
     mostrarToast(`+${puntos} fichas, ¡lo resolviste!`, 'gain');
     pensFase = 'acertado';
   } else {
+    reproducirTono('incorrecto');
     mostrarToast('No es eso... ¡seguí pensando o pedí una pista!');
   }
   renderPensamiento();

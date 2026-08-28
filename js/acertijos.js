@@ -151,10 +151,12 @@ function comprobarAcertijo(){
   const intento = input ? input.value : '';
   const a = acertijosSesion[acertijoIndex];
   if(esRespuestaCorrecta(intento, a.respuesta)){
+    reproducirTono('correcto');
     ganarFichas(5);
     mostrarToast('+5 fichas, ¡la sacaron!', 'gain');
     acertijoFase = 'acertado';
   } else {
+    reproducirTono('incorrecto');
     mostrarToast('Esa no es... ¡probá de nuevo!');
   }
   renderAcertijo();

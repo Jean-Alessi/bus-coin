@@ -68,10 +68,12 @@ function comprobarCuatrouno(){
   const p = cuatrounoActual();
   const armada = cuatrounoConstruida.map(i => cuatrounoFichas[i].letra).join('');
   if(armada === p.palabra){
+    reproducirTono('bonus');
     ganarFichas(10);
     mostrarToast('+10 fichas, ¡la sacaron!', 'gain');
     cuatrounoFase = 'acertado';
   } else {
+    reproducirTono('incorrecto');
     mostrarToast('Esa combinación no es... ¡seguí probando!');
   }
   renderCuatrouno();

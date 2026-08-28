@@ -84,7 +84,15 @@ function iniciarBingo(){
     bingoRefEstado().on('value', snap => {
       // Firebase no guarda arrays vacíos ni null: se completan los campos que
       // falten con los valores por defecto para que el resto del código no rompa.
+      const anterior = bingo;
       bingo = Object.assign(bingoEstadoVacio(), snap.val() || {});
+      // El sonido se dispara acá (no en bingoSortear) para que suene en el
+      // celular de cada pasajero cuando le llega el número nuevo, no solo en
+      // el del organizador que lo sorteó.
+      if(anterior){
+        if((bingo.sorteados || []).length > (anterior.sorteados || []).length) reproducirTono('tick');
+        if(bingo.ganadorCartonLleno && !anterior.ganadorCartonLleno) reproducirTono('bonus');
+      }
       renderBingo();
     });
     bingoRefPasajeros().on('value', snap => {

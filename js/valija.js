@@ -73,34 +73,8 @@ let valijaTiempoRestante = 20;
 let valijaTimerId = null;
 let valijaFase = 'jugando'; // 'jugando' | 'resultado'
 let valijaUltimoResultado = null;
-let valijaAudioCtx = null;
-
-// Sonidos simples generados en el momento (sin archivos de audio): un tono
-// corto distinto para acierto, error, los últimos segundos, el final y el bonus.
-function reproducirTonoValija(tipo){
-  try {
-    if(!valijaAudioCtx) valijaAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const ctx = valijaAudioCtx;
-    const ahora = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    const config = {
-      correcto: { freq: 880, dur: 0.12, onda: 'sine' },
-      incorrecto: { freq: 180, dur: 0.15, onda: 'sawtooth' },
-      tick: { freq: 660, dur: 0.06, onda: 'square' },
-      fin: { freq: 220, dur: 0.4, onda: 'triangle' },
-      bonus: { freq: 1046, dur: 0.35, onda: 'sine' },
-    }[tipo] || { freq: 440, dur: 0.1, onda: 'sine' };
-    osc.type = config.onda;
-    osc.frequency.value = config.freq;
-    gain.gain.setValueAtTime(0.15, ahora);
-    gain.gain.exponentialRampToValueAtTime(0.001, ahora + config.dur);
-    osc.start(ahora);
-    osc.stop(ahora + config.dur);
-  } catch(e){ /* si el navegador bloquea el audio, seguimos sin sonido */ }
-}
+// Los tonos (reproducirTono) viven en sonido.js, compartidos con todos los
+// juegos, así el mute de uno aplica a todos.
 
 function iniciarValija(){
   valijaOrden = barajar([...Array(VALIJA_DESTINOS.length).keys()]);
@@ -143,7 +117,7 @@ function tickValija(){
     terminarRondaValija();
     return;
   }
-  if(valijaTiempoRestante <= 5) reproducirTonoValija('tick');
+  if(valijaTiempoRestante <= 5) reproducirTono('tick');
   renderValija();
 }
 
@@ -154,7 +128,7 @@ function tocarItemValija(item){
   } else {
     if(valijaSeleccionados.size >= 10) return;
     valijaSeleccionados.add(item);
-    reproducirTonoValija(valijaDestinoActual.correctos.includes(item) ? 'correcto' : 'incorrecto');
+    reproducirTono(valijaDestinoActual.correctos.includes(item) ? 'correcto' : 'incorrecto');
   }
   renderValija();
 }
@@ -168,7 +142,7 @@ function terminarRondaValija(){
   const puntaje = aciertos * 10 + bonus;
   valijaUltimoResultado = { aciertos, errores, bonus, puntaje };
   if(puntaje > 0) ganarFichas(puntaje);
-  reproducirTonoValija(bonus ? 'bonus' : 'fin');
+  reproducirTono(bonus ? 'bonus' : 'fin');
   renderValija();
 }
 
