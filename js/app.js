@@ -107,9 +107,13 @@ function confirmarCodigoViaje(){
   if(error) error.textContent = '';
   if(!codigo) return;
 
-  db.ref('salas/' + codigo + '/creado').once('value').then(snap => {
-    if(snap.val() == null){
+  db.ref('salas/' + codigo).once('value').then(snap => {
+    if(!snap.exists() || snap.child('creado').val() == null){
       if(error) error.textContent = 'Ese código no existe. Pedile el código al organizador del viaje.';
+      return;
+    }
+    if(snap.child('cerrado').val()){
+      if(error) error.textContent = 'Este viaje ya terminó y dejó de estar disponible.';
       return;
     }
     codigoViaje = codigo;
@@ -157,10 +161,12 @@ function renderAdminViajes(){
     }
     cont.innerHTML = `<div class="section-label">Viajes guardados</div>` + codigos.map(c => {
       const pasajeros = Object.keys((datos[c].ranking && datos[c].ranking.puntos) || {}).length;
+      const cerrado = !!datos[c].cerrado;
       return `<div class="bingo-roster-item">
-        <span>${c}</span>
+        <span>${c}${cerrado ? ' 🔒' : ''}</span>
         <span class="bingo-roster-derecha">
           <span>${pasajeros} pasajero${pasajeros === 1 ? '' : 's'}</span>
+          <button class="btn-finalizar-viaje" onclick="toggleCerrarViaje('${c}',${!cerrado})">${cerrado ? 'Reabrir' : 'Finalizar'}</button>
           <button class="btn-eliminar-pasajero" onclick="eliminarViaje('${c}')" title="Eliminar viaje">✕</button>
         </span>
       </div>`;
@@ -182,6 +188,13 @@ function verificarPinAdmin(){
 
 function eliminarViaje(codigo){
   db.ref('salas/' + codigo).remove().then(() => renderAdminViajes());
+}
+
+// "Finalizar" no borra nada (así el ranking queda para entregar los premios
+// después): solo marca la sala como cerrada, y desde ese momento nadie más
+// puede entrar con ese código. "Reabrir" deshace eso, por si hace falta.
+function toggleCerrarViaje(codigo, cerrar){
+  db.ref('salas/' + codigo + '/cerrado').set(cerrar).then(() => renderAdminViajes());
 }
 
 // ---- Identidad y ranking compartido: cada celular dice su emoji, nombre y
@@ -375,8 +388,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if(codigoURL){
     // Se abrió con un link compartido (?viaje=CODIGO): valida contra Firebase
     // antes de entrar directo, por si el código ya no existe.
-    db.ref('salas/' + codigoURL + '/creado').once('value').then(snap => {
-      if(snap.val() != null){
+    db.ref('salas/' + codigoURL).once('value').then(snap => {
+      if(snap.exists() && snap.child('creado').val() != null && !snap.child('cerrado').val()){
         codigoViaje = codigoURL;
         localStorage.setItem('codigo-viaje', codigoViaje);
         showView('onboard');
@@ -384,7 +397,9 @@ document.addEventListener('DOMContentLoaded', ()=>{
         codigoInput.value = codigoURL;
         actualizarBotonCodigoViaje();
         const error = document.getElementById('codigo-viaje-error');
-        if(error) error.textContent = 'Ese código ya no existe. Pedile uno nuevo al organizador.';
+        if(error) error.textContent = snap.exists() && snap.child('cerrado').val()
+          ? 'Este viaje ya terminó y dejó de estar disponible.'
+          : 'Ese código ya no existe. Pedile uno nuevo al organizador.';
       }
     });
   } else if(codigoInput){
