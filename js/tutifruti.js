@@ -62,7 +62,12 @@ function iniciarTutifruti(){
     });
     tutiRefAnotados().on('value', snap => {
       tutiAnotados = snap.val() || {};
-      renderTutifruti();
+      // La lista de anotados solo se ve en el lobby. Si alguien se anota
+      // mientras otro está jugando o el organizador está sorteando, no hay
+      // que redibujar toda la pantalla — eso les cerraba el teclado a los
+      // que estaban escribiendo y le hacía perder el toque al organizador
+      // cuando quería parar el cartel.
+      if(tuti && tuti.fase === 'lobby') renderTutifruti();
     });
   } else {
     renderTutifruti();
