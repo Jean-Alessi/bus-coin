@@ -1,10 +1,9 @@
 // Tutti Frutti / Basta: se juega contra el resto de los pasajeros del mismo
-// código de viaje (no contra el reloj solo), reusando el patrón de sala
-// compartida por Firebase que ya usa Bingo. Cualquiera puede arrancar una
-// ronda nueva (no hace falta PIN de organizador, es un juego casual). Todos
-// ven la misma letra y el mismo cronómetro (arrancan del mismo timestamp
-// guardado en la sala), y cualquiera puede tocar "¡BASTA!" para cortar la
-// ronda para todos a la vez, como en el juego de mesa real.
+// código de viaje, reusando el patrón de sala compartida por Firebase que ya
+// usa Bingo. Los pasajeros se anotan en una lista (como en Bingo), y es el
+// organizador quien decide cuándo cerrar la anotación y arrancar, quien corta
+// la ronda tocando "¡BASTA!", y quien puede terminar el juego en cualquier
+// momento. El organizador no juega, solo administra — igual que en Bingo.
 
 const TUTI_CATEGORIAS = ['Nombre', 'Animal', 'Color', 'Comida', 'País', 'Cosa'];
 // Se excluyen letras difíciles en español (K, Ñ, W, X, Y, Z) para que siempre
@@ -15,16 +14,18 @@ const TUTI_PUNTOS_UNICA = 10;
 const TUTI_PUNTOS_REPETIDA = 5;
 
 let tuti = null;
+let tutiAnotados = {}; // { asiento: nombre } de quienes se anotaron para jugar
 let tutiRespuestas = {}; // respuestas de TODOS los pasajeros de la ronda actual, por asiento
 let tutiMisRespuestas = {}; // borrador local (para no perder lo tipeado si el estado se actualiza)
 let tutiTimerId = null;
 let tutiRondaPuntuada = null; // evita sumar monedas dos veces por la misma ronda
 
 function tutiEstadoVacio(){
-  return { fase: 'esperando', letra: null, categorias: [], inicio: null, duracionSeg: TUTI_DURACION_SEG, ronda: 0 };
+  return { fase: 'lobby', letra: null, categorias: [], inicio: null, duracionSeg: TUTI_DURACION_SEG, ronda: 0 };
 }
 
 function tutiRefEstado(){ return db.ref(`salas/${codigoViaje}/tutifruti/estado`); }
+function tutiRefAnotados(){ return db.ref(`salas/${codigoViaje}/tutifruti/anotados`); }
 function tutiRefRespuestas(){ return db.ref(`salas/${codigoViaje}/tutifruti/rondas/${tuti ? tuti.ronda : 0}/respuestas`); }
 
 // Sin tildes/mayúsculas, para comparar palabras de forma justa aunque las
@@ -49,6 +50,10 @@ function iniciarTutifruti(){
       tutiTickTimer();
       renderTutifruti();
     });
+    tutiRefAnotados().on('value', snap => {
+      tutiAnotados = snap.val() || {};
+      renderTutifruti();
+    });
   } else {
     renderTutifruti();
   }
@@ -61,11 +66,23 @@ function tutiEscucharRespuestas(){
   });
 }
 
+function tutiAnotarme(){
+  if(!miAsiento) return;
+  tutiRefAnotados().child(String(miAsiento)).set(miNombre);
+}
+
+// El organizador puede sacar a alguien de la lista antes de arrancar, igual
+// que en Bingo.
+function tutiSacarAnotado(asiento){
+  if(!bingoEsOrganizador()) return;
+  tutiRefAnotados().child(String(asiento)).remove();
+}
+
 function tutiEmpezarRonda(){
-  if(!tuti || (tuti.fase !== 'esperando' && tuti.fase !== 'resultados')) return;
+  if(!bingoEsOrganizador()) return;
+  if(!tuti || (tuti.fase !== 'lobby' && tuti.fase !== 'resultados')) return;
   const letra = TUTI_LETRAS[Math.floor(Math.random() * TUTI_LETRAS.length)];
   const nuevaRonda = (tuti.ronda || 0) + 1;
-  tutiMisRespuestas = {};
   db.ref(`salas/${codigoViaje}/tutifruti/estado`).set({
     fase: 'jugando',
     letra,
@@ -82,15 +99,23 @@ function tutiActualizarRespuesta(categoria, valor){
   tutiRefRespuestas().child(String(miAsiento)).set({ nombre: miNombre, palabras: tutiMisRespuestas });
 }
 
-// Cualquier pasajero puede cortar la ronda para todos, igual que gritar
-// "¡Basta!" en la mesa real.
+// Solo el organizador corta la ronda para todos, igual que gritar "¡Basta!"
+// en la mesa real siendo quien maneja el juego.
 function tutiBasta(){
+  if(!bingoEsOrganizador()) return;
   if(!tuti || tuti.fase !== 'jugando') return;
   tutiCerrarRonda();
 }
 
 function tutiCerrarRonda(){
   tutiRefEstado().child('fase').set('resultados');
+}
+
+// El organizador puede terminar el juego en cualquier momento: se borra todo
+// (anotados, ronda actual e historial) y vuelve a quedar un lobby vacío.
+function tutiTerminarJuego(){
+  if(!bingoEsOrganizador()) return;
+  db.ref(`salas/${codigoViaje}/tutifruti`).remove();
 }
 
 function tutiTiempoRestante(){
@@ -111,7 +136,9 @@ function tutiTickTimer(){
     const restante = tutiTiempoRestante();
     if(restante <= 0){
       clearInterval(tutiTimerId);
-      tutiCerrarRonda();
+      // Solo el organizador cierra la ronda: si es el celular de un pasajero,
+      // se limita a esperar a que el estado cambie solo por Firebase.
+      if(bingoEsOrganizador()) tutiCerrarRonda();
       return;
     }
     if(restante <= 5) reproducirTono('tick');
@@ -152,20 +179,93 @@ function tutiSumarMisMonedasSiCorresponde(puntos){
   if(total > 0) ganarMonedas(total);
 }
 
+function tutiOrdenAsientos(mapa){
+  return Object.keys(mapa).sort((a, b) => Number(a) - Number(b));
+}
+
 function renderTutifruti(){
   const cont = document.getElementById('tutifruti-content');
   if(!cont || !tuti) return;
   document.getElementById('tutifruti-sub').textContent =
-    tuti.fase === 'esperando' ? 'Contra el resto del viaje' :
+    tuti.fase === 'lobby' ? 'Contra el resto del viaje' :
     tuti.fase === 'jugando' ? `Letra ${tuti.letra}` : 'Resultados de la ronda';
 
-  if(tuti.fase === 'esperando'){
+  if(bingoEsOrganizador()){
+    renderTutifrutiOrganizador(cont);
+    return;
+  }
+  renderTutifrutiPasajero(cont);
+}
+
+function tutiListaAnotadosHTML(conBotonSacar){
+  const asientos = tutiOrdenAsientos(tutiAnotados);
+  if(!asientos.length) return '<p style="color:var(--gray);font-size:13px;">Todavía no se anotó nadie.</p>';
+  return `<div class="bingo-roster">${asientos.map(a => `
+    <div class="bingo-roster-item">
+      <span>Asiento ${a} — ${tutiAnotados[a]}</span>
+      ${conBotonSacar ? `<span class="bingo-roster-derecha"><button class="btn-eliminar-pasajero" onclick="tutiSacarAnotado('${a}')" title="Sacar de la lista">✕</button></span>` : ''}
+    </div>`).join('')}</div>`;
+}
+
+function renderTutifrutiOrganizador(cont){
+  if(tuti.fase === 'lobby'){
+    const asientos = Object.keys(tutiAnotados);
     cont.innerHTML = `
-      <div class="hero">
+      <div class="section-label">Panel del organizador</div>
+      <div class="hero" style="margin-top:8px;">
+        <h2>🔤 Tutti Frutti</h2>
+        <p>Categorías: ${TUTI_CATEGORIAS.join(', ')}. Los pasajeros se anotan acá abajo; arrancá cuando estén todos.</p>
+      </div>
+      ${tutiListaAnotadosHTML(true)}
+      <button class="btn-primary" onclick="tutiEmpezarRonda()" ${asientos.length ? '' : 'disabled'}>Cerrar anotación y empezar</button>`;
+    return;
+  }
+
+  if(tuti.fase === 'jugando'){
+    const restante = tutiTiempoRestante();
+    const urgente = restante <= 5;
+    cont.innerHTML = `
+      <div class="section-label">Panel del organizador</div>
+      <div class="valija-topbar">
+        <div class="valija-topbar-info">
+          <span class="valija-topbar-emoji">🔤</span>
+          <span class="valija-topbar-destino">Con la letra ${tuti.letra}</span>
+        </div>
+        <div class="valija-timer ${urgente ? 'valija-timer-urgente' : ''}">${restante}</div>
+      </div>
+      <p class="tienda-nota">Los pasajeros están completando sus categorías. Cortá cuando quieras.</p>
+      <button class="btn-primary tuti-basta" onclick="tutiBasta()">¡BASTA!</button>
+      <p class="link-chico" onclick="tutiTerminarJuego()">Terminar el juego</p>`;
+    return;
+  }
+
+  // fase === 'resultados'
+  const puntos = tutiCalcularPuntajes();
+  const asientos = Object.keys(tutiRespuestas).sort((a,b) => (puntos[b]||0) - (puntos[a]||0));
+  cont.innerHTML = `
+    <div class="section-label">Panel del organizador</div>
+    <div class="hero" style="margin-top:8px;">
+      <h2>Letra ${tuti.letra}</h2>
+      <p>Categorías: ${(tuti.categorias || []).join(', ')}</p>
+    </div>
+    <div class="tuti-resultados">${tutiFilasResultadosHTML(asientos, puntos)}</div>
+    <button class="btn-primary" onclick="tutiEmpezarRonda()">Nueva ronda</button>
+    <p class="link-chico" onclick="tutiTerminarJuego()">Terminar el juego</p>`;
+}
+
+function renderTutifrutiPasajero(cont){
+  if(tuti.fase === 'lobby'){
+    const anotado = miAsiento && tutiAnotados[String(miAsiento)] != null;
+    cont.innerHTML = `
+      ${bingoPinHTML()}
+      <div class="hero" style="margin-top:8px;">
         <h2>🔤 Tutti Frutti</h2>
         <p>Categorías: ${TUTI_CATEGORIAS.join(', ')}. Sale una letra al azar y competís contra el resto de los pasajeros de este viaje: si a alguien más se le ocurre la misma palabra, vale menos.</p>
       </div>
-      <button class="btn-primary" onclick="tutiEmpezarRonda()">Empezar ronda</button>`;
+      ${anotado
+        ? '<p class="tienda-nota">Ya estás anotado. Esperá a que el organizador arranque la ronda.</p>'
+        : `<button class="btn-primary" onclick="tutiAnotarme()">Anotarme para jugar</button>`}
+      ${tutiListaAnotadosHTML(false)}`;
     return;
   }
 
@@ -189,7 +289,7 @@ function renderTutifruti(){
         <div class="valija-timer ${urgente ? 'valija-timer-urgente' : ''}">${restante}</div>
       </div>
       <div class="tuti-categorias">${categoriasHTML}</div>
-      <button class="btn-primary tuti-basta" onclick="tutiBasta()">¡BASTA!</button>`;
+      <p class="tienda-nota">El organizador corta la ronda cuando quiera con "¡Basta!".</p>`;
     return;
   }
 
@@ -198,7 +298,18 @@ function renderTutifruti(){
   tutiSumarMisMonedasSiCorresponde(puntos);
   const asientos = Object.keys(tutiRespuestas).sort((a,b) => (puntos[b]||0) - (puntos[a]||0));
 
-  const filasHTML = asientos.length ? asientos.map(a => {
+  cont.innerHTML = `
+    <div class="hero" style="margin-top:8px;">
+      <h2>Letra ${tuti.letra}</h2>
+      <p>Categorías: ${(tuti.categorias || []).join(', ')}</p>
+    </div>
+    <div class="tuti-resultados">${tutiFilasResultadosHTML(asientos, puntos)}</div>
+    <p class="tienda-nota">Esperá a que el organizador arranque otra ronda.</p>`;
+}
+
+function tutiFilasResultadosHTML(asientos, puntos){
+  if(!asientos.length) return '<p style="color:var(--gray);font-size:13px;">Nadie llegó a contestar esta ronda.</p>';
+  return asientos.map(a => {
     const nombre = tutiRespuestas[a].nombre || `Asiento ${a}`;
     const esMio = a === String(miAsiento);
     const detalle = (tuti.categorias || []).map(cat => {
@@ -211,13 +322,5 @@ function renderTutifruti(){
         <div class="rank-name">${esMio ? 'Vos' : nombre}<span class="tuti-resultado-detalle">${detalle}</span></div>
         <div class="rank-pts">${puntos[a] || 0} pts</div>
       </div>`;
-  }).join('') : '<p style="color:var(--gray);font-size:13px;">Nadie llegó a contestar esta ronda.</p>';
-
-  cont.innerHTML = `
-    <div class="hero" style="margin-top:8px;">
-      <h2>Letra ${tuti.letra}</h2>
-      <p>Categorías: ${(tuti.categorias || []).join(', ')}</p>
-    </div>
-    <div class="tuti-resultados">${filasHTML}</div>
-    <button class="btn-primary" onclick="tutiEmpezarRonda()">Nueva ronda</button>`;
+  }).join('');
 }
