@@ -425,6 +425,7 @@ body{
 .tuti-resultados{display:flex; flex-direction:column; gap:8px; margin-bottom:16px;}
 .tuti-resultado-detalle{font-size:11px; color:var(--gray); font-weight:400; display:flex; flex-wrap:wrap; gap:6px; margin-top:2px;}
 .tuti-resultado-palabra{background:var(--cream); border-radius:6px; padding:1px 6px;}
+.tuti-resultado-invalida{background:#F4E6E0; color:#A8432F; text-decoration:line-through;}
 .tuti-sorteo{display:flex; flex-direction:column; align-items:center; gap:22px; margin:32px 0;}
 .tuti-sorteo-letra{
   width:140px; height:140px; border-radius:28px;

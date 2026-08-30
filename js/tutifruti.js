@@ -1,9 +1,11 @@
 // Tutti Frutti / Basta: se juega contra el resto de los pasajeros del mismo
 // código de viaje, reusando el patrón de sala compartida por Firebase que ya
 // usa Bingo. Los pasajeros se anotan en una lista (como en Bingo), y es el
-// organizador quien decide cuándo cerrar la anotación y arrancar, quien corta
-// la ronda tocando "¡BASTA!", y quien puede terminar el juego en cualquier
-// momento. El organizador no juega, solo administra — igual que en Bingo.
+// organizador quien decide cuándo cerrar la anotación y arrancar el sorteo.
+// Cualquiera que esté jugando (no solo el organizador) puede cortar la ronda
+// tocando "¡BASTA!" apenas termine — como en el juego real, donde gana
+// también el que es más rápido. El organizador puede terminar el juego en
+// cualquier momento. El organizador no juega, solo administra.
 
 const TUTI_CATEGORIAS = ['Nombre', 'Animal', 'Color', 'Comida', 'País', 'Cosa'];
 // Se excluyen solo las letras realmente difíciles en español (Ñ, W, X).
@@ -12,6 +14,44 @@ const TUTI_DURACION_SEG = 75;
 const TUTI_PUNTOS_UNICA = 10;
 const TUTI_PUNTOS_REPETIDA = 5;
 const TUTI_SORTEO_INTERVALO_MS = 90;
+
+// Listas cerradas para las categorías donde tiene sentido validar de verdad
+// (un país es un país, un color es un color). "Nombre", "Comida" y "Cosa"
+// quedan sin lista porque son categorías abiertas — prácticamente cualquier
+// sustantivo es una "cosa" válida, y no hay forma honesta de listar todos
+// los nombres de persona o comidas posibles sin rechazar respuestas buenas.
+const TUTI_LISTA_PAISES = ['afganistan','albania','alemania','andorra','angola','arabia saudita','argelia','argentina','armenia','australia','austria','azerbaiyan','bahamas','bangladés','barbados','bahrein','belgica','belice','benin','bielorrusia','birmania','bolivia','bosnia','botsuana','brasil','brunei','bulgaria','burkina faso','burundi','butan','cabo verde','camboya','camerun','canada','catar','chad','chile','china','chipre','colombia','comoras','corea del norte','corea del sur','costa de marfil','costa rica','croacia','cuba','dinamarca','dominica','ecuador','egipto','el salvador','emiratos arabes unidos','eritrea','eslovaquia','eslovenia','espana','estados unidos','estonia','etiopia','filipinas','finlandia','fiyi','francia','gabon','gambia','georgia','ghana','granada','grecia','guatemala','guyana','guinea','guinea ecuatorial','guinea-bisau','haiti','honduras','hungria','india','indonesia','irak','iran','irlanda','islandia','israel','italia','jamaica','japon','jordania','kazajistan','kenia','kirguistan','kiribati','kuwait','laos','lesoto','letonia','libano','liberia','libia','liechtenstein','lituania','luxemburgo','madagascar','malasia','malaui','maldivas','mali','malta','marruecos','mauricio','mauritania','mexico','micronesia','moldavia','monaco','mongolia','montenegro','mozambique','namibia','nauru','nepal','nicaragua','niger','nigeria','noruega','nueva zelanda','oman','paises bajos','pakistan','palaos','panama','papua nueva guinea','paraguay','peru','polonia','portugal','reino unido','republica centroafricana','republica checa','republica dominicana','ruanda','rumania','rusia','samoa','san marino','senegal','serbia','seychelles','sierra leona','singapur','siria','somalia','sri lanka','sudafrica','sudan','sudan del sur','suecia','suiza','surinam','tailandia','tanzania','tayikistan','timor oriental','togo','tonga','trinidad y tobago','tunez','turkmenistan','turquia','tuvalu','ucrania','uganda','uruguay','uzbekistan','vanuatu','vaticano','venezuela','vietnam','yemen','yibuti','zambia','zimbabue'];
+
+const TUTI_LISTA_COLORES = ['rojo','azul','verde','amarillo','naranja','violeta','morado','rosa','rosado','negro','blanco','gris','marron','celeste','turquesa','dorado','plateado','beige','bordo','magenta','lila','purpura','ocre','caqui','aguamarina','coral','cian','indigo','ambar','cobre','bronce','crema','salmon','fucsia'];
+
+const TUTI_LISTA_ANIMALES = ['perro','gato','leon','tigre','elefante','jirafa','cebra','oso','lobo','zorro','conejo','ardilla','ballena','delfin','tiburon','aguila','condor','loro','tucan','serpiente','cocodrilo','tortuga','rana','sapo','arana','hormiga','abeja','mariposa','mosca','mosquito','caballo','vaca','toro','cerdo','chancho','oveja','cabra','gallina','gallo','pato','ganso','pavo','burro','mono','gorila','koala','canguro','pinguino','foca','morsa','rinoceronte','hipopotamo','jaguar','puma','guepardo','hiena','camello','llama','alpaca','vicuna','yaguarete','murcielago','erizo','topo','raton','rata','hamster','cobaya','iguana','camaleon','lagartija','lagarto','salamandra','buho','lechuza','halcon','buitre','cuervo','gaviota','cisne','flamenco','pelicano','colibri','pinzon','canario','jilguero','avestruz','emu','faisan','codorniz','perdiz','urraca','golondrina','guacamayo','cacatua','oruga','escarabajo','cucaracha','grillo','saltamontes','libelula','luciernaga','medusa','pulpo','calamar','cangrejo','langosta','camaron','almeja','mejillon','ostra','orca','narval','raya','atun','salmon','trucha','bagre','pirana','anguila','caracol','babosa','gusano','lombriz','huron','comadreja','nutria','castor','marmota','puercoespin','armadillo','perezoso','zarigueya','mapache','tejon','gacela','antilope','bufalo','bisonte','alce','reno','ciervo','venado','jabali','chita','leopardo','pantera','lince','ocelote','dromedario','avispa','termita','piojo','pulga','garrapata'];
+
+function tutiListaDeCategoria(categoria){
+  if(categoria === 'País') return TUTI_LISTA_PAISES;
+  if(categoria === 'Color') return TUTI_LISTA_COLORES;
+  if(categoria === 'Animal') return TUTI_LISTA_ANIMALES;
+  return null;
+}
+
+// Para categorías con lista cerrada, la palabra tiene que parecerse a algo
+// de la lista (tolera tildes/errores de tipeo con la misma lógica que
+// Pensamiento Lateral). Para "Nombre", "Comida" y "Cosa" no hay lista
+// posible, así que se acepta cualquier palabra que pase el resto de los
+// chequeos.
+function tutiPerteneceACategoria(categoria, norm){
+  const lista = tutiListaDeCategoria(categoria);
+  if(!lista) return true;
+  return lista.some(item => palabrasCercanas(norm, tutiNormalizar(item)));
+}
+
+// Filtro barato para un error de tipeo muy común: escribir la letra de la
+// ronda como recordatorio y seguir de largo sin borrarla (ej. "AAdriana" en
+// vez de "Adriana"). Se excluye "ll" porque es un dígrafo real del español
+// (llama, lluvia, llave...), no un error.
+function tutiEsTipeoDobleLetra(norm){
+  if(norm.length < 2 || norm[0] !== norm[1]) return false;
+  return norm.slice(0, 2) !== 'll';
+}
 
 let tuti = null;
 let tutiAnotados = {}; // { asiento: nombre } de quienes se anotaron para jugar
@@ -159,10 +199,11 @@ function tutiActualizarRespuesta(categoria, valor){
   tutiRefRespuestas().child(String(miAsiento)).set({ nombre: miNombre, palabras: tutiMisRespuestas });
 }
 
-// Solo el organizador corta la ronda para todos, igual que gritar "¡Basta!"
-// en la mesa real siendo quien maneja el juego.
+// Cualquiera que esté jugando puede gritar "¡Basta!" apenas termine — como
+// en el juego real, corta la ronda para todos al instante. El organizador
+// también puede, por si nadie termina o hay que avanzar igual.
 function tutiBasta(){
-  if(!bingoEsOrganizador()) return;
+  if(!miAsiento) return;
   if(!tuti || tuti.fase !== 'jugando') return;
   tutiCerrarRonda();
 }
@@ -196,9 +237,10 @@ function tutiTickTimer(){
     const restante = tutiTiempoRestante();
     if(restante <= 0){
       clearInterval(tutiTimerId);
-      // Solo el organizador cierra la ronda: si es el celular de un pasajero,
-      // se limita a esperar a que el estado cambie solo por Firebase.
-      if(bingoEsOrganizador()) tutiCerrarRonda();
+      // Cualquier celular conectado puede cerrar la ronda al llegar a cero
+      // (no solo el organizador), para que no quede colgada si su celular
+      // está en otra pantalla justo en ese momento.
+      if(miAsiento) tutiCerrarRonda();
       return;
     }
     if(restante <= 5) reproducirTono('tick');
@@ -216,30 +258,41 @@ function tutiTickTimer(){
   }, 1000);
 }
 
-// Palabra válida: no vacía y arranca con la letra de la ronda (sin importar
-// tilde/mayúscula). Entre las válidas de una misma categoría, si nadie más
-// escribió lo mismo suma el puntaje completo; si se repite con otro
-// pasajero, suma la mitad (como en el juego real, donde empatar resta).
+// Palabra válida: no vacía, arranca con la letra de la ronda, no es un
+// típico error de tipeo de letra duplicada, y si la categoría tiene lista
+// cerrada (País, Color, Animal) tiene que parecerse a algo de esa lista —
+// así "AAdriana" en Animal ya no vale. Entre las válidas de una misma
+// categoría, si nadie más escribió lo mismo suma el puntaje completo; si se
+// repite con otro pasajero, suma la mitad. Devuelve tanto el total por
+// asiento como el detalle por palabra (para mostrar cuánto sacó cada una y
+// con cuántos coincidió).
 function tutiCalcularPuntajes(){
   const letra = tutiNormalizar(tuti.letra);
   const asientos = Object.keys(tutiRespuestas);
   const puntos = {};
-  asientos.forEach(a => { puntos[a] = 0; });
+  const detalle = {};
+  asientos.forEach(a => { puntos[a] = 0; detalle[a] = {}; });
 
   (tuti.categorias || []).forEach(categoria => {
     const porAsiento = asientos.map(a => {
       const palabra = (tutiRespuestas[a].palabras || {})[categoria] || '';
       const norm = tutiNormalizar(palabra);
-      const valida = norm.length > 0 && norm.startsWith(letra);
+      const valida = norm.length > 0
+        && norm.startsWith(letra)
+        && !tutiEsTipeoDobleLetra(norm)
+        && tutiPerteneceACategoria(categoria, norm);
       return { asiento: a, palabra, norm, valida };
     });
     porAsiento.forEach(entrada => {
-      if(!entrada.valida) return;
-      const repetida = porAsiento.some(otra => otra.asiento !== entrada.asiento && otra.valida && otra.norm === entrada.norm);
-      puntos[entrada.asiento] += repetida ? TUTI_PUNTOS_REPETIDA : TUTI_PUNTOS_UNICA;
+      const coincidencias = entrada.valida
+        ? porAsiento.filter(otra => otra.valida && otra.norm === entrada.norm).length
+        : 0;
+      const pts = entrada.valida ? (coincidencias > 1 ? TUTI_PUNTOS_REPETIDA : TUTI_PUNTOS_UNICA) : 0;
+      puntos[entrada.asiento] += pts;
+      detalle[entrada.asiento][categoria] = { puntos: pts, coincidencias };
     });
   });
-  return puntos;
+  return { puntos, detalle };
 }
 
 function tutiSumarMisMonedasSiCorresponde(puntos){
@@ -330,7 +383,7 @@ function renderTutifrutiOrganizador(cont){
   }
 
   // fase === 'resultados'
-  const puntos = tutiCalcularPuntajes();
+  const { puntos, detalle } = tutiCalcularPuntajes();
   const asientos = Object.keys(tutiRespuestas).sort((a,b) => (puntos[b]||0) - (puntos[a]||0));
   cont.innerHTML = `
     <div class="section-label">Panel del organizador</div>
@@ -338,7 +391,7 @@ function renderTutifrutiOrganizador(cont){
       <h2>Letra ${tuti.letra}</h2>
       <p>Categorías: ${(tuti.categorias || []).join(', ')}</p>
     </div>
-    <div class="tuti-resultados">${tutiFilasResultadosHTML(asientos, puntos)}</div>
+    <div class="tuti-resultados">${tutiFilasResultadosHTML(asientos, puntos, detalle)}</div>
     <button class="btn-primary" onclick="tutiIniciarSorteo()">Sortear letra para otra ronda</button>
     ${tutiUsadasHTML()}
     <p class="link-chico" onclick="tutiTerminarJuego()">Terminar el juego</p>`;
@@ -399,13 +452,14 @@ function renderTutifrutiPasajero(cont){
         <div class="valija-timer ${urgente ? 'valija-timer-urgente' : ''}" id="tuti-timer">${restante}</div>
       </div>
       <div class="tuti-categorias">${categoriasHTML}</div>
-      <p class="tienda-nota">El organizador corta la ronda cuando quiera con "¡Basta!".</p>
+      <button class="btn-primary tuti-basta" onclick="tutiBasta()">¡BASTA!</button>
+      <p class="tienda-nota">Tocá "¡Basta!" apenas termines — corta la ronda para todos, así ganás por rapidez.</p>
       ${anotado ? '' : `<p class="tienda-nota">Podés jugar esta ronda igual, pero anotate para que el organizador sepa que seguís en las próximas.</p>${tutiAnotarseHTML(anotado)}`}`;
     return;
   }
 
   // fase === 'resultados'
-  const puntos = tutiCalcularPuntajes();
+  const { puntos, detalle } = tutiCalcularPuntajes();
   tutiSumarMisMonedasSiCorresponde(puntos);
   const asientos = Object.keys(tutiRespuestas).sort((a,b) => (puntos[b]||0) - (puntos[a]||0));
 
@@ -414,24 +468,28 @@ function renderTutifrutiPasajero(cont){
       <h2>Letra ${tuti.letra}</h2>
       <p>Categorías: ${(tuti.categorias || []).join(', ')}</p>
     </div>
-    <div class="tuti-resultados">${tutiFilasResultadosHTML(asientos, puntos)}</div>
+    <div class="tuti-resultados">${tutiFilasResultadosHTML(asientos, puntos, detalle)}</div>
     ${tutiAnotarseHTML(anotado)}
     <p class="tienda-nota">Esperá a que el organizador arranque otra ronda.</p>`;
 }
 
-function tutiFilasResultadosHTML(asientos, puntos){
+function tutiFilasResultadosHTML(asientos, puntos, detalle){
   if(!asientos.length) return '<p style="color:var(--gray);font-size:13px;">Nadie llegó a contestar esta ronda.</p>';
   return asientos.map(a => {
     const nombre = tutiRespuestas[a].nombre || `Asiento ${a}`;
     const esMio = a === String(miAsiento);
-    const detalle = (tuti.categorias || []).map(cat => {
+    const detalleAsiento = (detalle && detalle[a]) || {};
+    const palabrasHTML = (tuti.categorias || []).map(cat => {
       const palabra = (tutiRespuestas[a].palabras || {})[cat] || '—';
-      return `<span class="tuti-resultado-palabra">${palabra}</span>`;
+      const info = detalleAsiento[cat] || { puntos: 0, coincidencias: 0 };
+      const coincidenciaTxt = info.coincidencias > 1 ? ` (+${info.coincidencias - 1})` : '';
+      const clase = info.puntos === 0 ? 'tuti-resultado-palabra tuti-resultado-invalida' : 'tuti-resultado-palabra';
+      return `<span class="${clase}">${palabra} · ${info.puntos}${coincidenciaTxt}</span>`;
     }).join('');
     return `
       <div class="rank-row ${esMio ? 'me' : ''}">
         <div class="rank-avatar">${nombre.slice(0,2).toUpperCase()}</div>
-        <div class="rank-name">${esMio ? 'Vos' : nombre}<span class="tuti-resultado-detalle">${detalle}</span></div>
+        <div class="rank-name">${esMio ? 'Vos' : nombre}<span class="tuti-resultado-detalle">${palabrasHTML}</span></div>
         <div class="rank-pts">${puntos[a] || 0} pts</div>
       </div>`;
   }).join('');
