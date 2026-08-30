@@ -23,7 +23,15 @@ let tutiSorteoTimerId = null;
 let tutiLetraSorteo = null; // letra que se ve "pasando" en el cartel, mientras el organizador no para el sorteo
 
 function tutiEstadoVacio(){
-  return { fase: 'lobby', letra: null, categorias: [], inicio: null, duracionSeg: TUTI_DURACION_SEG, ronda: 0 };
+  return { fase: 'lobby', letra: null, categorias: [], inicio: null, duracionSeg: TUTI_DURACION_SEG, ronda: 0, usadas: [] };
+}
+
+// Letras que todavía no salieron en este juego. Si ya salieron todas, se
+// vuelve a barajar el mazo completo en vez de trabarse sin letras.
+function tutiLetrasDisponibles(){
+  const usadas = (tuti && tuti.usadas) || [];
+  const disponibles = TUTI_LETRAS.filter(l => !usadas.includes(l));
+  return disponibles.length ? disponibles : TUTI_LETRAS.slice();
 }
 
 function tutiRefEstado(){ return db.ref(`salas/${codigoViaje}/tutifruti/estado`); }
@@ -94,7 +102,8 @@ function tutiIniciarSorteo(){
 // organizador ve su propio cartel pasando hasta que lo para.
 function tutiAsegurarSorteoAnimado(){
   if(tutiSorteoTimerId) return;
-  tutiLetraSorteo = TUTI_LETRAS[Math.floor(Math.random() * TUTI_LETRAS.length)];
+  const disponibles = tutiLetrasDisponibles();
+  tutiLetraSorteo = disponibles[Math.floor(Math.random() * disponibles.length)];
   tutiSorteoTimerId = setInterval(() => {
     const vistaActiva = document.querySelector('.view.active');
     if(!vistaActiva || vistaActiva.id !== 'view-tutifruti' || !tuti || tuti.fase !== 'sorteando'){
@@ -102,19 +111,25 @@ function tutiAsegurarSorteoAnimado(){
       tutiSorteoTimerId = null;
       return;
     }
-    tutiLetraSorteo = TUTI_LETRAS[Math.floor(Math.random() * TUTI_LETRAS.length)];
+    const disp = tutiLetrasDisponibles();
+    tutiLetraSorteo = disp[Math.floor(Math.random() * disp.length)];
     renderTutifruti();
   }, TUTI_SORTEO_INTERVALO_MS);
 }
 
 // El organizador para el cartel: la letra que haya quedado a la vista es la
-// que arranca la ronda para todos.
+// que arranca la ronda para todos, y queda marcada como usada para que no
+// vuelva a salir hasta que se termine el mazo de letras.
 function tutiPararSorteo(){
   if(!bingoEsOrganizador()) return;
   if(!tuti || tuti.fase !== 'sorteando') return;
   clearInterval(tutiSorteoTimerId);
   tutiSorteoTimerId = null;
-  const letra = tutiLetraSorteo || TUTI_LETRAS[Math.floor(Math.random() * TUTI_LETRAS.length)];
+  const disponibles = tutiLetrasDisponibles();
+  const letra = (tutiLetraSorteo && disponibles.includes(tutiLetraSorteo)) ? tutiLetraSorteo : disponibles[Math.floor(Math.random() * disponibles.length)];
+  // Si tutiLetrasDisponibles() tuvo que rebarajar el mazo completo, arranca
+  // la lista de usadas de cero; si no, sigue sumando a la que ya había.
+  const usadasPrevias = disponibles.length === TUTI_LETRAS.length ? [] : (tuti.usadas || []);
   const nuevaRonda = (tuti.ronda || 0) + 1;
   db.ref(`salas/${codigoViaje}/tutifruti/estado`).set({
     fase: 'jugando',
@@ -123,6 +138,7 @@ function tutiPararSorteo(){
     inicio: Date.now(),
     duracionSeg: TUTI_DURACION_SEG,
     ronda: nuevaRonda,
+    usadas: [...usadasPrevias, letra],
   });
 }
 
@@ -231,6 +247,12 @@ function renderTutifruti(){
   renderTutifrutiPasajero(cont);
 }
 
+function tutiUsadasHTML(){
+  const usadas = (tuti && tuti.usadas) || [];
+  if(!usadas.length) return '';
+  return `<p class="tienda-nota">Letras que ya salieron: ${usadas.join(', ')}</p>`;
+}
+
 function tutiListaAnotadosHTML(conBotonSacar){
   const asientos = tutiOrdenAsientos(tutiAnotados);
   if(!asientos.length) return '<p style="color:var(--gray);font-size:13px;">Todavía no se anotó nadie.</p>';
@@ -263,7 +285,8 @@ function renderTutifrutiOrganizador(cont){
       <div class="tuti-sorteo">
         <div class="tuti-sorteo-letra">${tutiLetraSorteo || '?'}</div>
         <button class="btn-primary" onclick="tutiPararSorteo()">¡Parar acá!</button>
-      </div>`;
+      </div>
+      ${tutiUsadasHTML()}`;
     return;
   }
 
@@ -296,6 +319,7 @@ function renderTutifrutiOrganizador(cont){
     </div>
     <div class="tuti-resultados">${tutiFilasResultadosHTML(asientos, puntos)}</div>
     <button class="btn-primary" onclick="tutiIniciarSorteo()">Sortear letra para otra ronda</button>
+    ${tutiUsadasHTML()}
     <p class="link-chico" onclick="tutiTerminarJuego()">Terminar el juego</p>`;
 }
 
@@ -320,7 +344,8 @@ function renderTutifrutiPasajero(cont){
       <div class="hero" style="margin-top:8px;">
         <h2>🎲 Sorteando la letra...</h2>
         <p>El organizador está eligiendo con qué letra arranca esta ronda.</p>
-      </div>`;
+      </div>
+      ${tutiUsadasHTML()}`;
     return;
   }
 
