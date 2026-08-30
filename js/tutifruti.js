@@ -100,6 +100,10 @@ function tutiIniciarSorteo(){
 // Arranca (o retoma, si el organizador salió y volvió a entrar) la animación
 // local del cartel. Es solo visual: no se sincroniza entre celulares, cada
 // organizador ve su propio cartel pasando hasta que lo para.
+//
+// Importante: NO redibuja toda la pantalla en cada letra (eso hacía que el
+// botón "¡Parar acá!" se recreara todo el tiempo y a veces el toque no
+// llegara a registrarse). Solo actualiza el texto de la letra a mano.
 function tutiAsegurarSorteoAnimado(){
   if(tutiSorteoTimerId) return;
   const disponibles = tutiLetrasDisponibles();
@@ -113,7 +117,9 @@ function tutiAsegurarSorteoAnimado(){
     }
     const disp = tutiLetrasDisponibles();
     tutiLetraSorteo = disp[Math.floor(Math.random() * disp.length)];
-    renderTutifruti();
+    const letraEl = document.getElementById('tuti-sorteo-letra');
+    if(letraEl) letraEl.textContent = tutiLetraSorteo;
+    else renderTutifruti();
   }, TUTI_SORTEO_INTERVALO_MS);
 }
 
@@ -191,7 +197,17 @@ function tutiTickTimer(){
       return;
     }
     if(restante <= 5) reproducirTono('tick');
-    renderTutifruti();
+    // No redibuja toda la pantalla: eso destruía y recreaba los inputs de
+    // categorías cada segundo, y en el celular se sentía como que "no
+    // dejaba escribir" (el teclado se cerraba solo a mitad de tipear).
+    // Solo actualiza el número del cronómetro a mano.
+    const timerEl = document.getElementById('tuti-timer');
+    if(timerEl){
+      timerEl.textContent = restante;
+      timerEl.classList.toggle('valija-timer-urgente', restante <= 5);
+    } else {
+      renderTutifruti();
+    }
   }, 1000);
 }
 
@@ -283,7 +299,7 @@ function renderTutifrutiOrganizador(cont){
       <div class="section-label">Panel del organizador</div>
       <p class="tienda-nota">Mirá el cartel y pará cuando quieras — esa letra es la de la ronda.</p>
       <div class="tuti-sorteo">
-        <div class="tuti-sorteo-letra">${tutiLetraSorteo || '?'}</div>
+        <div class="tuti-sorteo-letra" id="tuti-sorteo-letra">${tutiLetraSorteo || '?'}</div>
         <button class="btn-primary" onclick="tutiPararSorteo()">¡Parar acá!</button>
       </div>
       ${tutiUsadasHTML()}`;
@@ -300,7 +316,7 @@ function renderTutifrutiOrganizador(cont){
           <span class="valija-topbar-emoji">🔤</span>
           <span class="valija-topbar-destino">Con la letra ${tuti.letra}</span>
         </div>
-        <div class="valija-timer ${urgente ? 'valija-timer-urgente' : ''}">${restante}</div>
+        <div class="valija-timer ${urgente ? 'valija-timer-urgente' : ''}" id="tuti-timer">${restante}</div>
       </div>
       <p class="tienda-nota">Los pasajeros están completando sus categorías. Cortá cuando quieras.</p>
       <button class="btn-primary tuti-basta" onclick="tutiBasta()">¡BASTA!</button>
@@ -375,7 +391,7 @@ function renderTutifrutiPasajero(cont){
           <span class="valija-topbar-emoji">🔤</span>
           <span class="valija-topbar-destino">Con la letra ${tuti.letra}</span>
         </div>
-        <div class="valija-timer ${urgente ? 'valija-timer-urgente' : ''}">${restante}</div>
+        <div class="valija-timer ${urgente ? 'valija-timer-urgente' : ''}" id="tuti-timer">${restante}</div>
       </div>
       <div class="tuti-categorias">${categoriasHTML}</div>
       <p class="tienda-nota">El organizador corta la ronda cuando quiera con "¡Basta!".</p>
