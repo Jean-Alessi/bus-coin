@@ -365,8 +365,8 @@ function comprobarPensamiento(){
   if(esRespuestaCorrecta(intento, p.clave)){
     reproducirTono('correcto');
     const puntos = Math.max(0, 10 - pensPreguntasUsadas.size);
-    ganarFichas(puntos);
-    mostrarToast(`+${puntos} fichas, ¡lo resolviste!`, 'gain');
+    ganarMonedas(puntos);
+    mostrarToast(`+${puntos} monedas, ¡lo resolviste!`, 'gain');
     pensFase = 'acertado';
   } else {
     reproducirTono('incorrecto');

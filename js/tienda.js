@@ -37,7 +37,7 @@ function guardarListaPremios(){
 }
 
 // Congela quiénes son el 1° a 4° puesto en este momento, para que el orden
-// de elección no cambie aunque alguien siga sumando fichas mientras eligen.
+// de elección no cambie aunque alguien siga sumando monedas mientras eligen.
 // Lee el ranking directo de Firebase (no el caché local) para no quedarse
 // con datos viejos si justo llegó un punto nuevo.
 function habilitarEleccionPremios(){
@@ -79,7 +79,7 @@ function renderPremiosViaje(){
       <button class="btn-primary" onclick="habilitarEleccionPremios()">Habilitar elección de premios</button>` : '';
 
     cont.innerHTML = `
-      <p class="tienda-nota">Jugá y sumá fichas en Trivia, Acertijos y Bingo. Al terminar el viaje, del 1° al 4° puesto del ranking eligen premio en orden.</p>
+      <p class="tienda-nota">Jugá y sumá monedas en Trivia, Acertijos y Bingo. Al terminar el viaje, del 1° al 4° puesto del ranking eligen premio en orden.</p>
       <div class="section-label">Premios de este viaje</div>
       ${lista.map(p => `<div class="pack pack-podio"><div class="info"><h3>${p}</h3></div></div>`).join('')}
       ${editorHTML}`;

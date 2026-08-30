@@ -232,8 +232,8 @@ function responder(i){
   });
   if(i === p.correcta){
     reproducirTono('correcto');
-    ganarFichas(5);
-    mostrarToast('+5 fichas por acertar', 'gain');
+    ganarMonedas(5);
+    mostrarToast('+5 monedas por acertar', 'gain');
   } else {
     reproducirTono('incorrecto');
     mostrarToast('Esa no era... ¡a la próxima!');

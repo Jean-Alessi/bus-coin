@@ -81,11 +81,53 @@ function normalizarRespuestaAcertijo(s){
     .trim();
 }
 
+// Distancia de edición (Levenshtein): cuántas letras hay que cambiar/agregar/
+// sacar para pasar de una palabra a la otra. Sirve para aceptar errores de
+// tipeo o variantes cercanas (ej. "acostumbra" contra la clave "costumbre").
+function distanciaEdicionPalabras(a, b){
+  const m = a.length, n = b.length;
+  const fila = new Array(n + 1);
+  for(let j = 0; j <= n; j++) fila[j] = j;
+  for(let i = 1; i <= m; i++){
+    let anterior = fila[0];
+    fila[0] = i;
+    for(let j = 1; j <= n; j++){
+      const temp = fila[j];
+      fila[j] = a[i-1] === b[j-1] ? anterior : 1 + Math.min(anterior, fila[j], fila[j-1]);
+      anterior = temp;
+    }
+  }
+  return fila[n];
+}
+
+// Cuánto margen de diferencia se tolera según el largo de la palabra: casi
+// nada para palabras cortas (para no aceptar cualquier cosa), un poco más
+// para las largas (para perdonar errores de tipeo o una letra distinta).
+function toleranciaPorLargoPalabra(largo){
+  if(largo <= 4) return 0;
+  if(largo <= 7) return 1;
+  return 2;
+}
+
+function palabrasCercanas(a, b){
+  if(!a || !b) return false;
+  if(a === b) return true;
+  if(a.length >= 4 && b.length >= 4 && (a.includes(b) || b.includes(a))) return true;
+  return distanciaEdicionPalabras(a, b) <= toleranciaPorLargoPalabra(Math.min(a.length, b.length));
+}
+
 function esRespuestaCorrecta(intento, respuesta){
   const a = normalizarRespuestaAcertijo(intento);
   const b = normalizarRespuestaAcertijo(respuesta);
   if(!a) return false;
-  return a === b || b.includes(a) || a.includes(b);
+  if(a === b || b.includes(a) || a.includes(b)) return true;
+  // Para respuestas largas (Pensamiento Lateral, donde se escribe una teoría
+  // entera en vez de solo la palabra clave): alcanza con que cada palabra de
+  // la clave aparezca, igual o parecida, en algún lugar de lo que escribieron.
+  const palabrasClave = b.split(' ').filter(Boolean);
+  const palabrasIntento = a.split(' ').filter(Boolean);
+  if(!palabrasClave.length) return false;
+  return palabrasClave.every(pc => palabrasIntento.some(pi => palabrasCercanas(pi, pc)));
 }
 
 function iniciarAcertijos(){
@@ -152,8 +194,8 @@ function comprobarAcertijo(){
   const a = acertijosSesion[acertijoIndex];
   if(esRespuestaCorrecta(intento, a.respuesta)){
     reproducirTono('correcto');
-    ganarFichas(5);
-    mostrarToast('+5 fichas, ¡la sacaron!', 'gain');
+    ganarMonedas(5);
+    mostrarToast('+5 monedas, ¡la sacaron!', 'gain');
     acertijoFase = 'acertado';
   } else {
     reproducirTono('incorrecto');

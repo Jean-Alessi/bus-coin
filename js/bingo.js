@@ -174,8 +174,8 @@ function bingoSortear(){
     const asientoGanador = Object.keys(bingoCartones).find(a => (bingoCartones[a].marcados || []).length === BINGO_CANTIDAD_CARTON);
     if(asientoGanador){
       bingo.ganadorCartonLleno = asientoGanador;
-      ganarFichas(100);
-      mostrarToast(`¡BINGO para ${bingoPasajeros[asientoGanador]}! +100 fichas`, 'gain');
+      ganarMonedas(100);
+      mostrarToast(`¡BINGO para ${bingoPasajeros[asientoGanador]}! +100 monedas`, 'gain');
     }
   }
   bingoGuardarEstado();

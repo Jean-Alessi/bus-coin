@@ -1,6 +1,6 @@
 // 4+1: se muestran 4 imágenes que remiten a una misma palabra, y hay que
 // armarla tocando fichas con letras (incluye letras de más, como señuelo).
-// Acertar vale 10 fichas; probar una combinación equivocada no resta nada.
+// Acertar vale 10 monedas; probar una combinación equivocada no resta nada.
 
 const CUATROUNO_PALABRAS = [
   { palabra: 'AMOR', imagenes: ['🤗', '🏖️❤️', '💍', '👶💋'], letras: ['A', 'M', 'O', 'R', 'S', 'T', 'L', 'P', 'E', 'I', 'U', 'G'], pista: 'Sentimiento universal y profundo.' },
@@ -69,8 +69,8 @@ function comprobarCuatrouno(){
   const armada = cuatrounoConstruida.map(i => cuatrounoFichas[i].letra).join('');
   if(armada === p.palabra){
     reproducirTono('bonus');
-    ganarFichas(10);
-    mostrarToast('+10 fichas, ¡la sacaron!', 'gain');
+    ganarMonedas(10);
+    mostrarToast('+10 monedas, ¡la sacaron!', 'gain');
     cuatrounoFase = 'acertado';
   } else {
     reproducirTono('incorrecto');

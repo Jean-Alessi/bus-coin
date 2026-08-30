@@ -19,7 +19,8 @@ const ICONOS = {
   reloj: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',
   interrogacion: '<path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7v.5"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="9"/>',
   rompecabezas: '<path d="M4 9h3.2a1.8 1.8 0 1 1 3.6 0H14V4.8a1.8 1.8 0 1 1 3.6 0V9H20v3.2a1.8 1.8 0 1 0 0 3.6V20h-3.2a1.8 1.8 0 1 0-3.6 0H9v-4.2a1.8 1.8 0 1 0-3.6 0H4V9Z"/>',
-  valija: '<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><line x1="3" y1="13" x2="21" y2="13"/>'
+  valija: '<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><line x1="3" y1="13" x2="21" y2="13"/>',
+  letraA: '<path d="M12 4 5 20"/><path d="M12 4l7 16"/><path d="M8 15h8"/>'
 };
 
 function icono(nombre, size){

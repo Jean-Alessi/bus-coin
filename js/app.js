@@ -1,9 +1,9 @@
-// Fichas coin: no se compran con plata, todos arrancan en cero. Solo suben
+// Monedas Bus Coin: no se compran con plata, todos arrancan en cero. Solo suben
 // jugando (respuesta correcta o ganar el Bingo); un error no resta nada, no
 // hay riesgo, solo premio por acertar. Sirven para el ranking del viaje y
 // para elegir premio al final. Como nadie paga para jugar, esto es una
 // promoción de fidelización gratuita, no un juego de azar.
-let fichasCoin = 0;
+let monedasCoin = 0;
 
 const EMOJIS_DISPONIBLES = ['😊', '😎', '🤩', '😜', '🥳', '😇', '🤠', '🧐', '🤓', '💃', '🕺', '😴'];
 
@@ -14,6 +14,7 @@ const TARJETAS_JUEGOS = [
   { icon: "libro", title: "Ahorcado", sub: "Adiviná la palabra letra por letra", view: "ahorcado" },
   { icon: "lupa", title: "4+1", sub: "4 imágenes, 1 palabra", view: "cuatrouno" },
   { icon: "valija", title: "Valija Express", sub: "20 segundos para armar la valija", view: "valija" },
+  { icon: "letraA", title: "Tutti Frutti", sub: "Una letra, contra el resto del viaje", view: "tutifruti" },
   { icon: "bingo", title: "Bingo", sub: "Números del 00 al 99, con su significado", view: "bingo" },
 ];
 
@@ -255,7 +256,7 @@ function goHome(){
   bingoRegistrarPasajero(miAsiento, miNombre);
   showView('home');
   document.getElementById('tabbar').style.display = 'flex';
-  actualizarFichasEnPantalla();
+  actualizarMonedasEnPantalla();
   renderHome();
 }
 
@@ -284,7 +285,7 @@ function renderJuegos(){
 
 // Trivia, Acertijos y Bingo se entran desde el menú "Juegos" del tabbar, así
 // que esa pestaña queda marcada activa aunque ya estés adentro de uno de ellos.
-const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'bingo'];
+const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'tutifruti', 'bingo'];
 
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -300,6 +301,7 @@ function showView(name){
   if(name==='ahorcado'){ iniciarAhorcado(); }
   if(name==='cuatrouno'){ iniciarCuatrouno(); }
   if(name==='valija'){ iniciarValija(); }
+  if(name==='tutifruti'){ iniciarTutifruti(); }
   if(name==='ranking'){ renderRanking(); }
   if(name==='bingo'){ iniciarBingo(); }
   if(name==='tienda'){ iniciarPremios(); }
@@ -322,32 +324,32 @@ function renderRanking(){
   });
 }
 
-function totalFichas(){
-  return fichasCoin;
+function totalMonedas(){
+  return monedasCoin;
 }
 
-function alcanzanFichas(cantidad){
-  return fichasCoin >= cantidad;
+function alcanzanMonedas(cantidad){
+  return monedasCoin >= cantidad;
 }
 
-function gastarFichas(cantidad){
-  if(!alcanzanFichas(cantidad)) return false;
-  fichasCoin -= cantidad;
-  actualizarFichasEnPantalla();
+function gastarMonedas(cantidad){
+  if(!alcanzanMonedas(cantidad)) return false;
+  monedasCoin -= cantidad;
+  actualizarMonedasEnPantalla();
   return true;
 }
 
-function actualizarFichasEnPantalla(){
-  const el = document.getElementById('fichas-coin-count');
-  if(el) el.textContent = fichasCoin;
+function actualizarMonedasEnPantalla(){
+  const el = document.getElementById('monedas-coin-count');
+  if(el) el.textContent = monedasCoin;
 }
 
-// Suma o resta fichas jugando (positivo si acertaste, negativo si no);
+// Suma o resta monedas jugando (positivo si acertaste, negativo si no);
 // nunca deja el saldo en negativo. Todos los juegos usan esto, Bingo incluido,
 // y también actualiza el Ranking en vivo con el mismo número.
-function ganarFichas(cantidad){
-  fichasCoin = Math.max(0, fichasCoin + cantidad);
-  actualizarFichasEnPantalla();
+function ganarMonedas(cantidad){
+  monedasCoin = Math.max(0, monedasCoin + cantidad);
+  actualizarMonedasEnPantalla();
   if(!miNombre || !miAsiento) return;
   const asiento = String(miAsiento);
   const puntosActuales = (rankingPuntos[asiento] && rankingPuntos[asiento].pts) || 0;
@@ -358,7 +360,7 @@ function ganarFichas(cantidad){
 
 let toastTimer = null;
 
-// tipo: 'gain' (sumaste fichas), 'loss' (perdiste fichas) o vacío (neutro).
+// tipo: 'gain' (sumaste monedas), 'loss' (perdiste monedas) o vacío (neutro).
 // Dura más y se resalta con color para que dé tiempo a leerlo antes de
 // pasar a la siguiente pregunta.
 function mostrarToast(msg, tipo){

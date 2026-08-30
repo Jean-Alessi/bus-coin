@@ -1,13 +1,13 @@
 // Ahorcado clásico: adivinan una palabra letra por letra desde un teclado
 // en pantalla. 6 errores permitidos antes de perder la palabra. Acertarla
-// completa vale 10 fichas; un error no resta nada, solo achica el margen.
+// completa vale 10 monedas; un error no resta nada, solo achica el margen.
 
 const AHORCADO_PALABRAS = [
   'COLECTIVO', 'VENTANILLA', 'VALIJA', 'ASIENTO', 'CHOFER', 'RUTA', 'PEAJE',
   'MOCHILA', 'PASAJERO', 'EQUIPAJE', 'DESTINO', 'VIAJE', 'BOLETO', 'PARADA',
   'AUTOPISTA', 'PAISAJE', 'MONTAÑA', 'CUMPLEAÑOS', 'AMISTAD', 'VACACIONES',
   'AVENTURA', 'RECUERDO', 'FOTOGRAFIA', 'CANCION', 'GUITARRA', 'BINGO',
-  'TRIVIA', 'SORPRESA', 'FICHAS', 'PREMIO', 'GASEOSA', 'ALMOHADA', 'MANTA',
+  'TRIVIA', 'SORPRESA', 'MONEDAS', 'PREMIO', 'GASEOSA', 'ALMOHADA', 'MANTA',
   'AURICULARES', 'CELULAR', 'CARGADOR', 'MAPA', 'BRUJULA', 'LINTERNA',
   'TERMO', 'MATE', 'GUIA', 'EXCURSION', 'HOSPEDAJE', 'RESERVA', 'ITINERARIO',
   'ANECDOTA', 'KILOMETRO', 'ESTACION', 'SIESTA',
@@ -71,8 +71,8 @@ function adivinarLetraAhorcado(letra){
     const completa = palabra.split('').every(ch => ahorcadoLetrasAdivinadas.has(ch));
     if(completa){
       reproducirTono('bonus');
-      ganarFichas(10);
-      mostrarToast('+10 fichas, ¡la adivinaste!', 'gain');
+      ganarMonedas(10);
+      mostrarToast('+10 monedas, ¡la adivinaste!', 'gain');
       ahorcadoFase = 'ganado';
     } else {
       reproducirTono('correcto');
