@@ -323,18 +323,26 @@ function renderTutifrutiOrganizador(cont){
     <p class="link-chico" onclick="tutiTerminarJuego()">Terminar el juego</p>`;
 }
 
+// El pasajero puede anotarse en cualquier momento, esté la fase que esté —
+// antes solo se podía anotar en el lobby, y si abría Tutti Frutti mientras
+// ya había una ronda en curso o en resultados, se quedaba sin ninguna forma
+// de sumarse para la próxima.
+function tutiAnotarseHTML(anotado, mensajeSiYaAnotado){
+  if(anotado) return mensajeSiYaAnotado ? `<p class="tienda-nota">${mensajeSiYaAnotado}</p>` : '';
+  return `<button class="btn-primary" onclick="tutiAnotarme()">Anotarme para jugar</button>`;
+}
+
 function renderTutifrutiPasajero(cont){
+  const anotado = !!(miAsiento && tutiAnotados[String(miAsiento)] != null);
+
   if(tuti.fase === 'lobby'){
-    const anotado = miAsiento && tutiAnotados[String(miAsiento)] != null;
     cont.innerHTML = `
       ${bingoPinHTML()}
       <div class="hero" style="margin-top:8px;">
         <h2>🔤 Tutti Frutti</h2>
         <p>Categorías: ${TUTI_CATEGORIAS.join(', ')}. Sale una letra al azar y competís contra el resto de los pasajeros de este viaje: si a alguien más se le ocurre la misma palabra, vale menos.</p>
       </div>
-      ${anotado
-        ? '<p class="tienda-nota">Ya estás anotado. Esperá a que el organizador arranque la ronda.</p>'
-        : `<button class="btn-primary" onclick="tutiAnotarme()">Anotarme para jugar</button>`}
+      ${tutiAnotarseHTML(anotado, 'Ya estás anotado. Esperá a que el organizador arranque la ronda.')}
       ${tutiListaAnotadosHTML(false)}`;
     return;
   }
@@ -345,6 +353,7 @@ function renderTutifrutiPasajero(cont){
         <h2>🎲 Sorteando la letra...</h2>
         <p>El organizador está eligiendo con qué letra arranca esta ronda.</p>
       </div>
+      ${tutiAnotarseHTML(anotado, 'Ya estás anotado.')}
       ${tutiUsadasHTML()}`;
     return;
   }
@@ -369,7 +378,8 @@ function renderTutifrutiPasajero(cont){
         <div class="valija-timer ${urgente ? 'valija-timer-urgente' : ''}">${restante}</div>
       </div>
       <div class="tuti-categorias">${categoriasHTML}</div>
-      <p class="tienda-nota">El organizador corta la ronda cuando quiera con "¡Basta!".</p>`;
+      <p class="tienda-nota">El organizador corta la ronda cuando quiera con "¡Basta!".</p>
+      ${anotado ? '' : `<p class="tienda-nota">Podés jugar esta ronda igual, pero anotate para que el organizador sepa que seguís en las próximas.</p>${tutiAnotarseHTML(anotado)}`}`;
     return;
   }
 
@@ -384,6 +394,7 @@ function renderTutifrutiPasajero(cont){
       <p>Categorías: ${(tuti.categorias || []).join(', ')}</p>
     </div>
     <div class="tuti-resultados">${tutiFilasResultadosHTML(asientos, puntos)}</div>
+    ${tutiAnotarseHTML(anotado)}
     <p class="tienda-nota">Esperá a que el organizador arranque otra ronda.</p>`;
 }
 
