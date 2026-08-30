@@ -16,28 +16,35 @@ const TUTI_PUNTOS_REPETIDA = 5;
 const TUTI_SORTEO_INTERVALO_MS = 90;
 
 // Listas cerradas para las categorías donde tiene sentido validar de verdad
-// (un país es un país, un color es un color). "Nombre", "Comida" y "Cosa"
-// quedan sin lista porque son categorías abiertas — prácticamente cualquier
-// sustantivo es una "cosa" válida, y no hay forma honesta de listar todos
-// los nombres de persona o comidas posibles sin rechazar respuestas buenas.
+// (un país es un país, un color es un color, la comida cotidiana es más o
+// menos acotada). "Nombre" y "Cosa" quedan sin lista porque son categorías
+// realmente abiertas — prácticamente cualquier sustantivo es una "cosa"
+// válida, y no hay forma de listar todos los nombres de persona posibles.
+//
+// Ninguna lista va a estar completa nunca (siempre va a faltar algún animal
+// o comida real) — por eso el organizador puede corregir a mano cualquier
+// palabra en la pantalla de resultados, igual que se haría en la mesa real
+// discutiendo entre todos si una respuesta vale o no.
 const TUTI_LISTA_PAISES = ['afganistan','albania','alemania','andorra','angola','arabia saudita','argelia','argentina','armenia','australia','austria','azerbaiyan','bahamas','bangladés','barbados','bahrein','belgica','belice','benin','bielorrusia','birmania','bolivia','bosnia','botsuana','brasil','brunei','bulgaria','burkina faso','burundi','butan','cabo verde','camboya','camerun','canada','catar','chad','chile','china','chipre','colombia','comoras','corea del norte','corea del sur','costa de marfil','costa rica','croacia','cuba','dinamarca','dominica','ecuador','egipto','el salvador','emiratos arabes unidos','eritrea','eslovaquia','eslovenia','espana','estados unidos','estonia','etiopia','filipinas','finlandia','fiyi','francia','gabon','gambia','georgia','ghana','granada','grecia','guatemala','guyana','guinea','guinea ecuatorial','guinea-bisau','haiti','honduras','hungria','india','indonesia','irak','iran','irlanda','islandia','israel','italia','jamaica','japon','jordania','kazajistan','kenia','kirguistan','kiribati','kuwait','laos','lesoto','letonia','libano','liberia','libia','liechtenstein','lituania','luxemburgo','madagascar','malasia','malaui','maldivas','mali','malta','marruecos','mauricio','mauritania','mexico','micronesia','moldavia','monaco','mongolia','montenegro','mozambique','namibia','nauru','nepal','nicaragua','niger','nigeria','noruega','nueva zelanda','oman','paises bajos','pakistan','palaos','panama','papua nueva guinea','paraguay','peru','polonia','portugal','reino unido','republica centroafricana','republica checa','republica dominicana','ruanda','rumania','rusia','samoa','san marino','senegal','serbia','seychelles','sierra leona','singapur','siria','somalia','sri lanka','sudafrica','sudan','sudan del sur','suecia','suiza','surinam','tailandia','tanzania','tayikistan','timor oriental','togo','tonga','trinidad y tobago','tunez','turkmenistan','turquia','tuvalu','ucrania','uganda','uruguay','uzbekistan','vanuatu','vaticano','venezuela','vietnam','yemen','yibuti','zambia','zimbabue'];
 
 const TUTI_LISTA_COLORES = ['rojo','azul','verde','amarillo','naranja','violeta','morado','rosa','rosado','negro','blanco','gris','marron','celeste','turquesa','dorado','plateado','beige','bordo','magenta','lila','purpura','ocre','caqui','aguamarina','coral','cian','indigo','ambar','cobre','bronce','crema','salmon','fucsia'];
 
-const TUTI_LISTA_ANIMALES = ['perro','gato','leon','tigre','elefante','jirafa','cebra','oso','lobo','zorro','conejo','ardilla','ballena','delfin','tiburon','aguila','condor','loro','tucan','serpiente','cocodrilo','tortuga','rana','sapo','arana','hormiga','abeja','mariposa','mosca','mosquito','caballo','vaca','toro','cerdo','chancho','oveja','cabra','gallina','gallo','pato','ganso','pavo','burro','mono','gorila','koala','canguro','pinguino','foca','morsa','rinoceronte','hipopotamo','jaguar','puma','guepardo','hiena','camello','llama','alpaca','vicuna','yaguarete','murcielago','erizo','topo','raton','rata','hamster','cobaya','iguana','camaleon','lagartija','lagarto','salamandra','buho','lechuza','halcon','buitre','cuervo','gaviota','cisne','flamenco','pelicano','colibri','pinzon','canario','jilguero','avestruz','emu','faisan','codorniz','perdiz','urraca','golondrina','guacamayo','cacatua','oruga','escarabajo','cucaracha','grillo','saltamontes','libelula','luciernaga','medusa','pulpo','calamar','cangrejo','langosta','camaron','almeja','mejillon','ostra','orca','narval','raya','atun','salmon','trucha','bagre','pirana','anguila','caracol','babosa','gusano','lombriz','huron','comadreja','nutria','castor','marmota','puercoespin','armadillo','perezoso','zarigueya','mapache','tejon','gacela','antilope','bufalo','bisonte','alce','reno','ciervo','venado','jabali','chita','leopardo','pantera','lince','ocelote','dromedario','avispa','termita','piojo','pulga','garrapata'];
+const TUTI_LISTA_ANIMALES = ['perro','gato','leon','tigre','elefante','jirafa','cebra','oso','lobo','zorro','conejo','ardilla','ballena','delfin','tiburon','aguila','condor','loro','tucan','serpiente','vibora','cascabel','cocodrilo','tortuga','rana','sapo','arana','tarantula','escorpion','hormiga','abeja','mariposa','mosca','mosquito','caballo','vaca','toro','cerdo','chancho','oveja','cabra','gallina','gallo','pato','ganso','pavo','burro','mono','gorila','koala','canguro','pinguino','foca','morsa','rinoceronte','hipopotamo','jaguar','puma','guepardo','hiena','camello','llama','alpaca','vicuna','yaguarete','murcielago','erizo','topo','raton','rata','hamster','cobaya','periquito','iguana','camaleon','lagartija','lagarto','salamandra','buho','lechuza','halcon','buitre','cuervo','gaviota','cisne','flamenco','pelicano','colibri','pinzon','canario','jilguero','avestruz','emu','faisan','codorniz','perdiz','urraca','golondrina','guacamayo','cacatua','ornitorrinco','oruga','escarabajo','cucaracha','grillo','saltamontes','libelula','luciernaga','medusa','pulpo','calamar','cangrejo','langosta','camaron','almeja','mejillon','ostra','orca','narval','raya','atun','salmon','trucha','bagre','pirana','anguila','caracol','babosa','gusano','lombriz','huron','comadreja','nutria','castor','marmota','puercoespin','armadillo','perezoso','zarigueya','mapache','tejon','gacela','antilope','bufalo','bisonte','alce','reno','ciervo','venado','jabali','chita','leopardo','pantera','lince','ocelote','dromedario','avispa','termita','piojo','pulga','garrapata'];
+
+const TUTI_LISTA_COMIDAS = ['manzana','banana','platano','naranja','mandarina','limon','pomelo','uva','sandia','melon','durazno','damasco','ciruela','pera','kiwi','ananá','pina','frutilla','frambuesa','arandano','cereza','higo','mango','papaya','coco','palta','aguacate','tomate','lechuga','papa','patata','batata','zanahoria','cebolla','ajo','pimiento','morron','berenjena','zapallo','calabaza','zapallito','choclo','maiz','arveja','poroto','lenteja','garbanzo','espinaca','acelga','brocoli','coliflor','apio','pepino','rabanito','remolacha','arroz','fideos','pasta','pan','pizza','empanada','milanesa','asado','bife','carne','pollo','pescado','cerdo','chorizo','morcilla','jamon','salame','queso','huevo','manteca','mayonesa','ketchup','mostaza','sal','azucar','miel','mermelada','chocolate','torta','budin','alfajor','galleta','helado','flan','gelatina','yogur','leche','cafe','te','mate','agua','jugo','gaseosa','vino','cerveza','sidra','fernet','pochoclo','hamburguesa','sandwich','tarta','tallarines','ravioles','noquis','locro','humita','tamal','sopa','guiso','puchero','ensalada','vinagre','aceite','harina','avena','cereal','nueces','almendras','mani','castanas','pasas'];
 
 function tutiListaDeCategoria(categoria){
   if(categoria === 'País') return TUTI_LISTA_PAISES;
   if(categoria === 'Color') return TUTI_LISTA_COLORES;
   if(categoria === 'Animal') return TUTI_LISTA_ANIMALES;
+  if(categoria === 'Comida') return TUTI_LISTA_COMIDAS;
   return null;
 }
 
 // Para categorías con lista cerrada, la palabra tiene que parecerse a algo
 // de la lista (tolera tildes/errores de tipeo con la misma lógica que
-// Pensamiento Lateral). Para "Nombre", "Comida" y "Cosa" no hay lista
-// posible, así que se acepta cualquier palabra que pase el resto de los
-// chequeos.
+// Pensamiento Lateral). Para "Nombre" y "Cosa" no hay lista posible, así que
+// se acepta cualquier palabra que pase el resto de los chequeos.
 function tutiPerteneceACategoria(categoria, norm){
   const lista = tutiListaDeCategoria(categoria);
   if(!lista) return true;
@@ -57,8 +64,9 @@ let tuti = null;
 let tutiAnotados = {}; // { asiento: nombre } de quienes se anotaron para jugar
 let tutiRespuestas = {}; // respuestas de TODOS los pasajeros de la ronda actual, por asiento
 let tutiMisRespuestas = {}; // borrador local (para no perder lo tipeado si el estado se actualiza)
+let tutiOverrides = {}; // { asiento: { categoria: true/false } } — corrección manual del organizador
 let tutiTimerId = null;
-let tutiRondaPuntuada = null; // evita sumar monedas dos veces por la misma ronda
+let tutiUltimoTotalPremiado = {}; // { ronda: monedas ya entregadas } — para sumar solo la diferencia si el organizador corrige después
 let tutiSorteoTimerId = null;
 let tutiLetraSorteo = null; // letra que se ve "pasando" en el cartel, mientras el organizador no para el sorteo
 
@@ -77,6 +85,7 @@ function tutiLetrasDisponibles(){
 function tutiRefEstado(){ return db.ref(`salas/${codigoViaje}/tutifruti/estado`); }
 function tutiRefAnotados(){ return db.ref(`salas/${codigoViaje}/tutifruti/anotados`); }
 function tutiRefRespuestas(){ return db.ref(`salas/${codigoViaje}/tutifruti/rondas/${tuti ? tuti.ronda : 0}/respuestas`); }
+function tutiRefOverrides(){ return db.ref(`salas/${codigoViaje}/tutifruti/rondas/${tuti ? tuti.ronda : 0}/overrides`); }
 
 // Sin tildes/mayúsculas, para comparar palabras de forma justa aunque las
 // escriban distinto (con o sin acento).
@@ -95,8 +104,12 @@ function iniciarTutifruti(){
       if(anterior && anterior.ronda !== tuti.ronda){
         tutiMisRespuestas = {};
         tutiRespuestas = {};
+        tutiOverrides = {};
       }
-      if(tuti.fase === 'jugando') tutiEscucharRespuestas();
+      if(tuti.fase === 'jugando'){
+        tutiEscucharRespuestas();
+        tutiEscucharOverrides();
+      }
       tutiTickTimer();
       renderTutifruti();
     });
@@ -119,6 +132,25 @@ function tutiEscucharRespuestas(){
     tutiRespuestas = snap.val() || {};
     if(tuti && tuti.fase === 'resultados') renderTutifruti();
   });
+}
+
+// El organizador puede corregir a mano cualquier palabra en resultados
+// (ninguna lista de animales/comidas/países va a estar completa nunca).
+// Todos escuchan este cambio para que el puntaje se actualice en cada
+// celular al instante.
+function tutiEscucharOverrides(){
+  tutiRefOverrides().on('value', snap => {
+    tutiOverrides = snap.val() || {};
+    if(tuti && tuti.fase === 'resultados') renderTutifruti();
+  });
+}
+
+// Cambia a mano si una palabra puntual cuenta como válida o no. Solo el
+// organizador puede hacerlo, viendo lo mismo que ve todo el mundo en
+// pantalla — como cuando en la mesa real el grupo discute si algo vale.
+function tutiAlternarValidez(asiento, categoria, valeAhora){
+  if(!bingoEsOrganizador()) return;
+  tutiRefOverrides().child(String(asiento)).child(categoria).set(!valeAhora);
 }
 
 function tutiAnotarme(){
@@ -277,11 +309,15 @@ function tutiCalcularPuntajes(){
     const porAsiento = asientos.map(a => {
       const palabra = (tutiRespuestas[a].palabras || {})[categoria] || '';
       const norm = tutiNormalizar(palabra);
-      const valida = norm.length > 0
+      const validaAuto = norm.length > 0
         && norm.startsWith(letra)
         && !tutiEsTipeoDobleLetra(norm)
         && tutiPerteneceACategoria(categoria, norm);
-      return { asiento: a, palabra, norm, valida };
+      // Ninguna lista es perfecta: el organizador puede haber corregido
+      // esta palabra puntual a mano, y eso pisa el resultado automático.
+      const forzado = tutiOverrides[a] && tutiOverrides[a][categoria];
+      const valida = typeof forzado === 'boolean' ? forzado : validaAuto;
+      return { asiento: a, palabra, norm, valida, corregida: typeof forzado === 'boolean' };
     });
     porAsiento.forEach(entrada => {
       const coincidencias = entrada.valida
@@ -289,17 +325,25 @@ function tutiCalcularPuntajes(){
         : 0;
       const pts = entrada.valida ? (coincidencias > 1 ? TUTI_PUNTOS_REPETIDA : TUTI_PUNTOS_UNICA) : 0;
       puntos[entrada.asiento] += pts;
-      detalle[entrada.asiento][categoria] = { puntos: pts, coincidencias };
+      detalle[entrada.asiento][categoria] = { puntos: pts, coincidencias, corregida: entrada.corregida };
     });
   });
   return { puntos, detalle };
 }
 
+// Suma solo la diferencia contra lo que ya se le dio en esta ronda, para
+// que si el organizador corrige una palabra después (y el puntaje sube),
+// la moneda de más se sume igual. Si el puntaje baja por una corrección, no
+// se le quita nada de lo que ya vio sumado — la economía de monedas de la
+// app nunca resta, solo premia.
 function tutiSumarMisMonedasSiCorresponde(puntos){
-  if(!miAsiento || tutiRondaPuntuada === tuti.ronda) return;
-  tutiRondaPuntuada = tuti.ronda;
+  if(!miAsiento) return;
   const total = puntos[String(miAsiento)] || 0;
-  if(total > 0) ganarMonedas(total);
+  const yaSumado = tutiUltimoTotalPremiado[tuti.ronda] || 0;
+  if(total > yaSumado){
+    ganarMonedas(total - yaSumado);
+  }
+  tutiUltimoTotalPremiado[tuti.ronda] = Math.max(total, yaSumado);
 }
 
 function tutiOrdenAsientos(mapa){
@@ -475,16 +519,24 @@ function renderTutifrutiPasajero(cont){
 
 function tutiFilasResultadosHTML(asientos, puntos, detalle){
   if(!asientos.length) return '<p style="color:var(--gray);font-size:13px;">Nadie llegó a contestar esta ronda.</p>';
+  const esOrganizador = bingoEsOrganizador();
   return asientos.map(a => {
     const nombre = tutiRespuestas[a].nombre || `Asiento ${a}`;
     const esMio = a === String(miAsiento);
     const detalleAsiento = (detalle && detalle[a]) || {};
     const palabrasHTML = (tuti.categorias || []).map(cat => {
       const palabra = (tutiRespuestas[a].palabras || {})[cat] || '—';
-      const info = detalleAsiento[cat] || { puntos: 0, coincidencias: 0 };
+      const info = detalleAsiento[cat] || { puntos: 0, coincidencias: 0, corregida: false };
       const coincidenciaTxt = info.coincidencias > 1 ? ` (+${info.coincidencias - 1})` : '';
-      const clase = info.puntos === 0 ? 'tuti-resultado-palabra tuti-resultado-invalida' : 'tuti-resultado-palabra';
-      return `<span class="${clase}">${palabra} · ${info.puntos}${coincidenciaTxt}</span>`;
+      const vale = info.puntos > 0;
+      const clase = 'tuti-resultado-palabra' + (vale ? '' : ' tuti-resultado-invalida') + (info.corregida ? ' tuti-resultado-corregida' : '');
+      // El organizador puede corregir cualquier palabra a mano: ninguna
+      // lista de países/animales/comidas va a cubrir todo, así que si algo
+      // quedó mal marcado, lo arregla tocándolo (como discutirlo en la mesa).
+      const control = (esOrganizador && palabra !== '—')
+        ? `<button class="tuti-override-btn" onclick="tutiAlternarValidez('${a}','${cat}',${vale})" title="${vale ? 'Marcar inválida' : 'Marcar válida'}">${vale ? '✕' : '✓'}</button>`
+        : '';
+      return `<span class="${clase}">${palabra} · ${info.puntos}${coincidenciaTxt}${control}</span>`;
     }).join('');
     return `
       <div class="rank-row ${esMio ? 'me' : ''}">

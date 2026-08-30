@@ -426,6 +426,12 @@ body{
 .tuti-resultado-detalle{font-size:11px; color:var(--gray); font-weight:400; display:flex; flex-wrap:wrap; gap:6px; margin-top:2px;}
 .tuti-resultado-palabra{background:var(--cream); border-radius:6px; padding:1px 6px;}
 .tuti-resultado-invalida{background:#F4E6E0; color:#A8432F; text-decoration:line-through;}
+.tuti-resultado-corregida{box-shadow:0 0 0 1.5px var(--orange) inset;}
+.tuti-override-btn{
+  border:none; background:rgba(0,0,0,0.08); color:inherit; cursor:pointer;
+  width:16px; height:16px; border-radius:50%; font-size:10px; line-height:1;
+  margin-left:4px; padding:0; vertical-align:middle; font-family:'Poppins',sans-serif;
+}
 .tuti-sorteo{display:flex; flex-direction:column; align-items:center; gap:22px; margin:32px 0;}
 .tuti-sorteo-letra{
   width:140px; height:140px; border-radius:28px;
