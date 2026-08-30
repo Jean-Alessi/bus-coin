@@ -71,7 +71,7 @@ let tutiSorteoTimerId = null;
 let tutiLetraSorteo = null; // letra que se ve "pasando" en el cartel, mientras el organizador no para el sorteo
 
 function tutiEstadoVacio(){
-  return { fase: 'lobby', letra: null, categorias: [], inicio: null, duracionSeg: TUTI_DURACION_SEG, ronda: 0, usadas: [] };
+  return { fase: 'lobby', letra: null, categorias: [], inicio: null, duracionSeg: TUTI_DURACION_SEG, ronda: 0, usadas: [], cortadoPor: null };
 }
 
 // Letras que todavía no salieron en este juego. Si ya salieron todas, se
@@ -233,15 +233,17 @@ function tutiActualizarRespuesta(categoria, valor){
 
 // Cualquiera que esté jugando puede gritar "¡Basta!" apenas termine — como
 // en el juego real, corta la ronda para todos al instante. El organizador
-// también puede, por si nadie termina o hay que avanzar igual.
+// también puede, por si nadie termina o hay que avanzar igual. Se guarda
+// quién la cortó, para mostrarlo en resultados (no siempre es el que más
+// puntaje sacó — cortar rápido no siempre significa contestar mejor).
 function tutiBasta(){
   if(!miAsiento) return;
   if(!tuti || tuti.fase !== 'jugando') return;
-  tutiCerrarRonda();
+  tutiCerrarRonda({ asiento: miAsiento, nombre: miNombre });
 }
 
-function tutiCerrarRonda(){
-  tutiRefEstado().child('fase').set('resultados');
+function tutiCerrarRonda(cortadoPor){
+  tutiRefEstado().update({ fase: 'resultados', cortadoPor: cortadoPor || null });
 }
 
 // El organizador puede terminar el juego en cualquier momento: se borra todo
@@ -371,6 +373,16 @@ function tutiUsadasHTML(){
   return `<p class="tienda-nota">Letras que ya salieron: ${usadas.join(', ')}</p>`;
 }
 
+// Quién cortó la ronda no siempre es quien más puntaje termina sacando —
+// cortar rápido no significa contestar mejor. Se muestra aparte para que
+// quede claro quién la gritó, aunque el orden de la lista sea por puntaje.
+function tutiCortadoPorHTML(){
+  const cortadoPor = tuti && tuti.cortadoPor;
+  if(!cortadoPor) return '<p>Se acabó el tiempo — nadie llegó a tocar "¡Basta!".</p>';
+  const quien = String(cortadoPor.asiento) === String(miAsiento) ? 'Vos' : cortadoPor.nombre;
+  return `<p>¡Basta! lo cortó <strong>${quien}</strong>.</p>`;
+}
+
 function tutiListaAnotadosHTML(conBotonSacar){
   const asientos = tutiOrdenAsientos(tutiAnotados);
   if(!asientos.length) return '<p style="color:var(--gray);font-size:13px;">Todavía no se anotó nadie.</p>';
@@ -434,6 +446,7 @@ function renderTutifrutiOrganizador(cont){
     <div class="hero" style="margin-top:8px;">
       <h2>Letra ${tuti.letra}</h2>
       <p>Categorías: ${(tuti.categorias || []).join(', ')}</p>
+      ${tutiCortadoPorHTML()}
     </div>
     <div class="tuti-resultados">${tutiFilasResultadosHTML(asientos, puntos, detalle)}</div>
     <button class="btn-primary" onclick="tutiIniciarSorteo()">Sortear letra para otra ronda</button>
@@ -511,6 +524,7 @@ function renderTutifrutiPasajero(cont){
     <div class="hero" style="margin-top:8px;">
       <h2>Letra ${tuti.letra}</h2>
       <p>Categorías: ${(tuti.categorias || []).join(', ')}</p>
+      ${tutiCortadoPorHTML()}
     </div>
     <div class="tuti-resultados">${tutiFilasResultadosHTML(asientos, puntos, detalle)}</div>
     ${tutiAnotarseHTML(anotado)}
