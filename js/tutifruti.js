@@ -6,12 +6,12 @@
 // momento. El organizador no juega, solo administra — igual que en Bingo.
 
 const TUTI_CATEGORIAS = ['Nombre', 'Animal', 'Color', 'Comida', 'País', 'Cosa'];
-// Se excluyen letras difíciles en español (K, Ñ, W, X, Y, Z) para que siempre
-// se pueda completar alguna categoría.
-const TUTI_LETRAS = ['A','B','C','D','E','F','G','H','I','J','L','M','N','O','P','Q','R','S','T','U','V'];
+// Se excluyen solo las letras realmente difíciles en español (Ñ, W, X).
+const TUTI_LETRAS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','Y','Z'];
 const TUTI_DURACION_SEG = 75;
 const TUTI_PUNTOS_UNICA = 10;
 const TUTI_PUNTOS_REPETIDA = 5;
+const TUTI_SORTEO_INTERVALO_MS = 90;
 
 let tuti = null;
 let tutiAnotados = {}; // { asiento: nombre } de quienes se anotaron para jugar
@@ -19,6 +19,8 @@ let tutiRespuestas = {}; // respuestas de TODOS los pasajeros de la ronda actual
 let tutiMisRespuestas = {}; // borrador local (para no perder lo tipeado si el estado se actualiza)
 let tutiTimerId = null;
 let tutiRondaPuntuada = null; // evita sumar monedas dos veces por la misma ronda
+let tutiSorteoTimerId = null;
+let tutiLetraSorteo = null; // letra que se ve "pasando" en el cartel, mientras el organizador no para el sorteo
 
 function tutiEstadoVacio(){
   return { fase: 'lobby', letra: null, categorias: [], inicio: null, duracionSeg: TUTI_DURACION_SEG, ronda: 0 };
@@ -78,10 +80,41 @@ function tutiSacarAnotado(asiento){
   tutiRefAnotados().child(String(asiento)).remove();
 }
 
-function tutiEmpezarRonda(){
+// El organizador manda a sortear: pasa a la fase "sorteando" (los pasajeros
+// ven que se está por elegir letra) y en SU pantalla arranca el cartel con
+// las letras pasando rápido, listo para que las pare cuando quiera.
+function tutiIniciarSorteo(){
   if(!bingoEsOrganizador()) return;
   if(!tuti || (tuti.fase !== 'lobby' && tuti.fase !== 'resultados')) return;
-  const letra = TUTI_LETRAS[Math.floor(Math.random() * TUTI_LETRAS.length)];
+  tutiRefEstado().child('fase').set('sorteando');
+}
+
+// Arranca (o retoma, si el organizador salió y volvió a entrar) la animación
+// local del cartel. Es solo visual: no se sincroniza entre celulares, cada
+// organizador ve su propio cartel pasando hasta que lo para.
+function tutiAsegurarSorteoAnimado(){
+  if(tutiSorteoTimerId) return;
+  tutiLetraSorteo = TUTI_LETRAS[Math.floor(Math.random() * TUTI_LETRAS.length)];
+  tutiSorteoTimerId = setInterval(() => {
+    const vistaActiva = document.querySelector('.view.active');
+    if(!vistaActiva || vistaActiva.id !== 'view-tutifruti' || !tuti || tuti.fase !== 'sorteando'){
+      clearInterval(tutiSorteoTimerId);
+      tutiSorteoTimerId = null;
+      return;
+    }
+    tutiLetraSorteo = TUTI_LETRAS[Math.floor(Math.random() * TUTI_LETRAS.length)];
+    renderTutifruti();
+  }, TUTI_SORTEO_INTERVALO_MS);
+}
+
+// El organizador para el cartel: la letra que haya quedado a la vista es la
+// que arranca la ronda para todos.
+function tutiPararSorteo(){
+  if(!bingoEsOrganizador()) return;
+  if(!tuti || tuti.fase !== 'sorteando') return;
+  clearInterval(tutiSorteoTimerId);
+  tutiSorteoTimerId = null;
+  const letra = tutiLetraSorteo || TUTI_LETRAS[Math.floor(Math.random() * TUTI_LETRAS.length)];
   const nuevaRonda = (tuti.ronda || 0) + 1;
   db.ref(`salas/${codigoViaje}/tutifruti/estado`).set({
     fase: 'jugando',
@@ -188,6 +221,7 @@ function renderTutifruti(){
   if(!cont || !tuti) return;
   document.getElementById('tutifruti-sub').textContent =
     tuti.fase === 'lobby' ? 'Contra el resto del viaje' :
+    tuti.fase === 'sorteando' ? 'Sorteando la letra...' :
     tuti.fase === 'jugando' ? `Letra ${tuti.letra}` : 'Resultados de la ronda';
 
   if(bingoEsOrganizador()){
@@ -217,7 +251,19 @@ function renderTutifrutiOrganizador(cont){
         <p>Categorías: ${TUTI_CATEGORIAS.join(', ')}. Los pasajeros se anotan acá abajo; arrancá cuando estén todos.</p>
       </div>
       ${tutiListaAnotadosHTML(true)}
-      <button class="btn-primary" onclick="tutiEmpezarRonda()" ${asientos.length ? '' : 'disabled'}>Cerrar anotación y empezar</button>`;
+      <button class="btn-primary" onclick="tutiIniciarSorteo()" ${asientos.length ? '' : 'disabled'}>Cerrar anotación y sortear letra</button>`;
+    return;
+  }
+
+  if(tuti.fase === 'sorteando'){
+    tutiAsegurarSorteoAnimado();
+    cont.innerHTML = `
+      <div class="section-label">Panel del organizador</div>
+      <p class="tienda-nota">Mirá el cartel y pará cuando quieras — esa letra es la de la ronda.</p>
+      <div class="tuti-sorteo">
+        <div class="tuti-sorteo-letra">${tutiLetraSorteo || '?'}</div>
+        <button class="btn-primary" onclick="tutiPararSorteo()">¡Parar acá!</button>
+      </div>`;
     return;
   }
 
@@ -249,7 +295,7 @@ function renderTutifrutiOrganizador(cont){
       <p>Categorías: ${(tuti.categorias || []).join(', ')}</p>
     </div>
     <div class="tuti-resultados">${tutiFilasResultadosHTML(asientos, puntos)}</div>
-    <button class="btn-primary" onclick="tutiEmpezarRonda()">Nueva ronda</button>
+    <button class="btn-primary" onclick="tutiIniciarSorteo()">Sortear letra para otra ronda</button>
     <p class="link-chico" onclick="tutiTerminarJuego()">Terminar el juego</p>`;
 }
 
@@ -266,6 +312,15 @@ function renderTutifrutiPasajero(cont){
         ? '<p class="tienda-nota">Ya estás anotado. Esperá a que el organizador arranque la ronda.</p>'
         : `<button class="btn-primary" onclick="tutiAnotarme()">Anotarme para jugar</button>`}
       ${tutiListaAnotadosHTML(false)}`;
+    return;
+  }
+
+  if(tuti.fase === 'sorteando'){
+    cont.innerHTML = `
+      <div class="hero" style="margin-top:8px;">
+        <h2>🎲 Sorteando la letra...</h2>
+        <p>El organizador está eligiendo con qué letra arranca esta ronda.</p>
+      </div>`;
     return;
   }
 
