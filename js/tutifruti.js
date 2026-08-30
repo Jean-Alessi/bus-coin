@@ -225,10 +225,24 @@ function tutiPararSorteo(){
   });
 }
 
+// No deja seguir cargando respuestas si la ronda ya no está en curso (por
+// ejemplo, alguien tocó "¡Basta!" un instante antes) — evita que a alguien
+// se le siga contando lo que complete después de cortada la ronda.
 function tutiActualizarRespuesta(categoria, valor){
+  if(!tuti || tuti.fase !== 'jugando') return;
   tutiMisRespuestas[categoria] = valor;
   if(!miAsiento) return;
   tutiRefRespuestas().child(String(miAsiento)).set({ nombre: miNombre, palabras: tutiMisRespuestas });
+  const botonBasta = document.getElementById('tuti-basta-btn');
+  if(botonBasta) botonBasta.disabled = !tutiPasajeroCompletoTodo();
+}
+
+// Para poder gritar "¡Basta!" hay que haber completado las 6 categorías —
+// igual que en el juego real, donde solo se corta cuando alguien terminó de
+// verdad. Así nadie corta la ronda a los pocos segundos sin darle chance al
+// resto. El organizador no juega, así que a él esto no le aplica.
+function tutiPasajeroCompletoTodo(){
+  return (tuti.categorias || []).every(cat => (tutiMisRespuestas[cat] || '').trim().length > 0);
 }
 
 // Cualquiera que esté jugando puede gritar "¡Basta!" apenas termine — como
@@ -239,6 +253,10 @@ function tutiActualizarRespuesta(categoria, valor){
 function tutiBasta(){
   if(!miAsiento) return;
   if(!tuti || tuti.fase !== 'jugando') return;
+  if(!bingoEsOrganizador() && !tutiPasajeroCompletoTodo()){
+    mostrarToast('Completá las 6 categorías antes de tocar "¡Basta!"');
+    return;
+  }
   tutiCerrarRonda({ asiento: miAsiento, nombre: miNombre });
 }
 
@@ -509,8 +527,8 @@ function renderTutifrutiPasajero(cont){
         <div class="valija-timer ${urgente ? 'valija-timer-urgente' : ''}" id="tuti-timer">${restante}</div>
       </div>
       <div class="tuti-categorias">${categoriasHTML}</div>
-      <button class="btn-primary tuti-basta" onclick="tutiBasta()">¡BASTA!</button>
-      <p class="tienda-nota">Tocá "¡Basta!" apenas termines — corta la ronda para todos, así ganás por rapidez.</p>
+      <button class="btn-primary tuti-basta" id="tuti-basta-btn" onclick="tutiBasta()" ${tutiPasajeroCompletoTodo() ? '' : 'disabled'}>¡BASTA!</button>
+      <p class="tienda-nota">Completá las 6 categorías para poder tocar "¡Basta!" — corta la ronda para todos, así ganás por rapidez.</p>
       ${anotado ? '' : `<p class="tienda-nota">Podés jugar esta ronda igual, pero anotate para que el organizador sepa que seguís en las próximas.</p>${tutiAnotarseHTML(anotado)}`}`;
     return;
   }
@@ -550,7 +568,12 @@ function tutiFilasResultadosHTML(asientos, puntos, detalle){
       const control = (esOrganizador && palabra !== '—')
         ? `<button class="tuti-override-btn" onclick="tutiAlternarValidez('${a}','${cat}',${vale})" title="${vale ? 'Marcar inválida' : 'Marcar válida'}">${vale ? '✕' : '✓'}</button>`
         : '';
-      return `<span class="${clase}">${palabra} · ${info.puntos}${coincidenciaTxt}${control}</span>`;
+      // Con 6 categorías en fila era fácil perder de vista a cuál corresponde
+      // cada palabra. Ahora cada una lleva el nombre de su categoría arriba.
+      return `<div class="tuti-resultado-item">
+        <span class="tuti-resultado-cat">${cat}</span>
+        <span class="${clase}">${palabra} · ${info.puntos}${coincidenciaTxt}${control}</span>
+      </div>`;
     }).join('');
     return `
       <div class="rank-row ${esMio ? 'me' : ''}">

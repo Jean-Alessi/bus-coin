@@ -423,8 +423,10 @@ body{
 .tuti-categoria input:focus{outline:none; border-color:var(--orange);}
 .tuti-basta{background:#D34C3D;}
 .tuti-resultados{display:flex; flex-direction:column; gap:8px; margin-bottom:16px;}
-.tuti-resultado-detalle{font-size:11px; color:var(--gray); font-weight:400; display:flex; flex-wrap:wrap; gap:6px; margin-top:2px;}
-.tuti-resultado-palabra{background:var(--cream); border-radius:6px; padding:1px 6px;}
+.tuti-resultado-detalle{display:grid; grid-template-columns:1fr 1fr; gap:6px 8px; margin-top:6px; width:100%;}
+.tuti-resultado-item{display:flex; flex-direction:column; gap:1px; min-width:0;}
+.tuti-resultado-cat{font-size:9px; color:var(--gray); font-weight:700; text-transform:uppercase; letter-spacing:.3px;}
+.tuti-resultado-palabra{background:var(--cream); border-radius:6px; padding:2px 6px; font-size:12px; color:var(--navy); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 .tuti-resultado-invalida{background:#F4E6E0; color:#A8432F; text-decoration:line-through;}
 .tuti-resultado-corregida{box-shadow:0 0 0 1.5px var(--orange) inset;}
 .tuti-override-btn{
