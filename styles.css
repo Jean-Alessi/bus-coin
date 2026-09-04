@@ -121,6 +121,22 @@ body{
 }
 .hero h2{font-size:20px; font-weight:600; margin-bottom:4px;}
 .hero p{font-size:13px; color:#C6D3E8; font-weight:400;}
+/* ---- Botones grandes del menú de Juegos (solo / grupo) ---- */
+.categoria-juegos{
+  display:flex; align-items:center; gap:14px;
+  border-radius:20px; padding:18px 18px;
+  margin-bottom:10px; cursor:pointer; color:#fff;
+}
+.categoria-juegos-solo{background:var(--navy);}
+.categoria-juegos-grupo{background:var(--orange);}
+.categoria-juegos-icono{font-size:28px; flex-shrink:0;}
+.categoria-juegos-info{flex:1; min-width:0;}
+.categoria-juegos-info h2{font-size:17px; font-weight:700; margin-bottom:2px;}
+.categoria-juegos-info p{font-size:12px; color:rgba(255,255,255,0.8); font-weight:400;}
+.categoria-juegos-flecha{font-size:18px; transition:transform .2s; flex-shrink:0;}
+.categoria-juegos-flecha-abierta{transform:rotate(180deg);}
+.categoria-juegos-lista{margin-bottom:14px;}
+
 .emoji-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px;}
 .emoji-opcion{
   background:#fff; border-radius:16px; border:2px solid transparent;

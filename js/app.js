@@ -288,12 +288,37 @@ function renderHome(){
   renderTarjetas(TARJETAS_HOME, 'home-content');
 }
 
+// Con 10 juegos la lista se hacía larga para escanear de un vistazo, así
+// que quedan agrupados atrás de dos botones grandes que se despliegan al
+// tocarlos (cada uno se abre y cierra por separado).
+let juegosAbiertos = { solo: false, grupo: false };
+
+function toggleCategoriaJuegos(categoria){
+  juegosAbiertos[categoria] = !juegosAbiertos[categoria];
+  renderJuegos();
+}
+
+function categoriaJuegosHTML(categoria, clase, icono, titulo, sub, lista){
+  const abierto = juegosAbiertos[categoria];
+  return `
+    <div class="categoria-juegos ${clase}" onclick="toggleCategoriaJuegos('${categoria}')">
+      <span class="categoria-juegos-icono">${icono}</span>
+      <div class="categoria-juegos-info">
+        <h2>${titulo}</h2>
+        <p>${sub}</p>
+      </div>
+      <span class="categoria-juegos-flecha ${abierto ? 'categoria-juegos-flecha-abierta' : ''}">▾</span>
+    </div>
+    ${abierto ? `<div class="categoria-juegos-lista" id="lista-${categoria}"></div>` : ''}`;
+}
+
 function renderJuegos(){
   const cont = document.getElementById('juegos-content');
-  cont.innerHTML = '<div class="section-label">Para jugar solo</div>';
-  renderTarjetas(TARJETAS_SOLO, 'juegos-content');
-  cont.insertAdjacentHTML('beforeend', '<div class="section-label" style="margin-top:18px;">Para jugar en grupo</div>');
-  renderTarjetas(TARJETAS_GRUPO, 'juegos-content');
+  cont.innerHTML =
+    categoriaJuegosHTML('solo', 'categoria-juegos-solo', '🧠', 'Desafiá tu mente', `${TARJETAS_SOLO.length} juegos para vos solo`, TARJETAS_SOLO) +
+    categoriaJuegosHTML('grupo', 'categoria-juegos-grupo', '🤝', 'Jugá en grupo, ¡Conectá!', `${TARJETAS_GRUPO.length} juegos para tu grupo`, TARJETAS_GRUPO);
+  if(juegosAbiertos.solo) renderTarjetas(TARJETAS_SOLO, 'lista-solo');
+  if(juegosAbiertos.grupo) renderTarjetas(TARJETAS_GRUPO, 'lista-grupo');
 }
 
 // Trivia, Acertijos y Bingo se entran desde el menú "Juegos" del tabbar, así
