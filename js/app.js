@@ -284,6 +284,7 @@ function renderHome(){
   // (sin duplicar las diez tarjetas) más el acceso directo al Ranking.
   document.getElementById('home-content').innerHTML = `
     <div class="home-logo-banner"><img src="Logo Busmac2.png" alt="Busmac"></div>
+    ${raspaditaHTML()}
     ${categoriasJuegosHTML('home')}
     <div class="card" onclick="showView('ranking')">
       <div class="icon">${icono('trofeo')}</div>
