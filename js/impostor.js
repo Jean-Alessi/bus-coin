@@ -7,6 +7,11 @@
 // una ronda para su grupo.
 
 const IMPOSTOR_MIN_JUGADORES = 3;
+// Al menos el doble de inocentes que de impostores, para que el juego
+// siga teniendo sentido (ej. con 6 anotados, como mucho 2 impostores).
+function impostorMaxImpostores(cantidadJugadores){
+  return Math.max(1, Math.floor(cantidadJugadores / 3));
+}
 
 const IMPOSTOR_BANCO = [
   { categoria: 'Animales', palabra: 'León' }, { categoria: 'Animales', palabra: 'Elefante' },
@@ -42,6 +47,7 @@ const IMPOSTOR_BANCO = [
 let impostorEstado = null;
 let impostorAnotados = {};
 let impostorRondaPremiada = null; // evita premiar dos veces la misma ronda
+let impostorCantidadElegida = 1; // cuántos impostores para la próxima ronda, se elige en el lobby
 
 function impostorEstadoVacio(){
   return { fase: 'lobby', categoria: null, palabra: null, impostores: [], jugadores: [], ronda: 0, votoGrupal: null };
@@ -87,12 +93,17 @@ function impostorOrdenAsientos(mapa){
 
 // Cualquiera que esté anotado puede repartir los roles y arrancar — no hay
 // un único organizador para este juego, es cosa del grupo que se junta a jugarlo.
+function impostorElegirCantidad(cantidad){
+  impostorCantidadElegida = cantidad;
+  renderImpostor();
+}
+
 function impostorEmpezarRonda(){
   if(!miAsiento || !impostorAnotados[String(miAsiento)]) return;
   const jugadores = impostorOrdenAsientos(impostorAnotados);
   if(jugadores.length < IMPOSTOR_MIN_JUGADORES) return;
   const elegido = IMPOSTOR_BANCO[Math.floor(Math.random() * IMPOSTOR_BANCO.length)];
-  const cantidadImpostores = jugadores.length >= 7 ? 2 : 1;
+  const cantidadImpostores = Math.min(impostorCantidadElegida, impostorMaxImpostores(jugadores.length));
   const impostores = barajar(jugadores.slice()).slice(0, cantidadImpostores);
   const nuevaRonda = (impostorEstado ? impostorEstado.ronda : 0) + 1;
   impostorRefEstado().set({
@@ -167,16 +178,27 @@ function renderImpostor(){
   if(impostorEstado.fase === 'lobby'){
     const anotado = miAsiento && impostorAnotados[String(miAsiento)] != null;
     const asientos = impostorOrdenAsientos(impostorAnotados);
+    const maxImpostores = impostorMaxImpostores(asientos.length);
+    if(impostorCantidadElegida > maxImpostores) impostorCantidadElegida = maxImpostores;
+    const selectorCantidadHTML = anotado && asientos.length >= IMPOSTOR_MIN_JUGADORES
+      ? `<div class="section-label">¿Cuántos impostores?</div>
+         <div class="chip-row" style="margin-bottom:14px;">
+           ${Array.from({ length: maxImpostores }, (_, i) => i + 1).map(n => `
+             <div class="chip ${impostorCantidadElegida === n ? 'selected' : ''}" onclick="impostorElegirCantidad(${n})">${n}</div>
+           `).join('')}
+         </div>`
+      : '';
     cont.innerHTML = `
       <div class="hero" style="margin-top:8px;">
         <h2>🕵️ El Impostor</h2>
-        <p>Se juega con el grupo con el que viajás (mínimo ${IMPOSTOR_MIN_JUGADORES}), no con todo el micro. Todos reciben la misma palabra menos el impostor. Las pistas, la charla y la votación son en voz alta — la app solo reparte el rol en secreto.</p>
+        <p>Se juega con el grupo con el que viajás (mínimo ${IMPOSTOR_MIN_JUGADORES}), no con todo el micro. Todos reciben la misma palabra menos el o los impostores. Las pistas, la charla y la votación son en voz alta — la app solo reparte el rol en secreto.</p>
       </div>
       ${anotado
         ? `<button class="btn-ghost" style="width:100%;" onclick="impostorSalirDelGrupo()">Salir del grupo</button>`
         : `<button class="btn-primary" onclick="impostorAnotarme()">Anotarme a este grupo</button>`}
       ${impostorListaAnotadosHTML()}
-      ${anotado ? `<button class="btn-primary" style="margin-top:14px;" onclick="impostorEmpezarRonda()" ${asientos.length >= IMPOSTOR_MIN_JUGADORES ? '' : 'disabled'}>Repartir roles y arrancar (${asientos.length}/${IMPOSTOR_MIN_JUGADORES})</button>` : ''}`;
+      ${selectorCantidadHTML}
+      ${anotado ? `<button class="btn-primary" onclick="impostorEmpezarRonda()" ${asientos.length >= IMPOSTOR_MIN_JUGADORES ? '' : 'disabled'}>Repartir roles y arrancar (${asientos.length}/${IMPOSTOR_MIN_JUGADORES})</button>` : ''}`;
     return;
   }
 

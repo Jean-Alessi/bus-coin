@@ -86,6 +86,13 @@ body{
   font-size:12px; font-weight:700; letter-spacing:.3px; white-space:nowrap;
 }
 .chip-monedas-juego{background:var(--orange-light); color:var(--orange);}
+.chip-row{display:flex; flex-wrap:wrap; gap:8px;}
+.chip{
+  padding:8px 16px; border-radius:999px; border:1.5px solid #ECE9E1;
+  font-size:13px; font-weight:600; color:var(--navy); background:#fff;
+  cursor:pointer; font-family:'Poppins',sans-serif; display:inline-block;
+}
+.chip.selected{background:var(--navy); border-color:var(--navy); color:#fff;}
 .btn-mute{
   background:#F7F5F0; border:1px solid #ECE9E1; border-radius:50%;
   width:34px; height:34px; font-size:15px; cursor:pointer; flex-shrink:0;
