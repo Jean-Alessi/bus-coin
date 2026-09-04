@@ -7,17 +7,26 @@ let monedasCoin = 0;
 
 const EMOJIS_DISPONIBLES = ['😊', '😎', '🤩', '😜', '🥳', '😇', '🤠', '🧐', '🤓', '💃', '🕺', '😴'];
 
-const TARJETAS_JUEGOS = [
+// Separados en dos grupos para que la lista de Juegos no sea una sola tira
+// larga: los que se juegan solo, mirando tu propia pantalla, y los que
+// necesitan un grupo (así sea todo el micro o unos pocos asientos).
+const TARJETAS_SOLO = [
   { icon: "trivia", title: "Trivia", sub: "Elegí un tema y sumá puntos", view: "trivia" },
   { icon: "interrogacion", title: "Acertijos", sub: "Pensá en grupo antes de rendirte", view: "acertijos" },
   { icon: "rompecabezas", title: "Pensamiento lateral", sub: "Resolvé el caso a puro sí o no", view: "pensamiento" },
   { icon: "libro", title: "Ahorcado", sub: "Adiviná la palabra letra por letra", view: "ahorcado" },
   { icon: "lupa", title: "4+1", sub: "4 imágenes, 1 palabra", view: "cuatrouno" },
   { icon: "valija", title: "Valija Express", sub: "20 segundos para armar la valija", view: "valija" },
+  { icon: "cartas", title: "Memoria", sub: "Encontrá los pares, cada nivel más grande", view: "memoria" },
+];
+
+const TARJETAS_GRUPO = [
   { icon: "letraA", title: "Tutti Frutti", sub: "Una letra, contra el resto del viaje", view: "tutifruti" },
   { icon: "espia", title: "El Impostor", sub: "Para tu grupo, no todo el micro", view: "impostor" },
   { icon: "bingo", title: "Bingo", sub: "Números del 00 al 99, con su significado", view: "bingo" },
 ];
+
+const TARJETAS_JUEGOS = TARJETAS_SOLO.concat(TARJETAS_GRUPO);
 
 const TARJETAS_HOME = TARJETAS_JUEGOS.concat([
   { icon: "trofeo", title: "Ranking del micro", sub: "¿Quién va primero hoy?", view: "ranking" },
@@ -280,13 +289,16 @@ function renderHome(){
 }
 
 function renderJuegos(){
-  document.getElementById('juegos-content').innerHTML = '';
-  renderTarjetas(TARJETAS_JUEGOS, 'juegos-content');
+  const cont = document.getElementById('juegos-content');
+  cont.innerHTML = '<div class="section-label">Para jugar solo</div>';
+  renderTarjetas(TARJETAS_SOLO, 'juegos-content');
+  cont.insertAdjacentHTML('beforeend', '<div class="section-label" style="margin-top:18px;">Para jugar en grupo</div>');
+  renderTarjetas(TARJETAS_GRUPO, 'juegos-content');
 }
 
 // Trivia, Acertijos y Bingo se entran desde el menú "Juegos" del tabbar, así
 // que esa pestaña queda marcada activa aunque ya estés adentro de uno de ellos.
-const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'tutifruti', 'impostor', 'bingo'];
+const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'memoria', 'tutifruti', 'impostor', 'bingo'];
 
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -302,6 +314,7 @@ function showView(name){
   if(name==='ahorcado'){ iniciarAhorcado(); }
   if(name==='cuatrouno'){ iniciarCuatrouno(); }
   if(name==='valija'){ iniciarValija(); }
+  if(name==='memoria'){ iniciarMemoria(); }
   if(name==='tutifruti'){ iniciarTutifruti(); }
   if(name==='impostor'){ iniciarImpostor(); }
   if(name==='ranking'){ renderRanking(); }
