@@ -279,18 +279,12 @@ function renderTarjetas(lista, contenedorId){
 function renderHome(){
   document.getElementById('home-saludo').textContent = `${miEmoji} Hola, ${miNombre}`;
   document.getElementById('home-viaje').textContent = `Viaje ${codigoViaje} · copiar link`;
-  // Antes acá se repetía la lista entera de juegos suelta; ahora que Juegos
-  // ya los agrupa en dos botones, Inicio muestra esos mismos dos botones
-  // (sin duplicar las diez tarjetas) más el acceso directo al Ranking.
+  // Los juegos ya están en la pestaña Juegos y el ranking en su propia
+  // pestaña; Inicio se queda solo con el logo (más publicidad) y la
+  // raspadita del día, sin repetir lo que ya está a un toque de distancia.
   document.getElementById('home-content').innerHTML = `
     <div class="home-logo-banner"><img src="Logo Busmac2.png" alt="Busmac"></div>
-    ${raspaditaHTML()}
-    ${categoriasJuegosHTML('home')}
-    <div class="card" onclick="showView('ranking')">
-      <div class="icon">${icono('trofeo')}</div>
-      <div class="txt"><h3>Ranking del micro</h3><p>¿Quién va primero hoy?</p></div>
-    </div>`;
-  renderCategoriasEnListas('home');
+    ${raspaditaHTML()}`;
 }
 
 // Con 10 juegos la lista se hacía larga para escanear de un vistazo, así
