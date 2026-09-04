@@ -7,7 +7,7 @@ let bingoMostrandoPin = false;
 // PIN para reclamar el rol de organizador. Es una traba simple, no seguridad
 // real (el código es público) — alcanza para que ningún pasajero lo toque sin querer.
 const BINGO_PIN_ORGANIZADOR = '2314';
-const BINGO_CANTIDAD_CARTON = 9;
+const BINGO_CANTIDAD_CARTON = 12;
 const BINGO_TAMANO_CARTON = 3;
 // Números del cartón: 00 al 99, como en un bingo/lotería tradicional.
 const BINGO_NUMEROS = Array.from({ length: 100 }, (_, i) => String(i).padStart(2, '0'));
@@ -36,10 +36,19 @@ function bingoArmarLlamada(numero){
 }
 
 // ---- Multi-celular: cada pasajero entra con su nombre + asiento (ya elegidos
-// al principio, en el onboarding) y arma su propio cartón eligiendo 9 números
-// del 00 al 99. El organizador puede empezar cuando quiera, sin esperar a
-// que todos completen. Ser organizador es una marca local del celular (vía
-// PIN), no depende de quién llegó primero ni se pierde si se reinicia la partida. ----
+// al principio, en el onboarding) y arma su propio cartón eligiendo
+// BINGO_CANTIDAD_CARTON números del 00 al 99. El organizador puede empezar
+// cuando quiera, sin esperar a que todos completen. Ser organizador es una
+// marca local del celular (vía PIN), no depende de quién llegó primero ni se
+// pierde si se reinicia la partida.
+//
+// El marcado del cartón es manual: cada uno toca sus propios números a
+// medida que van saliendo (no se marcan solos). Para que nadie pueda tocar
+// un número que no salió y "ganar" por error, bingoTocarNumero() solo
+// acepta el toque si ese número ya está en bingo.sorteados — así, si el
+// sistema detecta un cartón lleno, es matemáticamente imposible que sea un
+// falso positivo: todo lo marcado fue, sin excepción, validado contra lo
+// que realmente se cantó. ----
 
 function bingoRefEstado(){ return db.ref(`salas/${codigoViaje}/bingo/estado`); }
 function bingoRefPasajeros(){ return db.ref(`salas/${codigoViaje}/bingo/pasajeros`); }
@@ -162,24 +171,37 @@ function bingoSortear(){
   bingo.sorteados = bingo.sorteados || [];
   bingo.sorteados.push(numero);
   bingo.ultimaLlamada = bingoArmarLlamada(numero);
-
-  Object.keys(bingoCartones).forEach(asiento => {
-    const carton = bingoCartones[asiento];
-    carton.marcados = carton.marcados || [];
-    const idx = carton.nombres.indexOf(numero);
-    if(idx !== -1 && !carton.marcados.includes(idx)) carton.marcados.push(idx);
-  });
-
-  if(!bingo.ganadorCartonLleno){
-    const asientoGanador = Object.keys(bingoCartones).find(a => (bingoCartones[a].marcados || []).length === BINGO_CANTIDAD_CARTON);
-    if(asientoGanador){
-      bingo.ganadorCartonLleno = asientoGanador;
-      ganarMonedas(100);
-      mostrarToast(`¡BINGO para ${bingoPasajeros[asientoGanador]}! +100 monedas`, 'gain');
-    }
-  }
   bingoGuardarEstado();
-  bingoRefCartones().set(bingoCartones);
+}
+
+// Cada pasajero toca sus propios números a medida que van saliendo. Solo se
+// acepta si el número ya fue cantado (si no, no hace nada — así no hay
+// forma de marcar por error algo que no salió). Tocar de nuevo un número ya
+// marcado lo desmarca, por si alguien se confunde de casillero.
+function bingoTocarNumero(indice){
+  if(!miAsiento) return;
+  if(!bingo || bingo.fase !== 'jugando') return;
+  const miCarton = bingoCartones[String(miAsiento)];
+  if(!miCarton || !miCarton.nombres) return;
+  const numero = miCarton.nombres[indice];
+  if(!(bingo.sorteados || []).includes(numero)) return;
+
+  const marcados = (miCarton.marcados || []).slice();
+  const idx = marcados.indexOf(indice);
+  if(idx !== -1) marcados.splice(idx, 1);
+  else marcados.push(indice);
+  miCarton.marcados = marcados;
+  bingoRefCartones().child(String(miAsiento)).child('marcados').set(marcados);
+
+  // Como cada marca ya está validada contra lo realmente sorteado, un
+  // cartón lleno acá es un bingo genuino — se declara desde el propio
+  // celular del ganador, así las monedas se acreditan a quien corresponde.
+  if(marcados.length === BINGO_CANTIDAD_CARTON && !bingo.ganadorCartonLleno){
+    bingo.ganadorCartonLleno = String(miAsiento);
+    bingoGuardarEstado();
+    ganarMonedas(100);
+    mostrarToast('¡BINGO! +100 monedas', 'gain');
+  }
 }
 
 // Repite el sorteo con los mismos cartones (no hace falta rearmarlos a mano de nuevo).
@@ -195,15 +217,28 @@ function bingoJugarDeNuevo(){
   bingoRefCartones().set(bingoCartones);
 }
 
-function bingoCartonHTML(asiento, titulo, carton){
+// interactivo = true solo cuando se muestra el propio cartón durante la
+// partida: ahí cada celda se puede tocar. Antes de empezar (armando el
+// cartón) o mostrándole a alguien un cartón ajeno, queda solo de lectura.
+function bingoCartonHTML(asiento, titulo, carton, interactivo){
   const marcados = carton.marcados || [];
+  const sorteados = (bingo && bingo.sorteados) || [];
   const badges = [];
   if(bingo.ganadorCartonLleno === asiento) badges.push('<span class="bingo-badge bingo-badge-full">¡BINGO!</span>');
   return `
     <div class="bingo-carton">
       <div class="bingo-carton-titulo">${titulo} ${badges.join(' ')}</div>
       <div class="bingo-grid" style="grid-template-columns:repeat(${BINGO_TAMANO_CARTON},1fr)">
-        ${carton.nombres.map((n, i) => `<div class="bingo-celda ${marcados.includes(i) ? 'bingo-marcada' : ''}">${n}</div>`).join('')}
+        ${carton.nombres.map((n, i) => {
+          const marcado = marcados.includes(i);
+          const disponible = !marcado && sorteados.includes(n);
+          const clases = ['bingo-celda'];
+          if(marcado) clases.push('bingo-marcada');
+          if(interactivo && disponible) clases.push('bingo-celda-disponible');
+          if(interactivo) clases.push('bingo-celda-clickeable');
+          const onclick = interactivo ? ` onclick="bingoTocarNumero(${i})"` : '';
+          return `<div class="${clases.join(' ')}"${onclick}>${n}</div>`;
+        }).join('')}
       </div>
     </div>`;
 }
@@ -322,7 +357,7 @@ function renderBingoPasajero(container){
         <h2>Ya armaste tu cartón</h2>
         <p>Esperando a que el resto del grupo complete el suyo (${completos.length}/${asientos.length}).</p>
       </div>
-      ${bingoCartonHTML(String(miAsiento), `Tu cartón (asiento ${miAsiento})`, miCarton)}`;
+      ${bingoCartonHTML(String(miAsiento), `Tu cartón (asiento ${miAsiento})`, miCarton, false)}`;
     return;
   }
 
@@ -343,5 +378,6 @@ function renderBingoPasajero(container){
     </div>
     <div class="section-label">Ya salieron (${sorteados.length}/${BINGO_NUMEROS.length})</div>
     <div class="bingo-historial">${historialHTML}</div>
-    ${miCarton ? bingoCartonHTML(String(miAsiento), `Tu cartón (asiento ${miAsiento})`, miCarton) : ''}`;
+    ${miCarton ? bingoCartonHTML(String(miAsiento), `Tu cartón (asiento ${miAsiento})`, miCarton, !terminado) : ''}
+    ${!terminado ? '<p class="bingo-espera">Tocá tus números a medida que van saliendo.</p>' : ''}`;
 }

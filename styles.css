@@ -411,6 +411,16 @@ body{
   padding:2px; overflow:hidden; transition:.15s;
 }
 .bingo-celda.bingo-marcada{background:var(--orange); color:#fff;}
+.bingo-celda-clickeable{cursor:pointer;}
+.bingo-celda-disponible{
+  background:var(--orange-light); color:var(--orange);
+  box-shadow:0 0 0 2px var(--orange) inset;
+  animation:bingo-pulso-disponible 1.1s ease-in-out infinite;
+}
+@keyframes bingo-pulso-disponible{
+  0%, 100%{ transform:scale(1); }
+  50%{ transform:scale(0.94); }
+}
 
 /* ---- Tutti Frutti ---- */
 .tuti-categorias{display:flex; flex-direction:column; gap:10px; margin:16px 0;}
