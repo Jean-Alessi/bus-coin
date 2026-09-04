@@ -1,0 +1,243 @@
+// El Impostor: se juega en grupos chicos (no todo el micro a la vez, como
+// Bingo o Trivia). Todos reciben la misma palabra secreta menos uno o dos
+// impostores. El rol de la app es solo repartir el rol EN SECRETO a cada
+// celular (nada de pasarse un papelito ni un único teléfono) — las pistas,
+// la discusión y la votación son en voz alta, fuera de la app, como en el
+// juego real. No hay organizador: cualquiera que se anote puede arrancar
+// una ronda para su grupo.
+
+const IMPOSTOR_MIN_JUGADORES = 3;
+
+const IMPOSTOR_BANCO = [
+  { categoria: 'Animales', palabra: 'León' }, { categoria: 'Animales', palabra: 'Elefante' },
+  { categoria: 'Animales', palabra: 'Jirafa' }, { categoria: 'Animales', palabra: 'Cocodrilo' },
+  { categoria: 'Animales', palabra: 'Pingüino' }, { categoria: 'Animales', palabra: 'Canguro' },
+  { categoria: 'Animales', palabra: 'Delfín' }, { categoria: 'Animales', palabra: 'Tiburón' },
+  { categoria: 'Películas', palabra: 'Titanic' }, { categoria: 'Películas', palabra: 'Frozen' },
+  { categoria: 'Películas', palabra: 'Avatar' }, { categoria: 'Películas', palabra: 'Shrek' },
+  { categoria: 'Películas', palabra: 'Rocky' }, { categoria: 'Películas', palabra: 'Gladiador' },
+  { categoria: 'Películas', palabra: 'Coco' }, { categoria: 'Películas', palabra: 'Toy Story' },
+  { categoria: 'Comidas', palabra: 'Empanada' }, { categoria: 'Comidas', palabra: 'Asado' },
+  { categoria: 'Comidas', palabra: 'Milanesa' }, { categoria: 'Comidas', palabra: 'Pizza' },
+  { categoria: 'Comidas', palabra: 'Choripán' }, { categoria: 'Comidas', palabra: 'Locro' },
+  { categoria: 'Comidas', palabra: 'Alfajor' }, { categoria: 'Comidas', palabra: 'Helado' },
+  { categoria: 'Lugares', palabra: 'Playa' }, { categoria: 'Lugares', palabra: 'Montaña' },
+  { categoria: 'Lugares', palabra: 'Aeropuerto' }, { categoria: 'Lugares', palabra: 'Hospital' },
+  { categoria: 'Lugares', palabra: 'Escuela' }, { categoria: 'Lugares', palabra: 'Cancha' },
+  { categoria: 'Lugares', palabra: 'Boliche' }, { categoria: 'Lugares', palabra: 'Terminal de ómnibus' },
+  { categoria: 'Profesiones', palabra: 'Bombero' }, { categoria: 'Profesiones', palabra: 'Médico' },
+  { categoria: 'Profesiones', palabra: 'Profesor' }, { categoria: 'Profesiones', palabra: 'Chofer' },
+  { categoria: 'Profesiones', palabra: 'Cocinero' }, { categoria: 'Profesiones', palabra: 'Policía' },
+  { categoria: 'Profesiones', palabra: 'Peluquero' }, { categoria: 'Profesiones', palabra: 'Piloto' },
+  { categoria: 'Objetos', palabra: 'Paraguas' }, { categoria: 'Objetos', palabra: 'Mochila' },
+  { categoria: 'Objetos', palabra: 'Bicicleta' }, { categoria: 'Objetos', palabra: 'Guitarra' },
+  { categoria: 'Objetos', palabra: 'Anteojos' }, { categoria: 'Objetos', palabra: 'Billetera' },
+  { categoria: 'Objetos', palabra: 'Termo' }, { categoria: 'Objetos', palabra: 'Almohada' },
+  { categoria: 'Deportes', palabra: 'Fútbol' }, { categoria: 'Deportes', palabra: 'Tenis' },
+  { categoria: 'Deportes', palabra: 'Básquet' }, { categoria: 'Deportes', palabra: 'Rugby' },
+  { categoria: 'Deportes', palabra: 'Vóley' }, { categoria: 'Deportes', palabra: 'Boxeo' },
+  { categoria: 'Deportes', palabra: 'Truco' }, { categoria: 'Deportes', palabra: 'Ajedrez' },
+];
+
+let impostorEstado = null;
+let impostorAnotados = {};
+let impostorRondaPremiada = null; // evita premiar dos veces la misma ronda
+
+function impostorEstadoVacio(){
+  return { fase: 'lobby', categoria: null, palabra: null, impostores: [], jugadores: [], ronda: 0, votoGrupal: null };
+}
+
+function impostorRefEstado(){ return db.ref(`salas/${codigoViaje}/impostor/estado`); }
+function impostorRefAnotados(){ return db.ref(`salas/${codigoViaje}/impostor/anotados`); }
+
+let impostorListenersListos = false;
+
+function iniciarImpostor(){
+  if(!impostorListenersListos){
+    impostorListenersListos = true;
+    impostorRefEstado().on('value', snap => {
+      const anterior = impostorEstado;
+      impostorEstado = Object.assign(impostorEstadoVacio(), snap.val() || {});
+      if(anterior && anterior.ronda !== impostorEstado.ronda) impostorRondaPremiada = null;
+      if(impostorEstado.fase === 'revelado') impostorPremiarSiCorresponde();
+      renderImpostor();
+    });
+    impostorRefAnotados().on('value', snap => {
+      impostorAnotados = snap.val() || {};
+      if(impostorEstado && impostorEstado.fase === 'lobby') renderImpostor();
+    });
+  } else {
+    renderImpostor();
+  }
+}
+
+function impostorAnotarme(){
+  if(!miAsiento) return;
+  impostorRefAnotados().child(String(miAsiento)).set(miNombre);
+}
+
+function impostorSalirDelGrupo(){
+  if(!miAsiento) return;
+  impostorRefAnotados().child(String(miAsiento)).remove();
+}
+
+function impostorOrdenAsientos(mapa){
+  return Object.keys(mapa).sort((a, b) => Number(a) - Number(b));
+}
+
+// Cualquiera que esté anotado puede repartir los roles y arrancar — no hay
+// un único organizador para este juego, es cosa del grupo que se junta a jugarlo.
+function impostorEmpezarRonda(){
+  if(!miAsiento || !impostorAnotados[String(miAsiento)]) return;
+  const jugadores = impostorOrdenAsientos(impostorAnotados);
+  if(jugadores.length < IMPOSTOR_MIN_JUGADORES) return;
+  const elegido = IMPOSTOR_BANCO[Math.floor(Math.random() * IMPOSTOR_BANCO.length)];
+  const cantidadImpostores = jugadores.length >= 7 ? 2 : 1;
+  const impostores = barajar(jugadores.slice()).slice(0, cantidadImpostores);
+  const nuevaRonda = (impostorEstado ? impostorEstado.ronda : 0) + 1;
+  impostorRefEstado().set({
+    fase: 'jugando',
+    categoria: elegido.categoria,
+    palabra: elegido.palabra,
+    impostores,
+    jugadores,
+    ronda: nuevaRonda,
+    votoGrupal: null,
+  });
+}
+
+function impostorTerminarYVotar(){
+  if(!impostorEstado || impostorEstado.fase !== 'jugando') return;
+  if(!impostorEstado.jugadores.includes(String(miAsiento))) return;
+  impostorRefEstado().child('fase').set('votando');
+}
+
+function impostorVotar(asientoSospechoso){
+  if(!impostorEstado || impostorEstado.fase !== 'votando') return;
+  if(!impostorEstado.jugadores.includes(String(miAsiento))) return;
+  impostorRefEstado().update({ fase: 'revelado', votoGrupal: String(asientoSospechoso) });
+}
+
+// Cada celular se premia a sí mismo, así las monedas van a quien corresponde
+// (mismo criterio que se usa en Bingo y Tutti Frutti). Gana el que corresponde
+// según cómo terminó la votación del grupo, no según lo que decida un solo celular.
+function impostorPremiarSiCorresponde(){
+  if(!miAsiento || !impostorEstado || impostorEstado.fase !== 'revelado') return;
+  if(impostorRondaPremiada === impostorEstado.ronda) return;
+  if(!impostorEstado.jugadores.includes(String(miAsiento))) return;
+  impostorRondaPremiada = impostorEstado.ronda;
+
+  const soyImpostor = impostorEstado.impostores.includes(String(miAsiento));
+  const grupoAcerto = impostorEstado.votoGrupal && impostorEstado.impostores.includes(String(impostorEstado.votoGrupal));
+
+  if(soyImpostor && !grupoAcerto){
+    ganarMonedas(20);
+    mostrarToast('¡Engañaste a todos! +20 monedas', 'gain');
+  } else if(!soyImpostor && grupoAcerto){
+    ganarMonedas(15);
+    mostrarToast('¡Descubrieron al impostor! +15 monedas', 'gain');
+  }
+}
+
+function impostorNuevaRonda(){
+  if(!impostorEstado) return;
+  impostorRefEstado().set(impostorEstadoVacio());
+}
+
+function impostorTerminarJuego(){
+  if(!miAsiento || !impostorAnotados[String(miAsiento)]) return;
+  db.ref(`salas/${codigoViaje}/impostor`).remove();
+}
+
+function impostorListaAnotadosHTML(){
+  const asientos = impostorOrdenAsientos(impostorAnotados);
+  if(!asientos.length) return '<p style="color:var(--gray);font-size:13px;">Todavía no se anotó nadie.</p>';
+  return `<div class="bingo-roster">${asientos.map(a => `
+    <div class="bingo-roster-item"><span>Asiento ${a} — ${impostorAnotados[a]}</span></div>`).join('')}</div>`;
+}
+
+function renderImpostor(){
+  const cont = document.getElementById('impostor-content');
+  if(!cont || !impostorEstado) return;
+  document.getElementById('impostor-sub').textContent =
+    impostorEstado.fase === 'lobby' ? 'Para grupos chicos, no todo el micro' :
+    impostorEstado.fase === 'jugando' ? 'Ronda en curso' :
+    impostorEstado.fase === 'votando' ? 'Votación' : 'Resultado';
+
+  if(impostorEstado.fase === 'lobby'){
+    const anotado = miAsiento && impostorAnotados[String(miAsiento)] != null;
+    const asientos = impostorOrdenAsientos(impostorAnotados);
+    cont.innerHTML = `
+      <div class="hero" style="margin-top:8px;">
+        <h2>🕵️ El Impostor</h2>
+        <p>Se juega con el grupo con el que viajás (mínimo ${IMPOSTOR_MIN_JUGADORES}), no con todo el micro. Todos reciben la misma palabra menos el impostor. Las pistas, la charla y la votación son en voz alta — la app solo reparte el rol en secreto.</p>
+      </div>
+      ${anotado
+        ? `<button class="btn-ghost" style="width:100%;" onclick="impostorSalirDelGrupo()">Salir del grupo</button>`
+        : `<button class="btn-primary" onclick="impostorAnotarme()">Anotarme a este grupo</button>`}
+      ${impostorListaAnotadosHTML()}
+      ${anotado ? `<button class="btn-primary" style="margin-top:14px;" onclick="impostorEmpezarRonda()" ${asientos.length >= IMPOSTOR_MIN_JUGADORES ? '' : 'disabled'}>Repartir roles y arrancar (${asientos.length}/${IMPOSTOR_MIN_JUGADORES})</button>` : ''}`;
+    return;
+  }
+
+  const soyJugador = impostorEstado.jugadores.includes(String(miAsiento));
+
+  if(impostorEstado.fase === 'jugando'){
+    if(!soyJugador){
+      cont.innerHTML = `
+        <div class="hero" style="margin-top:8px;">
+          <h2>🕵️ Hay una ronda en curso</h2>
+          <p>Otro grupo está jugando ahora. Esperá a que termine, o anotate para la próxima.</p>
+        </div>
+        ${miAsiento && impostorAnotados[String(miAsiento)] != null ? '' : `<button class="btn-primary" onclick="impostorAnotarme()">Anotarme para la próxima</button>`}`;
+      return;
+    }
+    const soyImpostor = impostorEstado.impostores.includes(String(miAsiento));
+    cont.innerHTML = soyImpostor ? `
+      <div class="hero impostor-hero-malo" style="margin-top:8px;">
+        <h2>🤫 SOS EL IMPOSTOR</h2>
+        <p>No sabés la palabra. Escuchá bien las pistas de los demás e inventá una pista ambigua para no llamar la atención.</p>
+      </div>
+      <p class="tienda-nota">Categoría: <strong>${impostorEstado.categoria}</strong> (eso sí lo sabés, la palabra no).</p>
+    ` : `
+      <div class="hero" style="margin-top:8px;">
+        <h2>Tu palabra secreta</h2>
+        <p>Categoría: ${impostorEstado.categoria}</p>
+      </div>
+      <div class="impostor-palabra">${impostorEstado.palabra}</div>
+      <p class="tienda-nota">Por turnos, cada uno dice una palabra relacionada con esta. El impostor no la sabe — atento a quién duda o tira algo raro.</p>
+    `;
+    cont.innerHTML += `<button class="btn-primary" style="margin-top:14px;" onclick="impostorTerminarYVotar()">Terminar ronda y votar</button>`;
+    return;
+  }
+
+  if(impostorEstado.fase === 'votando'){
+    if(!soyJugador){
+      cont.innerHTML = `<div class="hero" style="margin-top:8px;"><h2>Votando...</h2><p>El grupo está decidiendo a quién señalar.</p></div>`;
+      return;
+    }
+    const opcionesHTML = impostorEstado.jugadores.map(a => `
+      <button class="chip" style="width:100%; text-align:left; margin-bottom:8px;" onclick="impostorVotar('${a}')">Asiento ${a} — ${impostorAnotados[a] || '?'}</button>
+    `).join('');
+    cont.innerHTML = `
+      <div class="hero" style="margin-top:8px;">
+        <h2>¿A quién señaló el grupo?</h2>
+        <p>Discutan en voz alta y, cuando decidan, tocá el nombre que votó la mayoría.</p>
+      </div>
+      ${opcionesHTML}`;
+    return;
+  }
+
+  // fase === 'revelado'
+  const nombresImpostores = impostorEstado.impostores.map(a => impostorAnotados[a] || `Asiento ${a}`).join(', ');
+  const grupoAcerto = impostorEstado.votoGrupal && impostorEstado.impostores.includes(String(impostorEstado.votoGrupal));
+  const votado = impostorEstado.votoGrupal ? (impostorAnotados[impostorEstado.votoGrupal] || `Asiento ${impostorEstado.votoGrupal}`) : null;
+  cont.innerHTML = `
+    <div class="hero ${grupoAcerto ? '' : 'impostor-hero-malo'}" style="margin-top:8px;">
+      <h2>${grupoAcerto ? '✅ ¡Lo descubrieron!' : '🎭 El impostor se salvó'}</h2>
+      <p>${votado ? `El grupo votó a ${votado}.` : ''} El impostor era: <strong>${nombresImpostores}</strong>.</p>
+    </div>
+    <p class="tienda-nota">Categoría: ${impostorEstado.categoria} — Palabra secreta: <strong>${impostorEstado.palabra}</strong></p>
+    <button class="btn-primary" style="margin-top:14px;" onclick="impostorNuevaRonda()">Nueva ronda</button>
+    <p class="link-chico" onclick="impostorTerminarJuego()">Terminar el juego</p>`;
+}

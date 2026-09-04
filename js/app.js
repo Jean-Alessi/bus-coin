@@ -15,6 +15,7 @@ const TARJETAS_JUEGOS = [
   { icon: "lupa", title: "4+1", sub: "4 imágenes, 1 palabra", view: "cuatrouno" },
   { icon: "valija", title: "Valija Express", sub: "20 segundos para armar la valija", view: "valija" },
   { icon: "letraA", title: "Tutti Frutti", sub: "Una letra, contra el resto del viaje", view: "tutifruti" },
+  { icon: "espia", title: "El Impostor", sub: "Para tu grupo, no todo el micro", view: "impostor" },
   { icon: "bingo", title: "Bingo", sub: "Números del 00 al 99, con su significado", view: "bingo" },
 ];
 
@@ -285,7 +286,7 @@ function renderJuegos(){
 
 // Trivia, Acertijos y Bingo se entran desde el menú "Juegos" del tabbar, así
 // que esa pestaña queda marcada activa aunque ya estés adentro de uno de ellos.
-const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'tutifruti', 'bingo'];
+const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'tutifruti', 'impostor', 'bingo'];
 
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -302,6 +303,7 @@ function showView(name){
   if(name==='cuatrouno'){ iniciarCuatrouno(); }
   if(name==='valija'){ iniciarValija(); }
   if(name==='tutifruti'){ iniciarTutifruti(); }
+  if(name==='impostor'){ iniciarImpostor(); }
   if(name==='ranking'){ renderRanking(); }
   if(name==='bingo'){ iniciarBingo(); }
   if(name==='tienda'){ iniciarPremios(); }
