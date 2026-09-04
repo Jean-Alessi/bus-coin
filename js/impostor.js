@@ -55,7 +55,7 @@ let impostorRondaPremiada = null; // evita premiar dos veces la misma ronda
 let impostorCantidadElegida = 1; // cuántos impostores para la próxima ronda, se elige en el lobby
 
 function impostorEstadoVacio(){
-  return { fase: 'lobby', categoria: null, palabra: null, impostores: [], jugadores: [], ronda: 0, votoGrupal: null, rondaPistas: 1 };
+  return { fase: 'lobby', categoria: null, palabra: null, impostores: [], jugadores: [], ronda: 0, votoGrupal: null };
 }
 
 function impostorRefEstado(){ return db.ref(`salas/${codigoViaje}/impostor/estado`); }
@@ -124,21 +124,12 @@ function impostorEmpezarRonda(){
     jugadores,
     ronda: nuevaRonda,
     votoGrupal: null,
-    rondaPistas: 1,
   });
-}
-
-// Antes de votar, se dan dos vueltas de pistas (como en el juego real) en
-// vez de una sola — así hay más información para sospechar antes de votar.
-function impostorSiguienteRondaDePistas(){
-  if(!impostorEsDirector()) return;
-  if(!impostorEstado || impostorEstado.fase !== 'jugando' || impostorEstado.rondaPistas !== 1) return;
-  impostorRefEstado().child('rondaPistas').set(2);
 }
 
 function impostorTerminarYVotar(){
   if(!impostorEsDirector()) return;
-  if(!impostorEstado || impostorEstado.fase !== 'jugando' || impostorEstado.rondaPistas !== 2) return;
+  if(!impostorEstado || impostorEstado.fase !== 'jugando') return;
   impostorRefEstado().child('fase').set('votando');
 }
 
@@ -241,15 +232,12 @@ function renderImpostor(){
       return;
     }
     const soyImpostor = impostorEstado.impostores.includes(String(miAsiento));
-    const segundaVuelta = impostorEstado.rondaPistas === 2;
-    const etiquetaVuelta = `<p class="tienda-nota" style="margin-top:0;">${segundaVuelta ? '2da vuelta de pistas' : '1ra vuelta de pistas'}</p>`;
     cont.innerHTML = soyImpostor ? `
       <div class="hero impostor-hero-malo" style="margin-top:8px;">
         <h2>🤫 SOS EL IMPOSTOR</h2>
         <p>No sabés la palabra. Escuchá bien las pistas de los demás e inventá una pista ambigua para no llamar la atención.</p>
       </div>
       <p class="tienda-nota">Categoría: <strong>${impostorEstado.categoria}</strong> (eso sí lo sabés, la palabra no).</p>
-      ${etiquetaVuelta}
     ` : `
       <div class="hero" style="margin-top:8px;">
         <h2>Tu palabra secreta</h2>
@@ -257,17 +245,10 @@ function renderImpostor(){
       </div>
       <div class="impostor-palabra">${impostorEstado.palabra}</div>
       <p class="tienda-nota">Por turnos, cada uno dice una palabra relacionada con esta. El impostor no la sabe — atento a quién duda o tira algo raro.</p>
-      ${etiquetaVuelta}
     `;
-    if(impostorEsDirector()){
-      cont.innerHTML += segundaVuelta
-        ? `<button class="btn-primary" style="margin-top:14px;" onclick="impostorTerminarYVotar()">Terminar ronda y votar</button>`
-        : `<button class="btn-primary" style="margin-top:14px;" onclick="impostorSiguienteRondaDePistas()">Pasar a la 2da vuelta de pistas</button>`;
-    } else {
-      cont.innerHTML += segundaVuelta
-        ? `<p class="tienda-nota" style="margin-top:14px;">Cuando terminen esta vuelta, el organizador del viaje corta para pasar a votar.</p>`
-        : `<p class="tienda-nota" style="margin-top:14px;">Cuando terminen esta vuelta, el organizador del viaje pasa a la segunda.</p>`;
-    }
+    cont.innerHTML += impostorEsDirector()
+      ? `<button class="btn-primary" style="margin-top:14px;" onclick="impostorTerminarYVotar()">Terminar ronda y votar</button>`
+      : `<p class="tienda-nota" style="margin-top:14px;">Cuando terminen las pistas, el organizador del viaje corta la ronda para pasar a votar.</p>`;
     return;
   }
 
