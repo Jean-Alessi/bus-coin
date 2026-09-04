@@ -3,8 +3,14 @@
 // impostores. El rol de la app es solo repartir el rol EN SECRETO a cada
 // celular (nada de pasarse un papelito ni un único teléfono) — las pistas,
 // la discusión y la votación son en voz alta, fuera de la app, como en el
-// juego real. No hay organizador: cualquiera que se anote puede arrancar
-// una ronda para su grupo.
+// juego real.
+//
+// Cada grupo tiene su propio "director" (no el organizador del micro, que
+// puede ni conocer a este grupo puntual): es quien reparte los roles,
+// corta la ronda, carga a quién votó el grupo y arranca la próxima. Nadie
+// lo elige a mano — es automáticamente el anotado con el asiento más chico
+// del grupo, y si ese se va, el puesto pasa solo al que sigue. Así siempre
+// hay una sola persona manejando el juego, sin PIN ni configuración.
 
 const IMPOSTOR_MIN_JUGADORES = 3;
 // Al menos el doble de inocentes que de impostores, para que el juego
@@ -91,15 +97,27 @@ function impostorOrdenAsientos(mapa){
   return Object.keys(mapa).sort((a, b) => Number(a) - Number(b));
 }
 
-// Cualquiera que esté anotado puede repartir los roles y arrancar — no hay
-// un único organizador para este juego, es cosa del grupo que se junta a jugarlo.
+// El director del grupo es, automáticamente, el anotado con el asiento más
+// chico — sin PIN ni elección manual. Si se va, el puesto pasa solo al que
+// sigue en la lista.
+function impostorEsDirector(){
+  if(!miAsiento) return false;
+  const asientos = impostorOrdenAsientos(impostorAnotados);
+  return asientos.length > 0 && asientos[0] === String(miAsiento);
+}
+
+function impostorNombreDirector(){
+  const asientos = impostorOrdenAsientos(impostorAnotados);
+  return asientos.length ? (impostorAnotados[asientos[0]] || `Asiento ${asientos[0]}`) : null;
+}
+
 function impostorElegirCantidad(cantidad){
   impostorCantidadElegida = cantidad;
   renderImpostor();
 }
 
 function impostorEmpezarRonda(){
-  if(!miAsiento || !impostorAnotados[String(miAsiento)]) return;
+  if(!impostorEsDirector()) return;
   const jugadores = impostorOrdenAsientos(impostorAnotados);
   if(jugadores.length < IMPOSTOR_MIN_JUGADORES) return;
   const elegido = IMPOSTOR_BANCO[Math.floor(Math.random() * IMPOSTOR_BANCO.length)];
@@ -118,14 +136,14 @@ function impostorEmpezarRonda(){
 }
 
 function impostorTerminarYVotar(){
+  if(!impostorEsDirector()) return;
   if(!impostorEstado || impostorEstado.fase !== 'jugando') return;
-  if(!impostorEstado.jugadores.includes(String(miAsiento))) return;
   impostorRefEstado().child('fase').set('votando');
 }
 
 function impostorVotar(asientoSospechoso){
+  if(!impostorEsDirector()) return;
   if(!impostorEstado || impostorEstado.fase !== 'votando') return;
-  if(!impostorEstado.jugadores.includes(String(miAsiento))) return;
   impostorRefEstado().update({ fase: 'revelado', votoGrupal: String(asientoSospechoso) });
 }
 
@@ -151,20 +169,20 @@ function impostorPremiarSiCorresponde(){
 }
 
 function impostorNuevaRonda(){
-  if(!impostorEstado) return;
+  if(!impostorEsDirector() || !impostorEstado) return;
   impostorRefEstado().set(impostorEstadoVacio());
 }
 
 function impostorTerminarJuego(){
-  if(!miAsiento || !impostorAnotados[String(miAsiento)]) return;
+  if(!impostorEsDirector()) return;
   db.ref(`salas/${codigoViaje}/impostor`).remove();
 }
 
 function impostorListaAnotadosHTML(){
   const asientos = impostorOrdenAsientos(impostorAnotados);
   if(!asientos.length) return '<p style="color:var(--gray);font-size:13px;">Todavía no se anotó nadie.</p>';
-  return `<div class="bingo-roster">${asientos.map(a => `
-    <div class="bingo-roster-item"><span>Asiento ${a} — ${impostorAnotados[a]}</span></div>`).join('')}</div>`;
+  return `<div class="bingo-roster">${asientos.map((a, i) => `
+    <div class="bingo-roster-item"><span>Asiento ${a} — ${impostorAnotados[a]}${i === 0 ? ' <span class="bingo-badge">Director</span>' : ''}</span></div>`).join('')}</div>`;
 }
 
 function renderImpostor(){
@@ -177,10 +195,11 @@ function renderImpostor(){
 
   if(impostorEstado.fase === 'lobby'){
     const anotado = miAsiento && impostorAnotados[String(miAsiento)] != null;
+    const soyDirector = impostorEsDirector();
     const asientos = impostorOrdenAsientos(impostorAnotados);
     const maxImpostores = impostorMaxImpostores(asientos.length);
     if(impostorCantidadElegida > maxImpostores) impostorCantidadElegida = maxImpostores;
-    const selectorCantidadHTML = anotado && asientos.length >= IMPOSTOR_MIN_JUGADORES
+    const selectorCantidadHTML = soyDirector && asientos.length >= IMPOSTOR_MIN_JUGADORES
       ? `<div class="section-label">¿Cuántos impostores?</div>
          <div class="chip-row" style="margin-bottom:14px;">
            ${Array.from({ length: maxImpostores }, (_, i) => i + 1).map(n => `
@@ -188,6 +207,12 @@ function renderImpostor(){
            `).join('')}
          </div>`
       : '';
+    let controlHTML = '';
+    if(soyDirector){
+      controlHTML = `<button class="btn-primary" onclick="impostorEmpezarRonda()" ${asientos.length >= IMPOSTOR_MIN_JUGADORES ? '' : 'disabled'}>Repartir roles y arrancar (${asientos.length}/${IMPOSTOR_MIN_JUGADORES})</button>`;
+    } else if(anotado){
+      controlHTML = `<p class="tienda-nota">Sos parte del grupo. El director (${impostorNombreDirector()}) es quien reparte los roles y arranca.</p>`;
+    }
     cont.innerHTML = `
       <div class="hero" style="margin-top:8px;">
         <h2>🕵️ El Impostor</h2>
@@ -198,7 +223,7 @@ function renderImpostor(){
         : `<button class="btn-primary" onclick="impostorAnotarme()">Anotarme a este grupo</button>`}
       ${impostorListaAnotadosHTML()}
       ${selectorCantidadHTML}
-      ${anotado ? `<button class="btn-primary" onclick="impostorEmpezarRonda()" ${asientos.length >= IMPOSTOR_MIN_JUGADORES ? '' : 'disabled'}>Repartir roles y arrancar (${asientos.length}/${IMPOSTOR_MIN_JUGADORES})</button>` : ''}`;
+      ${controlHTML}`;
     return;
   }
 
@@ -229,13 +254,15 @@ function renderImpostor(){
       <div class="impostor-palabra">${impostorEstado.palabra}</div>
       <p class="tienda-nota">Por turnos, cada uno dice una palabra relacionada con esta. El impostor no la sabe — atento a quién duda o tira algo raro.</p>
     `;
-    cont.innerHTML += `<button class="btn-primary" style="margin-top:14px;" onclick="impostorTerminarYVotar()">Terminar ronda y votar</button>`;
+    cont.innerHTML += impostorEsDirector()
+      ? `<button class="btn-primary" style="margin-top:14px;" onclick="impostorTerminarYVotar()">Terminar ronda y votar</button>`
+      : `<p class="tienda-nota" style="margin-top:14px;">Cuando terminen las pistas, el director (${impostorNombreDirector()}) corta la ronda para pasar a votar.</p>`;
     return;
   }
 
   if(impostorEstado.fase === 'votando'){
-    if(!soyJugador){
-      cont.innerHTML = `<div class="hero" style="margin-top:8px;"><h2>Votando...</h2><p>El grupo está decidiendo a quién señalar.</p></div>`;
+    if(!impostorEsDirector()){
+      cont.innerHTML = `<div class="hero" style="margin-top:8px;"><h2>Votando...</h2><p>Discutan en voz alta a quién señalan. El director (${impostorNombreDirector()}) va a cargar el resultado.</p></div>`;
       return;
     }
     const opcionesHTML = impostorEstado.jugadores.map(a => `
@@ -254,12 +281,15 @@ function renderImpostor(){
   const nombresImpostores = impostorEstado.impostores.map(a => impostorAnotados[a] || `Asiento ${a}`).join(', ');
   const grupoAcerto = impostorEstado.votoGrupal && impostorEstado.impostores.includes(String(impostorEstado.votoGrupal));
   const votado = impostorEstado.votoGrupal ? (impostorAnotados[impostorEstado.votoGrupal] || `Asiento ${impostorEstado.votoGrupal}`) : null;
+  const controlesRevelado = impostorEsDirector()
+    ? `<button class="btn-primary" style="margin-top:14px;" onclick="impostorNuevaRonda()">Nueva ronda</button>
+       <p class="link-chico" onclick="impostorTerminarJuego()">Terminar el juego</p>`
+    : `<p class="tienda-nota" style="margin-top:14px;">El director (${impostorNombreDirector()}) decide si juegan otra ronda.</p>`;
   cont.innerHTML = `
     <div class="hero ${grupoAcerto ? '' : 'impostor-hero-malo'}" style="margin-top:8px;">
       <h2>${grupoAcerto ? '✅ ¡Lo descubrieron!' : '🎭 El impostor se salvó'}</h2>
       <p>${votado ? `El grupo votó a ${votado}.` : ''} El impostor era: <strong>${nombresImpostores}</strong>.</p>
     </div>
     <p class="tienda-nota">Categoría: ${impostorEstado.categoria} — Palabra secreta: <strong>${impostorEstado.palabra}</strong></p>
-    <button class="btn-primary" style="margin-top:14px;" onclick="impostorNuevaRonda()">Nueva ronda</button>
-    <p class="link-chico" onclick="impostorTerminarJuego()">Terminar el juego</p>`;
+    ${controlesRevelado}`;
 }
