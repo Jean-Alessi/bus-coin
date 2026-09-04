@@ -26,11 +26,6 @@ const TARJETAS_GRUPO = [
   { icon: "bingo", title: "Bingo", sub: "Números del 00 al 99, con su significado", view: "bingo" },
 ];
 
-const TARJETAS_JUEGOS = TARJETAS_SOLO.concat(TARJETAS_GRUPO);
-
-const TARJETAS_HOME = TARJETAS_JUEGOS.concat([
-  { icon: "trofeo", title: "Ranking del micro", sub: "¿Quién va primero hoy?", view: "ranking" },
-]);
 
 // ---- Código de viaje: agrupa Bingo/Ranking/DJ bajo un mismo código, para
 // poder arrancar un viaje nuevo (pasajeros y nombres nuevos) sin mezclarlo
@@ -284,21 +279,33 @@ function renderTarjetas(lista, contenedorId){
 function renderHome(){
   document.getElementById('home-saludo').textContent = `${miEmoji} Hola, ${miNombre}`;
   document.getElementById('home-viaje').textContent = `Viaje ${codigoViaje} · copiar link`;
-  document.getElementById('home-content').innerHTML = '<div class="section-label">Para vos</div>';
-  renderTarjetas(TARJETAS_HOME, 'home-content');
+  // Antes acá se repetía la lista entera de juegos suelta; ahora que Juegos
+  // ya los agrupa en dos botones, Inicio muestra esos mismos dos botones
+  // (sin duplicar las diez tarjetas) más el acceso directo al Ranking.
+  document.getElementById('home-content').innerHTML = `
+    <div class="home-logo-banner"><img src="Logo Busmac2.png" alt="Busmac"></div>
+    ${categoriasJuegosHTML('home')}
+    <div class="card" onclick="showView('ranking')">
+      <div class="icon">${icono('trofeo')}</div>
+      <div class="txt"><h3>Ranking del micro</h3><p>¿Quién va primero hoy?</p></div>
+    </div>`;
+  renderCategoriasEnListas('home');
 }
 
 // Con 10 juegos la lista se hacía larga para escanear de un vistazo, así
 // que quedan agrupados atrás de dos botones grandes que se despliegan al
-// tocarlos (cada uno se abre y cierra por separado).
+// tocarlos (cada uno se abre y cierra por separado). Se muestran igual en
+// Inicio y en Juegos, así en Inicio no se repite toda la lista suelta —
+// por eso las funciones llevan un "vista" para no chocar los mismos ids.
 let juegosAbiertos = { solo: false, grupo: false };
 
 function toggleCategoriaJuegos(categoria){
   juegosAbiertos[categoria] = !juegosAbiertos[categoria];
+  renderHome();
   renderJuegos();
 }
 
-function categoriaJuegosHTML(categoria, clase, icono, titulo, sub, lista){
+function categoriaJuegosHTML(vista, categoria, clase, icono, titulo, sub){
   const abierto = juegosAbiertos[categoria];
   return `
     <div class="categoria-juegos ${clase}" onclick="toggleCategoriaJuegos('${categoria}')">
@@ -309,16 +316,22 @@ function categoriaJuegosHTML(categoria, clase, icono, titulo, sub, lista){
       </div>
       <span class="categoria-juegos-flecha ${abierto ? 'categoria-juegos-flecha-abierta' : ''}">▾</span>
     </div>
-    ${abierto ? `<div class="categoria-juegos-lista" id="lista-${categoria}"></div>` : ''}`;
+    ${abierto ? `<div class="categoria-juegos-lista" id="lista-${vista}-${categoria}"></div>` : ''}`;
+}
+
+function categoriasJuegosHTML(vista){
+  return categoriaJuegosHTML(vista, 'solo', 'categoria-juegos-solo', '🧠', 'Desafiá tu mente', `${TARJETAS_SOLO.length} juegos para vos solo`) +
+    categoriaJuegosHTML(vista, 'grupo', 'categoria-juegos-grupo', '🤝', 'Jugar en grupo, conecta.', `${TARJETAS_GRUPO.length} juegos para tu grupo`);
+}
+
+function renderCategoriasEnListas(vista){
+  if(juegosAbiertos.solo) renderTarjetas(TARJETAS_SOLO, `lista-${vista}-solo`);
+  if(juegosAbiertos.grupo) renderTarjetas(TARJETAS_GRUPO, `lista-${vista}-grupo`);
 }
 
 function renderJuegos(){
-  const cont = document.getElementById('juegos-content');
-  cont.innerHTML =
-    categoriaJuegosHTML('solo', 'categoria-juegos-solo', '🧠', 'Desafiá tu mente', `${TARJETAS_SOLO.length} juegos para vos solo`, TARJETAS_SOLO) +
-    categoriaJuegosHTML('grupo', 'categoria-juegos-grupo', '🤝', 'Jugá en grupo, ¡Conectá!', `${TARJETAS_GRUPO.length} juegos para tu grupo`, TARJETAS_GRUPO);
-  if(juegosAbiertos.solo) renderTarjetas(TARJETAS_SOLO, 'lista-solo');
-  if(juegosAbiertos.grupo) renderTarjetas(TARJETAS_GRUPO, 'lista-grupo');
+  document.getElementById('juegos-content').innerHTML = categoriasJuegosHTML('juegos');
+  renderCategoriasEnListas('juegos');
 }
 
 // Trivia, Acertijos y Bingo se entran desde el menú "Juegos" del tabbar, así

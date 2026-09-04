@@ -137,6 +137,12 @@ body{
 .categoria-juegos-flecha-abierta{transform:rotate(180deg);}
 .categoria-juegos-lista{margin-bottom:14px;}
 
+.home-logo-banner{
+  display:flex; align-items:center; justify-content:center;
+  padding:14px 0 20px;
+}
+.home-logo-banner img{height:88px; width:auto;}
+
 .emoji-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px;}
 .emoji-opcion{
   background:#fff; border-radius:16px; border:2px solid transparent;
