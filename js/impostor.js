@@ -5,12 +5,11 @@
 // la discusión y la votación son en voz alta, fuera de la app, como en el
 // juego real.
 //
-// Cada grupo tiene su propio "director" (no el organizador del micro, que
-// puede ni conocer a este grupo puntual): es quien reparte los roles,
-// corta la ronda, carga a quién votó el grupo y arranca la próxima. Nadie
-// lo elige a mano — es automáticamente el anotado con el asiento más chico
-// del grupo, y si ese se va, el puesto pasa solo al que sigue. Así siempre
-// hay una sola persona manejando el juego, sin PIN ni configuración.
+// El "director" del juego es el organizador del viaje (el mismo PIN que
+// usa para manejar Bingo y Tutti Frutti) — es quien creó el código, así
+// que es quien está a cargo también acá: reparte los roles, corta la
+// ronda, carga a quién votó el grupo y arranca la próxima. No hace falta
+// que juegue él mismo (puede repartir roles sin anotarse a recibir palabra).
 
 const IMPOSTOR_MIN_JUGADORES = 3;
 // Al menos el doble de inocentes que de impostores, para que el juego
@@ -97,18 +96,11 @@ function impostorOrdenAsientos(mapa){
   return Object.keys(mapa).sort((a, b) => Number(a) - Number(b));
 }
 
-// El director del grupo es, automáticamente, el anotado con el asiento más
-// chico — sin PIN ni elección manual. Si se va, el puesto pasa solo al que
-// sigue en la lista.
+// El director es el organizador del viaje (mismo PIN que Bingo/Tutti
+// Frutti), no un anotado del grupo — así el coordinador que arma el
+// viaje maneja también este juego, sin depender de quién se anotó primero.
 function impostorEsDirector(){
-  if(!miAsiento) return false;
-  const asientos = impostorOrdenAsientos(impostorAnotados);
-  return asientos.length > 0 && asientos[0] === String(miAsiento);
-}
-
-function impostorNombreDirector(){
-  const asientos = impostorOrdenAsientos(impostorAnotados);
-  return asientos.length ? (impostorAnotados[asientos[0]] || `Asiento ${asientos[0]}`) : null;
+  return bingoEsOrganizador();
 }
 
 function impostorElegirCantidad(cantidad){
@@ -190,8 +182,8 @@ function impostorTerminarJuego(){
 function impostorListaAnotadosHTML(){
   const asientos = impostorOrdenAsientos(impostorAnotados);
   if(!asientos.length) return '<p style="color:var(--gray);font-size:13px;">Todavía no se anotó nadie.</p>';
-  return `<div class="bingo-roster">${asientos.map((a, i) => `
-    <div class="bingo-roster-item"><span>Asiento ${a} — ${impostorAnotados[a]}${i === 0 ? ' <span class="bingo-badge">Director</span>' : ''}</span></div>`).join('')}</div>`;
+  return `<div class="bingo-roster">${asientos.map(a => `
+    <div class="bingo-roster-item"><span>Asiento ${a} — ${impostorAnotados[a]}</span></div>`).join('')}</div>`;
 }
 
 function renderImpostor(){
@@ -220,7 +212,7 @@ function renderImpostor(){
     if(soyDirector){
       controlHTML = `<button class="btn-primary" onclick="impostorEmpezarRonda()" ${asientos.length >= IMPOSTOR_MIN_JUGADORES ? '' : 'disabled'}>Repartir roles y arrancar (${asientos.length}/${IMPOSTOR_MIN_JUGADORES})</button>`;
     } else if(anotado){
-      controlHTML = `<p class="tienda-nota">Sos parte del grupo. El director (${impostorNombreDirector()}) es quien reparte los roles y arranca.</p>`;
+      controlHTML = `<p class="tienda-nota">Sos parte del grupo. El organizador del viaje es quien reparte los roles y arranca.</p>`;
     }
     cont.innerHTML = `
       <div class="hero" style="margin-top:8px;">
@@ -273,15 +265,15 @@ function renderImpostor(){
         : `<button class="btn-primary" style="margin-top:14px;" onclick="impostorSiguienteRondaDePistas()">Pasar a la 2da vuelta de pistas</button>`;
     } else {
       cont.innerHTML += segundaVuelta
-        ? `<p class="tienda-nota" style="margin-top:14px;">Cuando terminen esta vuelta, el director (${impostorNombreDirector()}) corta para pasar a votar.</p>`
-        : `<p class="tienda-nota" style="margin-top:14px;">Cuando terminen esta vuelta, el director (${impostorNombreDirector()}) pasa a la segunda.</p>`;
+        ? `<p class="tienda-nota" style="margin-top:14px;">Cuando terminen esta vuelta, el organizador del viaje corta para pasar a votar.</p>`
+        : `<p class="tienda-nota" style="margin-top:14px;">Cuando terminen esta vuelta, el organizador del viaje pasa a la segunda.</p>`;
     }
     return;
   }
 
   if(impostorEstado.fase === 'votando'){
     if(!impostorEsDirector()){
-      cont.innerHTML = `<div class="hero" style="margin-top:8px;"><h2>Votando...</h2><p>Discutan en voz alta a quién señalan. El director (${impostorNombreDirector()}) va a cargar el resultado.</p></div>`;
+      cont.innerHTML = `<div class="hero" style="margin-top:8px;"><h2>Votando...</h2><p>Discutan en voz alta a quién señalan. El organizador del viaje va a cargar el resultado.</p></div>`;
       return;
     }
     const opcionesHTML = impostorEstado.jugadores.map(a => `
@@ -303,7 +295,7 @@ function renderImpostor(){
   const controlesRevelado = impostorEsDirector()
     ? `<button class="btn-primary" style="margin-top:14px;" onclick="impostorNuevaRonda()">Nueva ronda</button>
        <p class="link-chico" onclick="impostorTerminarJuego()">Terminar el juego</p>`
-    : `<p class="tienda-nota" style="margin-top:14px;">El director (${impostorNombreDirector()}) decide si juegan otra ronda.</p>`;
+    : `<p class="tienda-nota" style="margin-top:14px;">El organizador del viaje decide si juegan otra ronda.</p>`;
   cont.innerHTML = `
     <div class="hero ${grupoAcerto ? '' : 'impostor-hero-malo'}" style="margin-top:8px;">
       <h2>${grupoAcerto ? '✅ ¡Lo descubrieron!' : '🎭 El impostor se salvó'}</h2>
