@@ -509,3 +509,15 @@ body{
   display:flex; align-items:center; justify-content:center;
   font-size:68px; font-weight:800; font-family:'Poppins',sans-serif;
 }
+
+/* ---- Dibujar y Adivinar ---- */
+.dibujar-canvas{
+  width:100%; aspect-ratio:1; background:#fff; border:1.5px solid #ECE9E1;
+  border-radius:16px; margin-bottom:12px; touch-action:none; cursor:crosshair;
+}
+.dibujar-intentos{margin-bottom:14px;}
+.dibujar-intento{
+  font-size:13px; color:var(--gray); background:#fff; border:1px solid #ECE9E1;
+  border-radius:10px; padding:8px 12px; margin-bottom:6px;
+}
+.dibujar-intento-correcto{border-color:#3B9B5A; color:#3B9B5A; font-weight:600;}

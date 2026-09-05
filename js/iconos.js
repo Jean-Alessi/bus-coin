@@ -22,7 +22,10 @@ const ICONOS = {
   valija: '<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><line x1="3" y1="13" x2="21" y2="13"/>',
   letraA: '<path d="M12 4 5 20"/><path d="M12 4l7 16"/><path d="M8 15h8"/>',
   espia: '<path d="M2 10h3l2-3h10l2 3h3"/><circle cx="7" cy="13" r="3"/><circle cx="17" cy="13" r="3"/><path d="M10 13h4"/>',
-  cartas: '<rect x="3" y="7" width="11" height="14" rx="2"/><rect x="10" y="3" width="11" height="14" rx="2"/>'
+  cartas: '<rect x="3" y="7" width="11" height="14" rx="2"/><rect x="10" y="3" width="11" height="14" rx="2"/>',
+  lapiz: '<path d="M3 21l4-1 11-11-3-3L4 17l-1 4Z"/><path d="M14 5l3 3"/>',
+  rayo: '<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/>',
+  pincel: '<path d="M4 20l4-4"/><path d="M8 16 18 6a2.8 2.8 0 0 0-4-4L4 12l4 4Z"/>'
 };
 
 function icono(nombre, size){

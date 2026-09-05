@@ -24,6 +24,9 @@ const TARJETAS_GRUPO = [
   { icon: "letraA", title: "Tutti Frutti", sub: "Una letra, contra el resto del viaje", view: "tutifruti" },
   { icon: "espia", title: "El Impostor", sub: "Para tu grupo, no todo el micro", view: "impostor" },
   { icon: "bingo", title: "Bingo", sub: "Números del 00 al 99, con su significado", view: "bingo" },
+  { icon: "rayo", title: "Trivia en Vivo", sub: "Todo el micro responde junto, estilo Kahoot", view: "triviavivo" },
+  { icon: "lapiz", title: "Cadáver Exquisito", sub: "Una historia armada entre todos, a ciegas", view: "cuento" },
+  { icon: "pincel", title: "Dibujar y Adivinar", sub: "Uno dibuja con el dedo, el resto adivina", view: "dibujar" },
 ];
 
 
@@ -331,7 +334,7 @@ function renderJuegos(){
 
 // Trivia, Acertijos y Bingo se entran desde el menú "Juegos" del tabbar, así
 // que esa pestaña queda marcada activa aunque ya estés adentro de uno de ellos.
-const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'memoria', 'tutifruti', 'impostor', 'bingo'];
+const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'memoria', 'tutifruti', 'impostor', 'bingo', 'triviavivo', 'cuento', 'dibujar'];
 
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -352,6 +355,9 @@ function showView(name){
   if(name==='impostor'){ iniciarImpostor(); }
   if(name==='ranking'){ renderRanking(); }
   if(name==='bingo'){ iniciarBingo(); }
+  if(name==='triviavivo'){ iniciarTriviaVivo(); }
+  if(name==='cuento'){ iniciarCuento(); }
+  if(name==='dibujar'){ iniciarDibujar(); }
   if(name==='tienda'){ iniciarPremios(); }
 }
 
