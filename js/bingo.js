@@ -279,20 +279,20 @@ function renderBingoOrganizador(container){
   // El organizador no juega, así que no cuenta como "pasajero esperando armar cartón".
   const asientos = bingoOrdenAsientos(bingoPasajeros).filter(a => a !== String(miAsiento));
   const completos = asientos.filter(a => bingoCartones[a] && bingoCartones[a].nombres && bingoCartones[a].nombres.length === BINGO_CANTIDAD_CARTON);
+  const listaHTML = asientos.length
+    ? asientos.map(a => {
+      const listo = bingoCartones[a] && bingoCartones[a].nombres && bingoCartones[a].nombres.length === BINGO_CANTIDAD_CARTON;
+      return `<div class="bingo-roster-item ${listo ? 'bingo-roster-listo' : ''}">
+        <span>Asiento ${a} — ${bingoPasajeros[a]}</span>
+        <span class="bingo-roster-derecha">
+          <span>${listo ? '✓ Listo' : 'Armando cartón...'}</span>
+          <button class="btn-eliminar-pasajero" onclick="bingoEliminarPasajero('${a}')" title="Sacar del bingo">✕</button>
+        </span>
+      </div>`;
+    }).join('')
+    : '<p style="color:var(--gray);font-size:13px;">Todavía no entró nadie con su nombre y asiento.</p>';
 
   if(bingo.fase === 'esperando'){
-    const listaHTML = asientos.length
-      ? asientos.map(a => {
-        const listo = bingoCartones[a] && bingoCartones[a].nombres && bingoCartones[a].nombres.length === BINGO_CANTIDAD_CARTON;
-        return `<div class="bingo-roster-item ${listo ? 'bingo-roster-listo' : ''}">
-          <span>Asiento ${a} — ${bingoPasajeros[a]}</span>
-          <span class="bingo-roster-derecha">
-            <span>${listo ? '✓ Listo' : 'Armando cartón...'}</span>
-            <button class="btn-eliminar-pasajero" onclick="bingoEliminarPasajero('${a}')" title="Sacar del bingo">✕</button>
-          </span>
-        </div>`;
-      }).join('')
-      : '<p style="color:var(--gray);font-size:13px;">Todavía no entró nadie con su nombre y asiento.</p>';
     container.innerHTML = `
       <div class="section-label">Panel del organizador</div>
       <div class="hero" style="margin-top:8px;">
@@ -332,6 +332,8 @@ function renderBingoOrganizador(container){
     </div>
     <div class="section-label">Ya salieron (${sorteados.length}/${BINGO_NUMEROS.length})</div>
     <div class="bingo-historial">${historialHTML}</div>
+    <div class="section-label">Pasajeros (${completos.length} de ${asientos.length} con cartón)</div>
+    <div class="bingo-roster">${listaHTML}</div>
     <p class="link-chico" onclick="bingoCerrarSesionOrganizador()">Cerrar sesión de organizador</p>`;
 }
 
