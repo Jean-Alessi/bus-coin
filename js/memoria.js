@@ -47,7 +47,7 @@ function tocarCartaMemoria(i){
     memoriaCartas[b].resuelta = true;
     memoriaVolteadas = [];
     reproducirTono('correcto');
-    ganarMonedas(10);
+    ganarMonedas(4);
     if(memoriaCartas.every(c => c.resuelta)){
       memoriaFase = (memoriaNivel === MEMORIA_NIVELES.length - 1) ? 'juego-completo' : 'nivel-completo';
     }

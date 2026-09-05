@@ -357,14 +357,14 @@ function usarPistaPensamiento(i){
   renderPensamiento();
 }
 
-// 10 puntos por acertar, menos 1 por cada pregunta sugerida que hayan usado en este caso.
+// 5 puntos por acertar, menos 1 por cada pregunta sugerida que hayan usado en este caso.
 function comprobarPensamiento(){
   const input = document.getElementById('pensamiento-respuesta-input');
   const intento = input ? input.value : '';
   const p = pensActual();
   if(esRespuestaCorrecta(intento, p.clave)){
     reproducirTono('correcto');
-    const puntos = Math.max(0, 10 - pensPreguntasUsadas.size);
+    const puntos = Math.max(0, 5 - pensPreguntasUsadas.size);
     ganarMonedas(puntos);
     mostrarToast(`+${puntos} monedas, ¡lo resolviste!`, 'gain');
     pensFase = 'acertado';

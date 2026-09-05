@@ -71,8 +71,8 @@ function adivinarLetraAhorcado(letra){
     const completa = palabra.split('').every(ch => ahorcadoLetrasAdivinadas.has(ch));
     if(completa){
       reproducirTono('bonus');
-      ganarMonedas(10);
-      mostrarToast('+10 monedas, ¡la adivinaste!', 'gain');
+      ganarMonedas(2);
+      mostrarToast('+2 monedas, ¡la adivinaste!', 'gain');
       ahorcadoFase = 'ganado';
     } else {
       reproducirTono('correcto');

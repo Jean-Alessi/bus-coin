@@ -5,9 +5,11 @@
 // sincroniza en Firebase para que cada pasajero vea su turno en su celular.
 
 const PREMIOS_DEFAULT = ['Viaje gratis', '50% de descuento en tu próximo viaje', 'Remera Busmac', 'Caja de Bon o Bon'];
+const PREMIOS_MEDALLAS = ['🥇', '🥈', '🥉', '🎗️'];
 
 let premiosState = { lista: PREMIOS_DEFAULT.slice(), habilitado: false, orden: null, elecciones: {} };
 let premiosListenersListos = false;
+let premiosEleccionesPrevias = -1; // -1 = todavía no se leyó nada; evita festejar de más al entrar a la pantalla
 
 function premiosRef(){ return db.ref('salas/' + codigoViaje + '/premios'); }
 
@@ -22,6 +24,11 @@ function iniciarPremios(){
       orden: val.orden || null,
       elecciones: val.elecciones || {},
     };
+    const cantidadElecciones = Object.keys(premiosState.elecciones).length;
+    // Festejo corto cuando se suma una elección nueva (no la primera vez que
+    // carga la pantalla, para no disparar el festejo con datos ya viejos).
+    if(premiosEleccionesPrevias >= 0 && cantidadElecciones > premiosEleccionesPrevias) premiosFestejarUltimaEleccion();
+    premiosEleccionesPrevias = cantidadElecciones;
     renderPremiosViaje();
   });
 }
@@ -64,24 +71,55 @@ function elegirPremio(indexPremio){
   premiosRef().child('elecciones').child(String(miAsiento)).set(indexPremio);
 }
 
+function premiosFestejarUltimaEleccion(){
+  const orden = premiosState.orden || [];
+  const cantidad = Object.keys(premiosState.elecciones).length;
+  const asiento = orden[cantidad - 1];
+  const nombre = (rankingPuntos[asiento] && rankingPuntos[asiento].nombre) || `Asiento ${asiento}`;
+  const indicePremio = premiosState.elecciones[asiento];
+  const premio = premiosState.lista[indicePremio];
+  reproducirTono('bonus');
+  mostrarToast(`🎉 ${nombre} eligió: ${premio}`, 'gain');
+  const grid = document.getElementById('premios-grid');
+  if(grid){
+    grid.classList.remove('premios-grid-flash');
+    void grid.offsetWidth; // fuerza el reinicio de la animación si ya estaba corriendo
+    grid.classList.add('premios-grid-flash');
+  }
+}
+
+function premiosGridHTML(elegidosPorIndice){
+  return `<div class="premios-grid" id="premios-grid">${premiosState.lista.map((p, i) => {
+    const elegido = elegidosPorIndice && elegidosPorIndice[i];
+    return `
+      <div class="premio-card premio-card-${i} ${elegido ? 'premio-card-elegido' : ''}">
+        <div class="premio-card-medalla">${PREMIOS_MEDALLAS[i]}</div>
+        <div class="premio-card-puesto">${i + 1}° puesto</div>
+        <div class="premio-card-nombre">${p}</div>
+        ${elegido ? `<div class="premio-card-tag">✓ Elegido por ${elegido}</div>` : ''}
+      </div>`;
+  }).join('')}</div>`;
+}
+
 function renderPremiosViaje(){
   const cont = document.getElementById('tienda-content');
   if(!cont) return;
 
-  const lista = premiosState.lista;
   const esOrganizador = bingoEsOrganizador();
 
   if(!premiosState.habilitado){
     const editorHTML = esOrganizador ? `
       <div class="section-label">Editá los premios de este viaje</div>
-      ${lista.map((p, i) => `<input type="text" id="premio-input-${i}" class="bingo-input-numero" style="width:100%;" value="${p.replace(/"/g, '&quot;')}">`).join('')}
+      ${premiosState.lista.map((p, i) => `<input type="text" id="premio-input-${i}" class="bingo-input-numero" style="width:100%;" value="${p.replace(/"/g, '&quot;')}">`).join('')}
       <button class="btn-ghost" onclick="guardarListaPremios()">Guardar premios</button>
       <button class="btn-primary" onclick="habilitarEleccionPremios()">Habilitar elección de premios</button>` : '';
 
     cont.innerHTML = `
-      <p class="tienda-nota">Jugá y sumá monedas en Trivia, Acertijos y Bingo. Al terminar el viaje, del 1° al 4° puesto del ranking eligen premio en orden.</p>
-      <div class="section-label">Premios de este viaje</div>
-      ${lista.map(p => `<div class="pack pack-podio"><div class="info"><h3>${p}</h3></div></div>`).join('')}
+      <div class="premios-hero">
+        <div class="premios-hero-titulo">🏆 Premios de este viaje</div>
+        <p>Jugá y sumá monedas en los juegos. Al terminar el viaje, del 1° al 4° puesto del ranking eligen premio, en orden.</p>
+      </div>
+      ${premiosGridHTML(null)}
       ${editorHTML}`;
     return;
   }
@@ -89,27 +127,44 @@ function renderPremiosViaje(){
   const orden = premiosState.orden || [];
   const turnoIndex = Object.keys(premiosState.elecciones).length;
   const turnoAsiento = orden[turnoIndex];
-  const elegidosIdx = new Set(Object.keys(premiosState.elecciones).map(a => premiosState.elecciones[a]));
+  const elegidosPorIndice = {};
+  orden.forEach(asiento => {
+    const idx = premiosState.elecciones[asiento];
+    if(idx != null) elegidosPorIndice[idx] = (rankingPuntos[asiento] && rankingPuntos[asiento].nombre) || `Asiento ${asiento}`;
+  });
 
-  const filasHTML = orden.map((asiento, i) => {
-    const nombre = (rankingPuntos[asiento] && rankingPuntos[asiento].nombre) || ('Asiento ' + asiento);
+  const podioHTML = orden.slice(0, 3).map((asiento, i) => {
+    const nombre = (rankingPuntos[asiento] && rankingPuntos[asiento].nombre) || `Asiento ${asiento}`;
     const eligio = premiosState.elecciones[asiento];
-    let estado;
-    if(eligio != null) estado = `Eligió: ${lista[eligio]}`;
-    else if(i === turnoIndex) estado = 'Eligiendo ahora...';
-    else estado = 'Esperando su turno';
-    return `<div class="bingo-roster-item ${eligio != null ? 'bingo-roster-listo' : ''}">
-      <span>${MEDALLAS_RANKING[i] || (i + 1) + '°'} ${nombre}</span>
+    const activo = i === turnoIndex;
+    let estado = eligio != null ? `Eligió: ${premiosState.lista[eligio]}` : (activo ? 'Eligiendo ahora...' : 'Esperando su turno');
+    return `
+      <div class="podio-puesto podio-${i + 1} ${activo ? 'podio-activo' : ''}">
+        <div class="podio-avatar">${nombre.slice(0, 2).toUpperCase()}</div>
+        <div class="podio-medalla">${PREMIOS_MEDALLAS[i]}</div>
+        <div class="podio-nombre">${nombre}</div>
+        <div class="podio-estado">${estado}</div>
+      </div>`;
+  }).join('');
+
+  const cuartoPuesto = orden.length > 3 ? (() => {
+    const asiento = orden[3];
+    const nombre = (rankingPuntos[asiento] && rankingPuntos[asiento].nombre) || `Asiento ${asiento}`;
+    const eligio = premiosState.elecciones[asiento];
+    const activo = turnoIndex === 3;
+    const estado = eligio != null ? `Eligió: ${premiosState.lista[eligio]}` : (activo ? 'Eligiendo ahora...' : 'Esperando su turno');
+    return `<div class="bingo-roster-item ${eligio != null ? 'bingo-roster-listo' : ''} ${activo ? 'premios-fila-activa' : ''}">
+      <span>${PREMIOS_MEDALLAS[3]} ${nombre}</span>
       <span class="bingo-roster-derecha"><span>${estado}</span></span>
     </div>`;
-  }).join('');
+  })() : '';
 
   let miTurnoHTML = '';
   if(turnoAsiento != null && String(turnoAsiento) === String(miAsiento) && premiosState.elecciones[String(miAsiento)] == null){
-    const disponibles = lista.map((p, i) => ({ p, i })).filter(o => !elegidosIdx.has(o.i));
+    const disponibles = premiosState.lista.map((p, i) => ({ p, i })).filter(o => elegidosPorIndice[o.i] == null);
     miTurnoHTML = `
-      <div class="hero" style="margin-top:8px;">
-        <h2>¡Te tocó elegir!</h2>
+      <div class="hero premios-tu-turno" style="margin-top:8px;">
+        <h2>🎉 ¡Te tocó elegir!</h2>
         <p>${disponibles.length === 1 ? 'Te queda el último premio disponible.' : 'Elegí el premio que quieras de los que quedan.'}</p>
       </div>
       ${disponibles.map(o => `<button class="btn-primary" style="margin-top:8px;" onclick="elegirPremio(${o.i})">${o.p}</button>`).join('')}`;
@@ -119,7 +174,9 @@ function renderPremiosViaje(){
 
   cont.innerHTML = `
     <div class="section-label">Elección de premios</div>
+    <div class="podio">${podioHTML}</div>
+    ${cuartoPuesto}
     ${miTurnoHTML}
-    <div class="bingo-roster">${filasHTML}</div>
-    ${terminado ? '<p class="tienda-nota">Ya eligieron todos. ¡Felicitaciones a los ganadores!</p>' : ''}`;
+    ${premiosGridHTML(elegidosPorIndice)}
+    ${terminado ? '<p class="tienda-nota">🎊 Ya eligieron todos. ¡Felicitaciones a los ganadores!</p>' : ''}`;
 }

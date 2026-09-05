@@ -1,8 +1,8 @@
 // Valija Express: 20 segundos para armar la valija con hasta 10 objetos de
 // los 20 que se muestran (10 correctos para el destino + 10 señuelos). Cada
-// correcto suma 10 monedas; los incorrectos no restan, pero ocupan uno de los
+// correcto suma 2 monedas; los incorrectos no restan, pero ocupan uno de los
 // 10 lugares disponibles, así que elegir mal sí "cuesta" sin hacer perder
-// monedas a nadie. Armar la valija perfecta (10/10) da un bonus de +20.
+// monedas a nadie. Armar la valija perfecta (10/10) da un bonus de +10.
 
 // Banco compartido de objetos: de acá salen los señuelos incorrectos de
 // cada destino (todo lo que no esté en la lista de "correctos" de ese
@@ -138,8 +138,8 @@ function terminarRondaValija(){
   const seleccion = [...valijaSeleccionados];
   const aciertos = seleccion.filter(x => valijaDestinoActual.correctos.includes(x)).length;
   const errores = seleccion.length - aciertos;
-  const bonus = aciertos === 10 ? 20 : 0;
-  const puntaje = aciertos * 10 + bonus;
+  const bonus = aciertos === 10 ? 10 : 0;
+  const puntaje = aciertos * 2 + bonus;
   valijaUltimoResultado = { aciertos, errores, bonus, puntaje };
   if(puntaje > 0) ganarMonedas(puntaje);
   reproducirTono(bonus ? 'bonus' : 'fin');

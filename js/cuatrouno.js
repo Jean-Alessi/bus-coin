@@ -69,8 +69,8 @@ function comprobarCuatrouno(){
   const armada = cuatrounoConstruida.map(i => cuatrounoFichas[i].letra).join('');
   if(armada === p.palabra){
     reproducirTono('bonus');
-    ganarMonedas(10);
-    mostrarToast('+10 monedas, ¡la sacaron!', 'gain');
+    ganarMonedas(5);
+    mostrarToast('+5 monedas, ¡la sacaron!', 'gain');
     cuatrounoFase = 'acertado';
   } else {
     reproducirTono('incorrecto');
