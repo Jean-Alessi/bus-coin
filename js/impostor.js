@@ -206,6 +206,7 @@ function renderImpostor(){
       controlHTML = `<p class="tienda-nota">Sos parte del grupo. El organizador del viaje es quien reparte los roles y arranca.</p>`;
     }
     cont.innerHTML = `
+      ${soyDirector ? '' : bingoPinHTML()}
       <div class="hero" style="margin-top:8px;">
         <h2>🕵️ El Impostor</h2>
         <p>Se juega con el grupo con el que viajás (mínimo ${IMPOSTOR_MIN_JUGADORES}), no con todo el micro. Todos reciben la misma palabra menos el o los impostores. Las pistas, la charla y la votación son en voz alta — la app solo reparte el rol en secreto.</p>

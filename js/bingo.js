@@ -120,6 +120,7 @@ function iniciarBingo(){
 function bingoMostrarPinOrganizador(){
   bingoMostrandoPin = true;
   renderBingo();
+  if(typeof renderImpostor === 'function') renderImpostor();
 }
 
 function bingoIntentarSerOrganizador(){
@@ -133,6 +134,10 @@ function bingoIntentarSerOrganizador(){
   localStorage.setItem('bingo-organizador', 'si');
   bingoMostrandoPin = false;
   renderBingo();
+  // El mismo PIN también da el rol de director en El Impostor — si esa
+  // pantalla está abierta (o se abrió antes en esta sesión), se refresca
+  // también para que aparezcan sus controles sin tener que ir y volver.
+  if(typeof renderImpostor === 'function') renderImpostor();
 }
 
 function bingoToggleNumero(numero){
