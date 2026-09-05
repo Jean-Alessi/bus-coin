@@ -344,7 +344,11 @@ function renderBingoPasajero(container){
   const miCarton = bingoCartones[String(miAsiento)];
   const tengoCartonCompleto = !!(miCarton && miCarton.nombres && miCarton.nombres.length === BINGO_CANTIDAD_CARTON);
 
-  if(bingo.fase === 'esperando' && !tengoCartonCompleto){
+  // Sin el chequeo de fase, alguien que todavía no armó su cartón cuando el
+  // organizador ya arrancó (o volvió a jugar) quedaba trabado para siempre,
+  // sin ninguna forma de sumarse — ahora puede armarlo en cualquier momento
+  // y arranca directo tocando los números que ya salieron.
+  if(!tengoCartonCompleto){
     const itemNumero = (n) => {
       const marcado = bingoSeleccion.includes(n);
       return `<div class="bingo-nombre-item ${marcado ? 'bingo-nombre-elegido' : ''}" onclick="bingoToggleNumero('${n}')">${n}</div>`;
