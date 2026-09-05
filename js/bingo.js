@@ -309,16 +309,24 @@ function renderBingoOrganizador(container){
   const terminado = !!bingo.ganadorCartonLleno;
   const bolsa = bingo.bolsa || [];
   const sorteados = bingo.sorteados || [];
+  // Con cartones de 12 números puede pasar que se canten los 100 y nadie
+  // complete el suyo — sin esto, el botón quedaba en "Cantar número"
+  // deshabilitado para siempre, sin ninguna forma de arrancar de nuevo.
+  const bolsaAgotada = !terminado && bolsa.length === 0;
   const historialHTML = sorteados.length
     ? sorteados.slice().reverse().map((n, i) => `<span class="bingo-chip${i === 0 ? ' bingo-chip-ultimo' : ''}">${n}</span>`).join('')
     : '<span class="bingo-chip bingo-chip-vacio">Todavía nada</span>';
-  const bannerFinal = terminado ? `<div class="hero" style="margin-top:8px;"><h2>¡BINGO!</h2><p>Ganó ${bingoPasajeros[bingo.ganadorCartonLleno]} (asiento ${bingo.ganadorCartonLleno}) con el cartón lleno.</p></div>` : '';
+  const bannerFinal = terminado
+    ? `<div class="hero" style="margin-top:8px;"><h2>¡BINGO!</h2><p>Ganó ${bingoPasajeros[bingo.ganadorCartonLleno]} (asiento ${bingo.ganadorCartonLleno}) con el cartón lleno.</p></div>`
+    : bolsaAgotada
+      ? `<div class="hero" style="margin-top:8px;"><h2>Se cantaron los 100 números</h2><p>Nadie completó el cartón esta vez.</p></div>`
+      : '';
   container.innerHTML = `
     <div class="section-label">Panel del organizador</div>
     ${bannerFinal}
     <div class="bingo-sorteo">
       <div class="bingo-ultimo">${bingo.ultimaLlamada || '—'}</div>
-      ${terminado
+      ${terminado || bolsaAgotada
         ? `<button class="btn-primary" onclick="bingoJugarDeNuevo()">Jugar de nuevo</button>`
         : `<button class="btn-primary" onclick="bingoSortear()" ${bolsa.length === 0 ? 'disabled' : ''}>Cantar número</button>`}
     </div>
@@ -368,21 +376,26 @@ function renderBingoPasajero(container){
 
   // fase 'jugando'
   const terminado = !!bingo.ganadorCartonLleno;
+  const bolsaAgotada = !terminado && (bingo.bolsa || []).length === 0;
   const sorteados = bingo.sorteados || [];
   const historialHTML = sorteados.length
     ? sorteados.slice().reverse().map((n, i) => `<span class="bingo-chip${i === 0 ? ' bingo-chip-ultimo' : ''}">${n}</span>`).join('')
     : '<span class="bingo-chip bingo-chip-vacio">Todavía nada</span>';
-  const bannerFinal = terminado ? `<div class="hero" style="margin-top:8px;"><h2>¡BINGO!</h2><p>Ganó ${bingoPasajeros[bingo.ganadorCartonLleno]} (asiento ${bingo.ganadorCartonLleno}) con el cartón lleno.</p></div>` : '';
+  const bannerFinal = terminado
+    ? `<div class="hero" style="margin-top:8px;"><h2>¡BINGO!</h2><p>Ganó ${bingoPasajeros[bingo.ganadorCartonLleno]} (asiento ${bingo.ganadorCartonLleno}) con el cartón lleno.</p></div>`
+    : bolsaAgotada
+      ? `<div class="hero" style="margin-top:8px;"><h2>Se cantaron los 100 números</h2><p>Nadie completó el cartón esta vez.</p></div>`
+      : '';
   container.innerHTML = `
     ${bingoPinHTML()}
     <div class="section-label">Tu asiento es el ${miAsiento}</div>
     ${bannerFinal}
     <div class="bingo-sorteo">
       <div class="bingo-ultimo">${bingo.ultimaLlamada || '—'}</div>
-      <p class="bingo-espera">${terminado ? 'Esperá a que el organizador arranque otra partida.' : 'El organizador va cantando los números.'}</p>
+      <p class="bingo-espera">${terminado || bolsaAgotada ? 'Esperá a que el organizador arranque otra partida.' : 'El organizador va cantando los números.'}</p>
     </div>
     <div class="section-label">Ya salieron (${sorteados.length}/${BINGO_NUMEROS.length})</div>
     <div class="bingo-historial">${historialHTML}</div>
-    ${miCarton ? bingoCartonHTML(String(miAsiento), `Tu cartón (asiento ${miAsiento})`, miCarton, !terminado) : ''}
-    ${!terminado ? '<p class="bingo-espera">Tocá tus números a medida que van saliendo.</p>' : ''}`;
+    ${miCarton ? bingoCartonHTML(String(miAsiento), `Tu cartón (asiento ${miAsiento})`, miCarton, !terminado && !bolsaAgotada) : ''}
+    ${!terminado && !bolsaAgotada ? '<p class="bingo-espera">Tocá tus números a medida que van saliendo.</p>' : ''}`;
 }
