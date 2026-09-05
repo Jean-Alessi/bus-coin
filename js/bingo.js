@@ -181,7 +181,9 @@ function bingoToggleNumero(numero){
 function bingoConfirmarCarton(){
   if(!bingo || bingo.fase !== 'armando') return;
   if(bingoSeleccion.length !== BINGO_CANTIDAD_CARTON || !miAsiento) return;
-  const numeros = barajar(bingoSeleccion.slice());
+  // De menor a mayor, no en el orden en que se fueron tocando al elegirlos —
+  // así es mucho más fácil ubicar cada número cuando se canta uno.
+  const numeros = bingoSeleccion.slice().sort((a, b) => Number(a) - Number(b));
   bingoRefCartones().child(String(miAsiento)).set({ nombres: numeros, marcados: [] });
 }
 
@@ -463,7 +465,7 @@ function renderBingoPasajero(container){
         ${bingoPinHTML()}
         <div class="hero" style="margin-top:8px;">
           <h2>Armá tu cartón</h2>
-          <p>Elegí exactamente ${BINGO_CANTIDAD_CARTON} números del 00 al 99. Vas a jugar con el asiento ${miAsiento}.</p>
+          <p>Elegí exactamente ${BINGO_CANTIDAD_CARTON} números del 00 al 99. Vas a jugar con el asiento ${miAsiento}. Este va a ser tu cartón para todo el viaje, en todas las partidas.</p>
         </div>
         <div class="section-label">Elegidos: ${bingoSeleccion.length}/${BINGO_CANTIDAD_CARTON}</div>
         <div class="bingo-lista-nombres">${BINGO_NUMEROS.map(itemNumero).join('')}</div>
