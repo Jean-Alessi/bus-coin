@@ -66,5 +66,15 @@ function pwaInstalarHTML(){
       <p class="link-chico" onclick="pwaOcultarAviso()">Ahora no</p>`;
   }
 
-  return '';
+  // Chrome/Android no siempre dispara "beforeinstallprompt" enseguida (pide
+  // algo de interacción previa con el sitio, que en un viaje de micro puede
+  // no llegar a darse), así que mientras tanto se deja igual el paso a paso
+  // manual — el menú del navegador siempre puede instalar si la app cumple
+  // los requisitos, aunque el cartel automático no haya aparecido.
+  return `
+    <div class="card">
+      <div class="icon">📲</div>
+      <div class="txt"><h3>Instalá Bus Coin</h3><p>Menú ⋮ del navegador → "Instalar aplicación" (o "Agregar a pantalla de inicio")</p></div>
+    </div>
+    <p class="link-chico" onclick="pwaOcultarAviso()">Ahora no</p>`;
 }
