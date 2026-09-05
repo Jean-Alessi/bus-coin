@@ -258,7 +258,6 @@ function goHome(){
   localStorage.setItem('mi-asiento', miAsiento);
   localStorage.setItem('mi-emoji', miEmoji);
   rankingUnirse();
-  bingoRegistrarPasajero(miAsiento, miNombre);
   showView('home');
   document.getElementById('tabbar').style.display = 'flex';
   actualizarMonedasEnPantalla();

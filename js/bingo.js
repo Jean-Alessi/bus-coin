@@ -35,12 +35,22 @@ function bingoArmarLlamada(numero){
   return `<span class="bingo-numero-resaltado">${numero}</span><span class="bingo-numero-significado">${significado}</span>`;
 }
 
-// ---- Multi-celular: cada pasajero entra con su nombre + asiento (ya elegidos
-// al principio, en el onboarding) y arma su propio cartón eligiendo
-// BINGO_CANTIDAD_CARTON números del 00 al 99. El organizador puede empezar
-// cuando quiera, sin esperar a que todos completen. Ser organizador es una
-// marca local del celular (vía PIN), no depende de quién llegó primero ni se
-// pierde si se reinicia la partida.
+// ---- Multi-celular, con el organizador manejando cada paso:
+//   1. 'cerrado'  — todavía no se abrió el bingo. Nadie se puede anotar.
+//   2. 'anotando' — el organizador abrió la anotación ("Comenzar el bingo").
+//                   Los pasajeros se anotan con su nombre + asiento.
+//   3. 'armando'  — el organizador cerró la anotación y dejó armar los
+//                   cartones. Ve en vivo (✓ verde) quién ya completó el
+//                   suyo, y puede sacar a cualquiera de la lista.
+//   4. 'jugando'  — el organizador arrancó el sorteo. Solo juega quien
+//                   llegó a completar su cartón antes de este paso; el que
+//                   quedó sin armar espera a la próxima partida.
+// "Jugar de nuevo" vuelve a 'armando' (no directo a 'jugando'), para que
+// quien se quedó sin cartón tenga otra chance antes de que arranque el
+// sorteo siguiente.
+//
+// Ser organizador es una marca local del celular (vía PIN), no depende de
+// quién llegó primero ni se pierde si se reinicia la partida.
 //
 // El marcado del cartón es manual: cada uno toca sus propios números a
 // medida que van saliendo (no se marcan solos). Para que nadie pueda tocar
@@ -55,7 +65,7 @@ function bingoRefPasajeros(){ return db.ref(`salas/${codigoViaje}/bingo/pasajero
 function bingoRefCartones(){ return db.ref(`salas/${codigoViaje}/bingo/cartones`); }
 
 function bingoEstadoVacio(){
-  return { fase: 'esperando', bolsa: [], sorteados: [], ultimaLlamada: null, ganadorCartonLleno: null };
+  return { fase: 'cerrado', bolsa: [], sorteados: [], ultimaLlamada: null, ganadorCartonLleno: null };
 }
 
 function bingoGuardarEstado(){
@@ -73,16 +83,40 @@ function bingoCerrarSesionOrganizador(){
   renderBingo();
 }
 
-// Se llama una vez, al entrar a la app con nombre + asiento (ver goHome en app.js).
 function bingoRegistrarPasajero(asiento, nombre){
   bingoRefPasajeros().child(String(asiento)).set(nombre);
 }
 
-// El organizador saca a quien se colgó o se arrepintió de jugar (solo antes de empezar).
+// El pasajero se anota por su cuenta, pero solo mientras el organizador
+// tiene la anotación abierta — así el organizador controla exactamente
+// quién entra a jugar esta partida.
+function bingoAnotarme(){
+  if(!miAsiento || !bingo || bingo.fase !== 'anotando') return;
+  bingoRegistrarPasajero(miAsiento, miNombre);
+}
+
+function bingoSalirDelBingo(){
+  if(!miAsiento || !bingo || bingo.fase !== 'anotando') return;
+  bingoRefPasajeros().child(String(miAsiento)).remove();
+}
+
+// El organizador saca a quien no quiere que juegue, en cualquier momento.
 function bingoEliminarPasajero(asiento){
   if(!bingoEsOrganizador()) return;
   bingoRefPasajeros().child(String(asiento)).remove();
   bingoRefCartones().child(String(asiento)).remove();
+}
+
+function bingoAbrirAnotacion(){
+  if(!bingoEsOrganizador()) return;
+  bingo.fase = 'anotando';
+  bingoGuardarEstado();
+}
+
+function bingoAbrirArmado(){
+  if(!bingoEsOrganizador() || !bingo || bingo.fase !== 'anotando') return;
+  bingo.fase = 'armando';
+  bingoGuardarEstado();
 }
 
 let bingoListenersListos = false;
@@ -151,15 +185,16 @@ function bingoToggleNumero(numero){
 }
 
 function bingoConfirmarCarton(){
+  if(!bingo || bingo.fase !== 'armando') return;
   if(bingoSeleccion.length !== BINGO_CANTIDAD_CARTON || !miAsiento) return;
   const numeros = barajar(bingoSeleccion.slice());
   bingoRefCartones().child(String(miAsiento)).set({ nombres: numeros, marcados: [] });
 }
 
 function bingoEmpezarJuego(){
-  if(!bingoEsOrganizador()) return;
-  const asientos = Object.keys(bingoPasajeros);
-  if(!asientos.length) return;
+  if(!bingoEsOrganizador() || !bingo || bingo.fase !== 'armando') return;
+  const conCarton = Object.keys(bingoCartones).filter(a => bingoCartones[a] && bingoCartones[a].nombres && bingoCartones[a].nombres.length === BINGO_CANTIDAD_CARTON);
+  if(!conCarton.length) return;
   bingo.bolsa = barajar(BINGO_NUMEROS.slice());
   bingo.sorteados = [];
   bingo.ultimaLlamada = null;
@@ -209,15 +244,27 @@ function bingoTocarNumero(indice){
   }
 }
 
-// Repite el sorteo con los mismos cartones (no hace falta rearmarlos a mano de nuevo).
+// Pide confirmación antes de dar por terminada la partida — así el
+// organizador no la cierra de un toque apurado sin haber cantado bien al
+// ganador delante de todos.
+function bingoConfirmarJugarDeNuevo(){
+  const mensaje = bingo.ganadorCartonLleno
+    ? `¿Seguro que querés empezar una partida nueva? Se va a perder de la pantalla que ganó ${bingoPasajeros[bingo.ganadorCartonLleno] || 'asiento ' + bingo.ganadorCartonLleno}.`
+    : '¿Seguro que querés empezar una partida nueva?';
+  if(confirm(mensaje)) bingoJugarDeNuevo();
+}
+
+// Vuelve a 'armando' (no directo a 'jugando'): quien se quedó sin cartón
+// esta vez tiene otra chance de armarlo antes de que arranque el sorteo
+// siguiente. Los cartones ya armados se conservan, solo se limpian las marcas.
 function bingoJugarDeNuevo(){
   if(!bingoEsOrganizador()) return;
   Object.values(bingoCartones).forEach(c => { c.marcados = []; });
-  bingo.bolsa = barajar(BINGO_NUMEROS.slice());
+  bingo.bolsa = [];
   bingo.sorteados = [];
   bingo.ultimaLlamada = null;
   bingo.ganadorCartonLleno = null;
-  bingo.fase = 'jugando';
+  bingo.fase = 'armando';
   bingoGuardarEstado();
   bingoRefCartones().set(bingoCartones);
 }
@@ -276,7 +323,7 @@ function renderBingo(){
 }
 
 function renderBingoOrganizador(container){
-  // El organizador no juega, así que no cuenta como "pasajero esperando armar cartón".
+  // El organizador no juega, así que no cuenta como "pasajero anotado".
   const asientos = bingoOrdenAsientos(bingoPasajeros).filter(a => a !== String(miAsiento));
   const completos = asientos.filter(a => bingoCartones[a] && bingoCartones[a].nombres && bingoCartones[a].nombres.length === BINGO_CANTIDAD_CARTON);
   const listaHTML = asientos.length
@@ -290,17 +337,42 @@ function renderBingoOrganizador(container){
         </span>
       </div>`;
     }).join('')
-    : '<p style="color:var(--gray);font-size:13px;">Todavía no entró nadie con su nombre y asiento.</p>';
+    : '<p style="color:var(--gray);font-size:13px;">Todavía no se anotó nadie.</p>';
 
-  if(bingo.fase === 'esperando'){
+  if(bingo.fase === 'cerrado'){
     container.innerHTML = `
       <div class="section-label">Panel del organizador</div>
       <div class="hero" style="margin-top:8px;">
-        <h2>Esperando los cartones</h2>
-        <p>${completos.length} de ${asientos.length} pasajeros ya armaron su cartón de ${BINGO_CANTIDAD_CARTON} números. Empezá cuando quieras, no hace falta que estén todos.</p>
+        <h2>Listo para arrancar</h2>
+        <p>Cuando toqués "Comenzar el bingo" los pasajeros van a poder anotarse.</p>
+      </div>
+      <button class="btn-primary" onclick="bingoAbrirAnotacion()">Comenzar el bingo</button>
+      <p class="link-chico" onclick="bingoCerrarSesionOrganizador()">Cerrar sesión de organizador</p>`;
+    return;
+  }
+
+  if(bingo.fase === 'anotando'){
+    container.innerHTML = `
+      <div class="section-label">Panel del organizador</div>
+      <div class="hero" style="margin-top:8px;">
+        <h2>Anotación abierta</h2>
+        <p>${asientos.length} anotado${asientos.length === 1 ? '' : 's'}. Sacá a quien no quieras que juegue, y cuando estén los que quieras, pasá a armar los cartones.</p>
       </div>
       <div class="bingo-roster">${listaHTML}</div>
-      <button class="btn-primary" onclick="bingoEmpezarJuego()" ${asientos.length ? '' : 'disabled'}>Empezar el bingo</button>
+      <button class="btn-primary" onclick="bingoAbrirArmado()" ${asientos.length ? '' : 'disabled'}>Empezar a armar cartones</button>
+      <p class="link-chico" onclick="bingoCerrarSesionOrganizador()">Cerrar sesión de organizador</p>`;
+    return;
+  }
+
+  if(bingo.fase === 'armando'){
+    container.innerHTML = `
+      <div class="section-label">Panel del organizador</div>
+      <div class="hero" style="margin-top:8px;">
+        <h2>Armando los cartones</h2>
+        <p>${completos.length} de ${asientos.length} ya completaron su cartón de ${BINGO_CANTIDAD_CARTON} números. El que no llegue a armarlo no juega esta partida.</p>
+      </div>
+      <div class="bingo-roster">${listaHTML}</div>
+      <button class="btn-primary" onclick="bingoEmpezarJuego()" ${completos.length ? '' : 'disabled'}>Empezar el bingo</button>
       <p class="link-chico" onclick="bingoCerrarSesionOrganizador()">Cerrar sesión de organizador</p>`;
     return;
   }
@@ -327,7 +399,7 @@ function renderBingoOrganizador(container){
     <div class="bingo-sorteo">
       <div class="bingo-ultimo">${bingo.ultimaLlamada || '—'}</div>
       ${terminado || bolsaAgotada
-        ? `<button class="btn-primary" onclick="bingoJugarDeNuevo()">Jugar de nuevo</button>`
+        ? `<button class="btn-primary" onclick="bingoConfirmarJugarDeNuevo()">Jugar de nuevo</button>`
         : `<button class="btn-primary" onclick="bingoSortear()" ${bolsa.length === 0 ? 'disabled' : ''}>Cantar número</button>`}
     </div>
     <div class="section-label">Ya salieron (${sorteados.length}/${BINGO_NUMEROS.length})</div>
@@ -343,44 +415,81 @@ function renderBingoPasajero(container){
     return;
   }
 
+  const anotado = bingoPasajeros[String(miAsiento)] != null;
   const miCarton = bingoCartones[String(miAsiento)];
   const tengoCartonCompleto = !!(miCarton && miCarton.nombres && miCarton.nombres.length === BINGO_CANTIDAD_CARTON);
 
-  // Sin el chequeo de fase, alguien que todavía no armó su cartón cuando el
-  // organizador ya arrancó (o volvió a jugar) quedaba trabado para siempre,
-  // sin ninguna forma de sumarse — ahora puede armarlo en cualquier momento
-  // y arranca directo tocando los números que ya salieron.
-  if(!tengoCartonCompleto){
-    const itemNumero = (n) => {
-      const marcado = bingoSeleccion.includes(n);
-      return `<div class="bingo-nombre-item ${marcado ? 'bingo-nombre-elegido' : ''}" onclick="bingoToggleNumero('${n}')">${n}</div>`;
-    };
+  if(bingo.fase === 'cerrado'){
     container.innerHTML = `
       ${bingoPinHTML()}
       <div class="hero" style="margin-top:8px;">
-        <h2>Armá tu cartón</h2>
-        <p>Elegí exactamente ${BINGO_CANTIDAD_CARTON} números del 00 al 99. Vas a jugar con el asiento ${miAsiento}.</p>
-      </div>
-      <div class="section-label">Elegidos: ${bingoSeleccion.length}/${BINGO_CANTIDAD_CARTON}</div>
-      <div class="bingo-lista-nombres">${BINGO_NUMEROS.map(itemNumero).join('')}</div>
-      <button class="btn-primary" onclick="bingoConfirmarCarton()" ${bingoSeleccion.length === BINGO_CANTIDAD_CARTON ? '' : 'disabled'}>Confirmar mi cartón</button>`;
+        <h2>🎱 Bingo</h2>
+        <p>Todavía no arrancó. Esperá a que el organizador abra la anotación.</p>
+      </div>`;
     return;
   }
 
-  if(bingo.fase === 'esperando' && tengoCartonCompleto){
+  if(bingo.fase === 'anotando'){
+    container.innerHTML = `
+      ${bingoPinHTML()}
+      <div class="hero" style="margin-top:8px;">
+        <h2>${anotado ? '¡Ya te anotaste!' : 'Se abrió el bingo'}</h2>
+        <p>${anotado ? 'Esperá a que el organizador abra armar los cartones.' : `Anotate para jugar con el asiento ${miAsiento}.`}</p>
+      </div>
+      ${anotado
+        ? `<button class="btn-ghost" style="width:100%;" onclick="bingoSalirDelBingo()">Salir del bingo</button>`
+        : `<button class="btn-primary" onclick="bingoAnotarme()">Anotarme al bingo</button>`}`;
+    return;
+  }
+
+  if(bingo.fase === 'armando'){
+    if(!anotado){
+      container.innerHTML = `
+        ${bingoPinHTML()}
+        <div class="hero" style="margin-top:8px;">
+          <h2>No te anotaste a tiempo</h2>
+          <p>La anotación para esta partida ya cerró. Esperá a que el organizador abra la próxima.</p>
+        </div>`;
+      return;
+    }
+    if(!tengoCartonCompleto){
+      const itemNumero = (n) => {
+        const marcado = bingoSeleccion.includes(n);
+        return `<div class="bingo-nombre-item ${marcado ? 'bingo-nombre-elegido' : ''}" onclick="bingoToggleNumero('${n}')">${n}</div>`;
+      };
+      container.innerHTML = `
+        ${bingoPinHTML()}
+        <div class="hero" style="margin-top:8px;">
+          <h2>Armá tu cartón</h2>
+          <p>Elegí exactamente ${BINGO_CANTIDAD_CARTON} números del 00 al 99. Vas a jugar con el asiento ${miAsiento}.</p>
+        </div>
+        <div class="section-label">Elegidos: ${bingoSeleccion.length}/${BINGO_CANTIDAD_CARTON}</div>
+        <div class="bingo-lista-nombres">${BINGO_NUMEROS.map(itemNumero).join('')}</div>
+        <button class="btn-primary" onclick="bingoConfirmarCarton()" ${bingoSeleccion.length === BINGO_CANTIDAD_CARTON ? '' : 'disabled'}>Confirmar mi cartón</button>`;
+      return;
+    }
     const asientos = Object.keys(bingoPasajeros);
     const completos = asientos.filter(a => bingoCartones[a] && bingoCartones[a].nombres && bingoCartones[a].nombres.length === BINGO_CANTIDAD_CARTON);
     container.innerHTML = `
       ${bingoPinHTML()}
       <div class="hero" style="margin-top:8px;">
         <h2>Ya armaste tu cartón</h2>
-        <p>Esperando a que el resto del grupo complete el suyo (${completos.length}/${asientos.length}).</p>
+        <p>Esperando a que el organizador arranque (${completos.length}/${asientos.length} ya están listos).</p>
       </div>
       ${bingoCartonHTML(String(miAsiento), `Tu cartón (asiento ${miAsiento})`, miCarton, false)}`;
     return;
   }
 
   // fase 'jugando'
+  if(!tengoCartonCompleto){
+    container.innerHTML = `
+      ${bingoPinHTML()}
+      <div class="hero" style="margin-top:8px;">
+        <h2>Esta vuelta no jugás</h2>
+        <p>${anotado ? 'No llegaste a armar tu cartón a tiempo.' : 'No te anotaste para esta partida.'} Esperá a que el organizador arranque otra.</p>
+      </div>`;
+    return;
+  }
   const terminado = !!bingo.ganadorCartonLleno;
   const bolsaAgotada = !terminado && (bingo.bolsa || []).length === 0;
   const sorteados = bingo.sorteados || [];
