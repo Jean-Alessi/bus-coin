@@ -374,6 +374,7 @@ function renderBingoOrganizador(container){
       </div>
       <div class="bingo-roster">${listaHTML}</div>
       <button class="btn-primary" onclick="bingoEmpezarJuego()" ${completos.length ? '' : 'disabled'}>Empezar el bingo</button>
+      <p class="link-chico" onclick="bingoAbrirAnotacion()">‹ Volver a la anotación (para que se sume alguien más)</p>
       <p class="link-chico" onclick="bingoCerrarSesionOrganizador()">Cerrar sesión de organizador</p>`;
     return;
   }
