@@ -68,10 +68,6 @@ function bingoEstadoVacio(){
   return { fase: 'cerrado', bolsa: [], sorteados: [], ultimaLlamada: null, ganadorCartonLleno: null };
 }
 
-function bingoGuardarEstado(){
-  bingoRefEstado().set(bingo);
-}
-
 function bingoEsOrganizador(){
   return localStorage.getItem('bingo-organizador') === 'si';
 }
@@ -109,14 +105,12 @@ function bingoEliminarPasajero(asiento){
 
 function bingoAbrirAnotacion(){
   if(!bingoEsOrganizador()) return;
-  bingo.fase = 'anotando';
-  bingoGuardarEstado();
+  bingoRefEstado().update({ fase: 'anotando' });
 }
 
 function bingoAbrirArmado(){
   if(!bingoEsOrganizador() || !bingo || bingo.fase !== 'anotando') return;
-  bingo.fase = 'armando';
-  bingoGuardarEstado();
+  bingoRefEstado().update({ fase: 'armando' });
 }
 
 let bingoListenersListos = false;
@@ -195,23 +189,27 @@ function bingoEmpezarJuego(){
   if(!bingoEsOrganizador() || !bingo || bingo.fase !== 'armando') return;
   const conCarton = Object.keys(bingoCartones).filter(a => bingoCartones[a] && bingoCartones[a].nombres && bingoCartones[a].nombres.length === BINGO_CANTIDAD_CARTON);
   if(!conCarton.length) return;
-  bingo.bolsa = barajar(BINGO_NUMEROS.slice());
-  bingo.sorteados = [];
-  bingo.ultimaLlamada = null;
-  bingo.ganadorCartonLleno = null;
-  bingo.fase = 'jugando';
-  bingoGuardarEstado();
+  bingoRefEstado().update({
+    bolsa: barajar(BINGO_NUMEROS.slice()),
+    sorteados: [],
+    ultimaLlamada: null,
+    ganadorCartonLleno: null,
+    fase: 'jugando',
+  });
 }
 
+// update() con solo los campos que cambian, nunca un .set() del objeto
+// entero — si se pisara todo el estado con la copia local del organizador,
+// un "cantar número" que llega justo después de que alguien completó su
+// cartón podría borrar el ganadorCartonLleno recién declarado (el
+// organizador todavía no se había enterado de ese cambio).
 function bingoSortear(){
   if(!bingoEsOrganizador()) return;
-  bingo.bolsa = bingo.bolsa || [];
-  if(!bingo.bolsa.length) return;
-  const numero = bingo.bolsa.pop();
-  bingo.sorteados = bingo.sorteados || [];
-  bingo.sorteados.push(numero);
-  bingo.ultimaLlamada = bingoArmarLlamada(numero);
-  bingoGuardarEstado();
+  const bolsa = (bingo.bolsa || []).slice();
+  if(!bolsa.length) return;
+  const numero = bolsa.pop();
+  const sorteados = (bingo.sorteados || []).concat(numero);
+  bingoRefEstado().update({ bolsa, sorteados, ultimaLlamada: bingoArmarLlamada(numero) });
 }
 
 // Cada pasajero toca sus propios números a medida que van saliendo. Solo se
@@ -236,9 +234,10 @@ function bingoTocarNumero(indice){
   // Como cada marca ya está validada contra lo realmente sorteado, un
   // cartón lleno acá es un bingo genuino — se declara desde el propio
   // celular del ganador, así las monedas se acreditan a quien corresponde.
+  // update() puntual (no un .set() del objeto entero): así esto no se
+  // pierde si justo se cruza con un "cantar número" del organizador.
   if(marcados.length === BINGO_CANTIDAD_CARTON && !bingo.ganadorCartonLleno){
-    bingo.ganadorCartonLleno = String(miAsiento);
-    bingoGuardarEstado();
+    bingoRefEstado().update({ ganadorCartonLleno: String(miAsiento) });
     ganarMonedas(100);
     mostrarToast('¡BINGO! +100 monedas', 'gain');
   }
@@ -259,14 +258,16 @@ function bingoConfirmarJugarDeNuevo(){
 // siguiente. Los cartones ya armados se conservan, solo se limpian las marcas.
 function bingoJugarDeNuevo(){
   if(!bingoEsOrganizador()) return;
-  Object.values(bingoCartones).forEach(c => { c.marcados = []; });
-  bingo.bolsa = [];
-  bingo.sorteados = [];
-  bingo.ultimaLlamada = null;
-  bingo.ganadorCartonLleno = null;
-  bingo.fase = 'armando';
-  bingoGuardarEstado();
-  bingoRefCartones().set(bingoCartones);
+  const cartonesLimpios = {};
+  Object.keys(bingoCartones).forEach(a => { cartonesLimpios[a] = Object.assign({}, bingoCartones[a], { marcados: [] }); });
+  bingoRefEstado().update({
+    bolsa: [],
+    sorteados: [],
+    ultimaLlamada: null,
+    ganadorCartonLleno: null,
+    fase: 'armando',
+  });
+  bingoRefCartones().set(cartonesLimpios);
 }
 
 // interactivo = true solo cuando se muestra el propio cartón durante la
