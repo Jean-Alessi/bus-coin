@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "salas": {
+      "$codigo": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}

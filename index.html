@@ -3,53 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Busmac Viaje App — Prototipo</title>
+<title>Busmac Viajes y Turismo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=34">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#0F2A4D">
 </head>
 <body>
 
 <div class="device">
   <div class="screen">
-    <div class="statusbar">Busmac Viajes — prototipo</div>
+    <div class="statusbar">
+      <img src="Logo Busmac2.png" alt="Busmac" class="statusbar-logo">
+      <span class="statusbar-brand">busmac <em>viajes y turismo</em></span>
+    </div>
+
+    <!-- CÓDIGO DE VIAJE -->
+    <div class="view active" id="view-codigo-viaje">
+      <div class="hero">
+        <h2>¡Bienvenido a este viaje!</h2>
+        <p>Para jugar con Busmac, solicitá el código de acceso al administrador del viaje.</p>
+      </div>
+      <input type="text" id="codigo-viaje-input" class="bingo-input-numero" style="width:100%; text-transform:uppercase;" placeholder="Código del viaje" oninput="actualizarBotonCodigoViaje()">
+      <button class="btn-primary" id="btn-continuar-codigo" disabled onclick="confirmarCodigoViaje()">Continuar</button>
+      <p id="codigo-viaje-error" class="bingo-pin-error"></p>
+      <p class="link-chico" onclick="mostrarGenerarCodigo()">¿Sos el organizador y estás por empezar un viaje nuevo?</p>
+      <div id="generar-codigo-content"></div>
+      <p class="link-chico" onclick="mostrarAdminViajes()">🔧 Administrar viajes</p>
+      <div id="admin-viajes-content"></div>
+    </div>
 
     <!-- ONBOARDING -->
-    <div class="view active" id="view-onboard">
+    <div class="view" id="view-onboard">
       <div class="hero">
-        <h2>¿Quién viaja hoy?</h2>
-        <p>Elegí tu perfil para armar tu experiencia en el micro.</p>
+        <h2>¿Con qué emoji te identificás?</h2>
+        <p>Elegí el que más se parezca a vos hoy.</p>
       </div>
-      <div class="grid2">
-        <div class="segment-card" data-seg="estudiantes" onclick="selectSegment('estudiantes')">
-          <div class="emoji-box" data-icon="graduacion"></div>
-          <h3>Estudiantes</h3>
-          <p>Trivia, ranking, música</p>
-        </div>
-        <div class="segment-card" data-seg="jubilados" onclick="selectSegment('jubilados')">
-          <div class="emoji-box" data-icon="libro"></div>
-          <h3>Jubilados</h3>
-          <p>Historias, truco, calma</p>
-        </div>
-        <div class="segment-card" data-seg="familia" onclick="selectSegment('familia')">
-          <div class="emoji-box" data-icon="casa"></div>
-          <h3>Familia</h3>
-          <p>Juegos para todos</p>
-        </div>
-        <div class="segment-card" data-seg="pareja" onclick="selectSegment('pareja')">
-          <div class="emoji-box" data-icon="corazon"></div>
-          <h3>Pareja</h3>
-          <p>Desafíos de a dos</p>
-        </div>
-      </div>
-      <div class="section-label">Tu grupo cerrado</div>
-      <div class="card" style="cursor:default;">
-        <div class="icon" data-icon="grupo"></div>
-        <div class="txt">
-          <h3>Los Rieleros</h3>
-          <p>4 integrantes ya sumados</p>
-        </div>
-      </div>
+      <div class="emoji-grid" id="emoji-grid"></div>
+      <div class="section-label">¿Y vos, cómo te llamás?</div>
+      <input type="text" id="mi-nombre-input" class="bingo-input-numero" style="width:100%;" placeholder="Tu nombre o apodo" oninput="actualizarBotonContinuar()">
+      <div class="section-label">¿En qué asiento vas?</div>
+      <input type="number" id="mi-asiento-input" class="bingo-input-numero" style="width:100%;" min="1" placeholder="Número de asiento" oninput="actualizarBotonContinuar()">
       <button class="btn-primary" id="btn-continuar" disabled onclick="goHome()">Continuar</button>
     </div>
 
@@ -58,12 +55,23 @@
       <div class="app-header">
         <div>
           <h1 id="home-saludo">Hola</h1>
-          <div class="sub">Grupo Los Rieleros</div>
+          <div class="sub" id="home-viaje" onclick="copiarLinkViaje()" style="text-decoration:underline; cursor:pointer;">Viaje</div>
         </div>
-        <div class="chip-fichas">FICHAS <span id="fichas-count">120</span></div>
+        <div class="chip-monedas chip-monedas-juego">MONEDAS <span id="monedas-coin-count">0</span></div>
       </div>
 
       <div id="home-content"></div>
+    </div>
+
+    <!-- JUEGOS (menú) -->
+    <div class="view" id="view-juegos">
+      <div class="app-header">
+        <div>
+          <h1>Juegos</h1>
+          <div class="sub">Elegí a qué jugar</div>
+        </div>
+      </div>
+      <div id="juegos-content"></div>
     </div>
 
     <!-- TRIVIA -->
@@ -71,15 +79,83 @@
       <div class="app-header">
         <div>
           <h1>Trivia</h1>
-          <div class="sub" id="trivia-sub">Pregunta 1 de 3</div>
+          <div class="sub" id="trivia-sub">Elegí un tema</div>
         </div>
+        <button class="btn-mute" onclick="toggleSonido()">🔊</button>
       </div>
-      <div class="progress-bar"><div class="progress-fill" id="trivia-progress" style="width:33%"></div></div>
-      <div class="question-box">
-        <div class="qnum" id="q-cat">CULTURA GENERAL</div>
-        <h3 id="q-text">¿En qué año se independizó Argentina?</h3>
+      <div id="trivia-content"></div>
+    </div>
+
+    <!-- ACERTIJOS -->
+    <div class="view" id="view-acertijos">
+      <div class="app-header">
+        <div>
+          <h1>Acertijos</h1>
+          <div class="sub" id="acertijos-sub">Acertijo 1 de 20</div>
+        </div>
+        <button class="btn-mute" onclick="toggleSonido()">🔊</button>
       </div>
-      <div id="q-options"></div>
+      <div id="acertijos-content"></div>
+    </div>
+
+    <!-- PENSAMIENTO LATERAL -->
+    <div class="view" id="view-pensamiento">
+      <div class="app-header">
+        <div>
+          <h1>Pensamiento lateral</h1>
+          <div class="sub" id="pensamiento-sub">Caso 1 de 20</div>
+        </div>
+        <button class="btn-mute" onclick="toggleSonido()">🔊</button>
+      </div>
+      <div id="pensamiento-content"></div>
+    </div>
+
+    <!-- AHORCADO -->
+    <div class="view" id="view-ahorcado">
+      <div class="app-header">
+        <div>
+          <h1>Ahorcado</h1>
+          <div class="sub" id="ahorcado-sub">Palabra 1 de 50</div>
+        </div>
+        <button class="btn-mute" onclick="toggleSonido()">🔊</button>
+      </div>
+      <div id="ahorcado-content"></div>
+    </div>
+
+    <!-- 4+1 -->
+    <div class="view" id="view-cuatrouno">
+      <div class="app-header">
+        <div>
+          <h1>4+1</h1>
+          <div class="sub" id="cuatrouno-sub">Palabra 1 de 20</div>
+        </div>
+        <button class="btn-mute" onclick="toggleSonido()">🔊</button>
+      </div>
+      <div id="cuatrouno-content"></div>
+    </div>
+
+    <!-- VALIJA EXPRESS -->
+    <div class="view" id="view-valija">
+      <div class="app-header">
+        <div>
+          <h1>Valija Express</h1>
+          <div class="sub" id="valija-sub">Destino 1 de 20</div>
+        </div>
+        <button class="btn-mute" onclick="toggleSonido()">🔊</button>
+      </div>
+      <div id="valija-content"></div>
+    </div>
+
+    <!-- MEMORIA -->
+    <div class="view" id="view-memoria">
+      <div class="app-header">
+        <div>
+          <h1>Memoria</h1>
+          <div class="sub" id="memoria-sub">Nivel 1 de 3</div>
+        </div>
+        <button class="btn-mute" onclick="toggleSonido()">🔊</button>
+      </div>
+      <div id="memoria-content"></div>
     </div>
 
     <!-- RANKING -->
@@ -87,56 +163,90 @@
       <div class="app-header">
         <div>
           <h1>Ranking</h1>
-          <div class="sub">Los Rieleros — solo tu grupo</div>
+          <div class="sub">Solo tu grupo, en este viaje</div>
         </div>
       </div>
       <div id="ranking-list"></div>
     </div>
 
-    <!-- TIENDA -->
+    <!-- TUTTI FRUTTI -->
+    <div class="view" id="view-tutifruti">
+      <div class="app-header">
+        <div>
+          <h1>Tutti Frutti</h1>
+          <div class="sub" id="tutifruti-sub">Contra el resto del viaje</div>
+        </div>
+        <button class="btn-mute" onclick="toggleSonido()">🔊</button>
+      </div>
+      <div id="tutifruti-content"></div>
+    </div>
+
+    <!-- EL IMPOSTOR -->
+    <div class="view" id="view-impostor">
+      <div class="app-header">
+        <div>
+          <h1>El Impostor</h1>
+          <div class="sub" id="impostor-sub">Para grupos chicos</div>
+        </div>
+      </div>
+      <div id="impostor-content"></div>
+    </div>
+
+    <!-- BINGO DE NOMBRES -->
+    <div class="view" id="view-bingo">
+      <div class="app-header">
+        <div>
+          <h1>Bingo</h1>
+          <div class="sub">Números del 00 al 99</div>
+        </div>
+        <button class="btn-mute" onclick="toggleSonido()">🔊</button>
+      </div>
+      <div id="bingo-content"></div>
+    </div>
+
+    <!-- PREMIOS -->
     <div class="view" id="view-tienda">
       <div class="app-header">
         <div>
-          <h1>Tienda de fichas</h1>
-          <div class="sub">Se usan solo dentro de la app</div>
+          <h1>Premios</h1>
+          <div class="sub">Los primeros del ranking eligen premio</div>
         </div>
       </div>
-      <div class="pack">
-        <div class="info"><h3>Pack chico</h3><p>50 fichas</p></div>
-        <button class="buy" onclick="comprarFichas(50)">$1.000</button>
-      </div>
-      <div class="pack">
-        <div class="info"><h3>Pack viaje</h3><p>150 fichas</p></div>
-        <button class="buy" onclick="comprarFichas(150)">$2.500</button>
-      </div>
-      <div class="pack">
-        <div class="info"><h3>Pack a fondo</h3><p>350 fichas</p></div>
-        <button class="buy" onclick="comprarFichas(350)">$5.000</button>
-      </div>
-      <div class="section-label">Con tus fichas podés</div>
-      <div class="card" style="cursor:default;">
-        <div class="icon" data-icon="musica"></div>
-        <div class="txt"><h3>Priorizar un tema</h3><p>20 fichas por canción</p></div>
-      </div>
-      <div class="card" style="cursor:default;">
-        <div class="icon" data-icon="cartas"></div>
-        <div class="txt"><h3>Apostar en truco</h3><p>10 fichas por mano</p></div>
-      </div>
+      <div id="tienda-content"></div>
     </div>
 
     <div class="toast" id="toast"></div>
 
     <div class="tabbar" id="tabbar" style="display:none;">
       <button class="tab active" onclick="showView('home')" data-tab="home"><span class="dot" data-icon="casa"></span>Inicio</button>
-      <button class="tab" onclick="showView('trivia')" data-tab="trivia"><span class="dot" data-icon="trivia"></span>Juegos</button>
+      <button class="tab" onclick="showView('juegos')" data-tab="juegos"><span class="dot" data-icon="trivia"></span>Juegos</button>
       <button class="tab" onclick="showView('ranking')" data-tab="ranking"><span class="dot" data-icon="trofeo"></span>Ranking</button>
-      <button class="tab" onclick="showView('tienda')" data-tab="tienda"><span class="dot" data-icon="moneda"></span>Tienda</button>
+      <button class="tab" onclick="showView('tienda')" data-tab="tienda"><span class="dot" data-icon="moneda"></span>Premios</button>
     </div>
   </div>
 </div>
 
-<script src="js/iconos.js"></script>
-<script src="js/trivia.js"></script>
-<script src="js/app.js"></script>
+<!-- El "?v=N" de cada archivo evita que el celular de alguien se quede con una
+     versión vieja en caché mientras el resto de la app ya se actualizó. Subí
+     este número cada vez que cambies styles.css o algún archivo de js/. -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+<script src="js/firebase-config.js?v=34"></script>
+<script src="js/iconos.js?v=34"></script>
+<script src="js/sonido.js?v=34"></script>
+<script src="js/trivia.js?v=34"></script>
+<script src="js/acertijos.js?v=34"></script>
+<script src="js/pensamiento.js?v=34"></script>
+<script src="js/ahorcado.js?v=34"></script>
+<script src="js/cuatrouno.js?v=34"></script>
+<script src="js/valija.js?v=34"></script>
+<script src="js/memoria.js?v=2"></script>
+<script src="js/bingo.js?v=34"></script>
+<script src="js/tutifruti.js?v=34"></script>
+<script src="js/impostor.js?v=8"></script>
+<script src="js/tienda.js?v=34"></script>
+<script src="js/raspadita.js?v=1"></script>
+<script src="js/pwa.js?v=2"></script>
+<script src="js/app.js?v=34"></script>
 </body>
 </html>
