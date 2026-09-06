@@ -1,0 +1,318 @@
+// Escoba de 15, para 2 jugadores. Primer juego de cartas con el sistema de
+// "mesas": dentro del mismo código de viaje pueden convivir varias mesas
+// jugando al mismo tiempo, sin necesitar un código aparte para cada grupo —
+// cada uno crea o se une a una mesa abierta, y arranca sola cuando se llena.
+//
+// Mazo español de 40 cartas (sin 8 ni 9). Para las combinaciones que suman
+// 15, la Sota vale 8, el Caballo 9 y el Rey 10 (por eso el mazo no tiene
+// esos dos números: dejarían dos cartas con el mismo valor de combinación).
+
+const ESCOBA_PALOS = ['oro', 'copa', 'espada', 'basto'];
+const ESCOBA_NUMEROS = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12];
+const ESCOBA_SIMBOLO_PALO = { oro: '🟡', copa: '🏆', espada: '⚔️', basto: '🌳' };
+const ESCOBA_NOMBRE_NUMERO = { 10: 'Sota', 11: 'Caballo', 12: 'Rey' };
+
+function escobaValor(numero){ return numero <= 7 ? numero : { 10: 8, 11: 9, 12: 10 }[numero]; }
+function escobaNombreCarta(carta){ return `${ESCOBA_NOMBRE_NUMERO[carta.numero] || carta.numero} ${ESCOBA_SIMBOLO_PALO[carta.palo]}`; }
+
+function escobaCrearMazo(){
+  const mazo = [];
+  ESCOBA_PALOS.forEach(palo => ESCOBA_NUMEROS.forEach(numero => mazo.push({ palo, numero })));
+  return barajar(mazo);
+}
+
+let escobaMesas = {};
+let escobaMesaIdActual = null;
+let escobaCartaSeleccionada = null;
+let escobaMesaSeleccionada = new Set();
+
+function escobaRefMesas(){ return db.ref(`salas/${codigoViaje}/escoba/mesas`); }
+
+let escobaListenersListos = false;
+
+function iniciarEscoba(){
+  if(!escobaListenersListos){
+    escobaListenersListos = true;
+    escobaRefMesas().on('value', snap => {
+      escobaMesas = snap.val() || {};
+      renderEscoba();
+    });
+  } else {
+    renderEscoba();
+  }
+}
+
+function escobaMesaActual(){
+  return escobaMesaIdActual ? escobaMesas[escobaMesaIdActual] : null;
+}
+
+function escobaOtroJugador(mesa){
+  return mesa.jugadores.find(a => a !== String(miAsiento));
+}
+
+function escobaCrearMesa(){
+  if(!miAsiento) return;
+  const ref = escobaRefMesas().push();
+  ref.set({
+    jugadores: [String(miAsiento)],
+    nombres: { [miAsiento]: miNombre },
+    fase: 'esperando',
+  });
+  // No se renderiza acá: escobaMesas todavía no tiene esta mesa (recién se
+  // está escribiendo). El listener de escobaRefMesas() la trae enseguida y
+  // dispara el render con los datos ya confirmados.
+  escobaMesaIdActual = ref.key;
+}
+
+function escobaUnirseAMesa(mesaId){
+  if(!miAsiento) return;
+  const mesa = escobaMesas[mesaId];
+  if(!mesa || mesa.fase !== 'esperando' || mesa.jugadores.includes(String(miAsiento)) || mesa.jugadores.length >= 2) return;
+  const jugadores = mesa.jugadores.concat([String(miAsiento)]);
+  const nombres = Object.assign({}, mesa.nombres, { [miAsiento]: miNombre });
+
+  const mazo = escobaCrearMazo();
+  const mesaCartas = mazo.splice(0, 4);
+  const mano = {};
+  jugadores.forEach(a => { mano[a] = mazo.splice(0, 3); });
+  const capturas = {}; const escobasIniciales = {};
+  jugadores.forEach(a => { capturas[a] = []; escobasIniciales[a] = 0; });
+
+  escobaRefMesas().child(mesaId).update({
+    jugadores, nombres, mano, mesaCartas, mazo,
+    turno: jugadores[0],
+    capturas, escobas: escobasIniciales,
+    ganadorUltimaCaptura: null,
+    fase: 'jugando',
+  });
+  // Ídem: se espera al listener para renderizar con los datos repartidos ya
+  // confirmados, en vez de la copia local (todavía en fase 'esperando').
+  escobaMesaIdActual = mesaId;
+}
+
+function escobaVolverAlLobby(){
+  escobaMesaIdActual = null;
+  escobaCartaSeleccionada = null;
+  escobaMesaSeleccionada = new Set();
+  renderEscoba();
+}
+
+function escobaTerminarMesa(mesaId){
+  escobaRefMesas().child(mesaId).remove();
+  if(escobaMesaIdActual === mesaId) escobaVolverAlLobby();
+}
+
+function escobaToggleCartaMano(indice){
+  escobaCartaSeleccionada = escobaCartaSeleccionada === indice ? null : indice;
+  renderEscoba();
+}
+
+function escobaToggleCartaMesa(indice){
+  if(escobaMesaSeleccionada.has(indice)) escobaMesaSeleccionada.delete(indice);
+  else escobaMesaSeleccionada.add(indice);
+  renderEscoba();
+}
+
+function escobaSumaSeleccionMesa(mesa){
+  return Array.from(escobaMesaSeleccionada).reduce((acc, i) => acc + escobaValor(mesa.mesaCartas[i].numero), 0);
+}
+
+// true si lo que hay tocado (carta de mano + cartas de mesa elegidas) es una
+// jugada válida: sin nada de mesa siempre vale (bajar la carta sin capturar),
+// con algo de mesa elegido tiene que sumar exactamente 15 junto a la carta.
+function escobaJugadaValida(mesa){
+  if(escobaCartaSeleccionada == null) return false;
+  if(escobaMesaSeleccionada.size === 0) return true;
+  const carta = mesa.mano[String(miAsiento)][escobaCartaSeleccionada];
+  return escobaSumaSeleccionMesa(mesa) + escobaValor(carta.numero) === 15;
+}
+
+function escobaCalcularResultado(mesa, capturas, escobas){
+  const [a, b] = mesa.jugadores;
+  const cartasA = (capturas[a] || []).length, cartasB = (capturas[b] || []).length;
+  const orosA = (capturas[a] || []).filter(c => c.palo === 'oro').length;
+  const orosB = (capturas[b] || []).filter(c => c.palo === 'oro').length;
+  const veloA = (capturas[a] || []).some(c => c.palo === 'oro' && c.numero === 7);
+  const veloB = (capturas[b] || []).some(c => c.palo === 'oro' && c.numero === 7);
+  const puntos = {};
+  puntos[a] = (escobas[a] || 0) + (veloA ? 1 : 0) + (cartasA > cartasB ? 1 : 0) + (orosA > orosB ? 1 : 0);
+  puntos[b] = (escobas[b] || 0) + (veloB ? 1 : 0) + (cartasB > cartasA ? 1 : 0) + (orosB > orosA ? 1 : 0);
+  const ganador = puntos[a] === puntos[b] ? null : (puntos[a] > puntos[b] ? a : b);
+  return { puntos, ganador };
+}
+
+function escobaJugarCarta(){
+  const mesa = escobaMesaActual();
+  if(!mesa || mesa.fase !== 'jugando' || String(mesa.turno) !== String(miAsiento)) return;
+  if(!escobaJugadaValida(mesa)) return;
+
+  const miMano = mesa.mano[String(miAsiento)];
+  const carta = miMano[escobaCartaSeleccionada];
+  const indicesMesa = Array.from(escobaMesaSeleccionada);
+  const nuevaMano = miMano.filter((_, i) => i !== escobaCartaSeleccionada);
+
+  let nuevaMesaCartas, capturas = Object.assign({}, mesa.capturas || {}), escobas = Object.assign({}, mesa.escobas || {}), ganadorUltimaCaptura = mesa.ganadorUltimaCaptura;
+  if(indicesMesa.length > 0){
+    const capturadas = indicesMesa.map(i => mesa.mesaCartas[i]).concat([carta]);
+    nuevaMesaCartas = mesa.mesaCartas.filter((_, i) => !indicesMesa.includes(i));
+    capturas[miAsiento] = (capturas[miAsiento] || []).concat(capturadas);
+    ganadorUltimaCaptura = String(miAsiento);
+    if(nuevaMesaCartas.length === 0) escobas[miAsiento] = (escobas[miAsiento] || 0) + 1;
+  } else {
+    nuevaMesaCartas = mesa.mesaCartas.concat([carta]);
+  }
+
+  const otro = escobaOtroJugador(mesa);
+  const manoOtroVacia = (mesa.mano[otro] || []).length === 0;
+  const updates = {
+    [`mano/${miAsiento}`]: nuevaMano,
+    mesaCartas: nuevaMesaCartas,
+    turno: otro,
+    [`capturas/${miAsiento}`]: capturas[miAsiento],
+    [`escobas/${miAsiento}`]: escobas[miAsiento],
+    ganadorUltimaCaptura,
+  };
+
+  if(nuevaMano.length === 0 && manoOtroVacia){
+    const mazo = (mesa.mazo || []).slice();
+    if(mazo.length >= mesa.jugadores.length * 3){
+      mesa.jugadores.forEach(a => { updates[`mano/${a}`] = mazo.splice(0, 3); });
+      updates.mazo = mazo;
+    } else {
+      // Se acabó el mazo: termina la partida. Lo que quedó en la mesa se lo
+      // lleva quien hizo la última captura (regla estándar de la escoba).
+      if(ganadorUltimaCaptura && nuevaMesaCartas.length){
+        capturas[ganadorUltimaCaptura] = (capturas[ganadorUltimaCaptura] || []).concat(nuevaMesaCartas);
+        updates[`capturas/${ganadorUltimaCaptura}`] = capturas[ganadorUltimaCaptura];
+        updates.mesaCartas = [];
+      }
+      updates.fase = 'terminado';
+      updates.resultado = escobaCalcularResultado(mesa, capturas, escobas);
+    }
+  }
+
+  escobaRefMesas().child(escobaMesaIdActual).update(updates);
+  escobaCartaSeleccionada = null;
+  escobaMesaSeleccionada = new Set();
+}
+
+let escobaPremiadoMesa = null;
+
+function escobaPremiarSiCorresponde(mesa){
+  if(!miAsiento || !mesa || mesa.fase !== 'terminado' || !mesa.resultado) return;
+  if(escobaPremiadoMesa === escobaMesaIdActual) return;
+  if(!mesa.jugadores.includes(String(miAsiento))) return;
+  escobaPremiadoMesa = escobaMesaIdActual;
+  const { puntos, ganador } = mesa.resultado;
+  if(ganador == null){
+    ganarMonedas(10);
+    mostrarToast(`Empataron ${puntos[mesa.jugadores[0]]} a ${puntos[mesa.jugadores[1]]}. +10 monedas`, 'gain');
+  } else if(String(ganador) === String(miAsiento)){
+    ganarMonedas(20);
+    mostrarToast(`¡Ganaste la escoba ${puntos[ganador]} a ${puntos[escobaOtroJugador(mesa)]}! +20 monedas`, 'gain');
+  } else {
+    mostrarToast(`Perdiste ${puntos[String(miAsiento)]} a ${puntos[ganador]}. ¡A la próxima!`);
+  }
+}
+
+function escobaCartaHTML(carta, seleccionada, onclick){
+  return `<button class="escoba-carta ${seleccionada ? 'escoba-carta-seleccionada' : ''}" ${onclick ? `onclick="${onclick}"` : 'disabled'}>
+    <span class="escoba-carta-numero">${ESCOBA_NOMBRE_NUMERO[carta.numero] || carta.numero}</span>
+    <span class="escoba-carta-palo">${ESCOBA_SIMBOLO_PALO[carta.palo]}</span>
+  </button>`;
+}
+
+function renderEscobaLobby(){
+  const cont = document.getElementById('escoba-content');
+  const mesasArray = Object.keys(escobaMesas).map(id => Object.assign({ id }, escobaMesas[id]));
+  const listaHTML = mesasArray.length ? mesasArray.map(m => {
+    const nombresJugadores = m.jugadores.map(a => m.nombres[a]).join(' vs ');
+    const estado = m.fase === 'esperando' ? `Esperando rival (${m.jugadores.length}/2)` : m.fase === 'jugando' ? 'Jugando...' : 'Terminada';
+    const puedoUnirme = m.fase === 'esperando' && m.jugadores.length < 2 && !m.jugadores.includes(String(miAsiento));
+    const puedoEntrar = m.jugadores.includes(String(miAsiento));
+    return `<div class="bingo-roster-item">
+      <span>${nombresJugadores}<br><span style="font-size:11px;color:var(--gray);">${estado}</span></span>
+      <span class="bingo-roster-derecha">
+        ${puedoEntrar ? `<button class="btn-eliminar-pasajero" style="width:auto;border-radius:10px;padding:4px 10px;" onclick="escobaMesaIdActual='${m.id}'; renderEscoba();">Entrar</button>` : ''}
+        ${puedoUnirme ? `<button class="btn-eliminar-pasajero" style="width:auto;border-radius:10px;padding:4px 10px;background:#3B9B5A;color:#fff;border-color:#3B9B5A;" onclick="escobaUnirseAMesa('${m.id}')">Unirme</button>` : ''}
+        ${puedoEntrar ? `<button class="btn-eliminar-pasajero" onclick="escobaTerminarMesa('${m.id}')" title="Eliminar mesa">✕</button>` : ''}
+      </span>
+    </div>`;
+  }).join('') : '<p style="color:var(--gray);font-size:13px;">Todavía no hay mesas. ¡Armá la primera!</p>';
+
+  cont.innerHTML = `
+    <div class="hero" style="margin-top:8px;">
+      <h2>🃏 Escoba de 15</h2>
+      <p>Para 2 jugadores. Jugá una carta y combinala con las de la mesa para sumar 15 y llevártelas — si dejás la mesa vacía, es una escoba y vale un punto extra.</p>
+    </div>
+    <div class="section-label">Mesas</div>
+    ${listaHTML}
+    <button class="btn-primary" onclick="escobaCrearMesa()">Crear mesa nueva</button>`;
+}
+
+function renderEscobaMesa(){
+  const cont = document.getElementById('escoba-content');
+  const mesa = escobaMesaActual();
+  if(!mesa){ escobaVolverAlLobby(); return; }
+
+  if(mesa.fase === 'esperando'){
+    cont.innerHTML = `
+      <div class="hero" style="margin-top:8px;"><h2>Esperando rival...</h2><p>Compartí la app con alguien más del viaje para que se una a esta mesa.</p></div>
+      <p class="link-chico" onclick="escobaVolverAlLobby()">‹ Volver a la lista de mesas</p>
+      <p class="link-chico" onclick="escobaTerminarMesa('${escobaMesaIdActual}')">Cancelar esta mesa</p>`;
+    return;
+  }
+
+  const soyTurno = mesa.fase === 'jugando' && String(mesa.turno) === String(miAsiento);
+  const otro = escobaOtroJugador(mesa);
+  const miMano = (mesa.mano && mesa.mano[String(miAsiento)]) || [];
+  const manoOtroLen = (mesa.mano && mesa.mano[otro] || []).length;
+
+  const cabezeraHTML = `
+    <div class="escoba-marcador">
+      <div>🫲 Vos: ${((mesa.capturas || {})[String(miAsiento)] || []).length} cartas, ${(mesa.escobas || {})[String(miAsiento)] || 0} escobas</div>
+      <div>${mesa.nombres[otro] || 'Rival'}: ${((mesa.capturas || {})[otro] || []).length} cartas, ${(mesa.escobas || {})[otro] || 0} escobas</div>
+    </div>`;
+
+  if(mesa.fase === 'terminado'){
+    const { puntos, ganador } = mesa.resultado;
+    const resultadoTexto = ganador == null ? '¡Empataron!' : (String(ganador) === String(miAsiento) ? '¡Ganaste!' : `Ganó ${mesa.nombres[ganador]}`);
+    cont.innerHTML = `
+      ${cabezeraHTML}
+      <div class="hero" style="margin-top:8px;">
+        <h2>🏁 ${resultadoTexto}</h2>
+        <p>${puntos[String(miAsiento)]} a ${puntos[otro]} puntos.</p>
+      </div>
+      <button class="btn-primary" onclick="escobaTerminarMesa('${escobaMesaIdActual}')">Cerrar esta mesa</button>
+      <p class="link-chico" onclick="escobaVolverAlLobby()">‹ Volver a la lista de mesas</p>`;
+    escobaPremiarSiCorresponde(mesa);
+    return;
+  }
+
+  const mesaCartasHTML = mesa.mesaCartas.map((c, i) => escobaCartaHTML(c, escobaMesaSeleccionada.has(i), soyTurno ? `escobaToggleCartaMesa(${i})` : null)).join('') || '<p style="color:var(--gray);font-size:12px;">Mesa vacía</p>';
+  const manoHTML = miMano.map((c, i) => escobaCartaHTML(c, escobaCartaSeleccionada === i, soyTurno ? `escobaToggleCartaMano(${i})` : null)).join('');
+  const sumaActual = escobaCartaSeleccionada != null ? escobaSumaSeleccionMesa(mesa) + escobaValor(miMano[escobaCartaSeleccionada].numero) : null;
+
+  cont.innerHTML = `
+    ${cabezeraHTML}
+    <div class="hero" style="margin-top:8px;">
+      <h2>${soyTurno ? 'Tu turno' : `Turno de ${mesa.nombres[otro]}`}</h2>
+      <p>${soyTurno ? 'Tocá una carta tuya y, si querés, cartas de la mesa que sumen 15 con ella.' : 'Esperá a que juegue su carta.'}</p>
+    </div>
+    <div class="section-label">Cartas de ${mesa.nombres[otro]} (${manoOtroLen})</div>
+    <div class="escoba-fila">${Array.from({ length: manoOtroLen }).map(() => '<div class="escoba-carta escoba-carta-dorso"></div>').join('')}</div>
+    <div class="section-label">Mesa${escobaCartaSeleccionada != null ? ` — suma elegida: ${sumaActual}/15` : ''}</div>
+    <div class="escoba-fila">${mesaCartasHTML}</div>
+    <div class="section-label">Tu mano</div>
+    <div class="escoba-fila">${manoHTML}</div>
+    ${soyTurno ? `<button class="btn-primary" onclick="escobaJugarCarta()" ${escobaJugadaValida(mesa) ? '' : 'disabled'}>${escobaMesaSeleccionada.size ? 'Capturar' : 'Jugar sin capturar'}</button>` : ''}
+    <p class="link-chico" onclick="escobaTerminarMesa('${escobaMesaIdActual}')">Abandonar esta mesa</p>`;
+}
+
+function renderEscoba(){
+  const cont = document.getElementById('escoba-content');
+  if(!cont) return;
+  document.getElementById('escoba-sub').textContent = escobaMesaIdActual ? 'En una mesa' : 'Elegí o creá una mesa';
+  if(escobaMesaIdActual && escobaMesas[escobaMesaIdActual]) renderEscobaMesa();
+  else { escobaMesaIdActual = null; renderEscobaLobby(); }
+}
