@@ -65,9 +65,11 @@ function renderPinCodigoNuevo(){
   cont.innerHTML = `
     <div class="bingo-pin-box">
       <input type="text" id="codigo-personalizado-input" class="bingo-input-numero" style="text-transform:uppercase;" placeholder="Código a elección (opcional)">
+      <input type="number" id="capacidad-viaje-input" class="bingo-input-numero" min="1" placeholder="Cantidad de pasajeros (opcional)">
       <input type="password" id="pin-codigo-nuevo-input" class="bingo-input-numero" inputmode="numeric" maxlength="4" placeholder="PIN del organizador">
       <button class="btn-primary" onclick="confirmarGenerarCodigo()">Crear código de viaje</button>
       <p id="pin-codigo-nuevo-error" class="bingo-pin-error"></p>
+      <p class="link-chico" style="margin-top:6px;">Si ponés una cantidad, nadie más va a poder entrar con este código una vez que se llenen esos cupos — aunque lo sigan reenviando.</p>
     </div>`;
 }
 
@@ -86,6 +88,8 @@ function confirmarGenerarCodigo(){
   const personalizadoInput = document.getElementById('codigo-personalizado-input');
   const personalizado = personalizadoInput ? personalizadoInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
   const codigo = personalizado || codigoAlAzar();
+  const capacidadInput = document.getElementById('capacidad-viaje-input');
+  const capacidad = capacidadInput ? Number(capacidadInput.value) : 0;
 
   db.ref('salas/' + codigo + '/creado').once('value').then(snap => {
     if(snap.val() != null){
@@ -96,6 +100,7 @@ function confirmarGenerarCodigo(){
     codigoViaje = codigo;
     localStorage.setItem('codigo-viaje', codigoViaje);
     db.ref('salas/' + codigoViaje + '/creado').set(Date.now());
+    if(capacidad > 0) db.ref('salas/' + codigoViaje + '/capacidad').set(capacidad);
     mostrandoPinCodigoNuevo = false;
     renderPinCodigoNuevo();
     showView('onboard');
@@ -105,6 +110,19 @@ function confirmarGenerarCodigo(){
 function actualizarBotonCodigoViaje(){
   const val = document.getElementById('codigo-viaje-input').value.trim();
   document.getElementById('btn-continuar-codigo').disabled = val.length === 0;
+}
+
+// Si el organizador definió una cantidad de pasajeros al crear el viaje, una
+// vez alcanzada nadie nuevo puede entrar con el código — así no importa
+// cuánto se siga reenviando, no se llena de gente que no iba en ese micro.
+// Un dispositivo que ya se había anotado (mismo asiento ya en el ranking de
+// este viaje) puede volver a entrar sin problema, aunque el cupo ya esté lleno.
+function viajeAlcanzoCapacidad(snap){
+  const capacidad = snap.child('capacidad').val();
+  if(!capacidad) return false;
+  const yaAnotado = miAsiento && snap.child('ranking/puntos/' + miAsiento).exists();
+  if(yaAnotado) return false;
+  return snap.child('ranking/puntos').numChildren() >= capacidad;
 }
 
 // Solo se puede entrar con un código que un organizador haya generado de
@@ -123,6 +141,10 @@ function confirmarCodigoViaje(){
     }
     if(snap.child('cerrado').val()){
       if(error) error.textContent = 'Este viaje ya terminó y dejó de estar disponible.';
+      return;
+    }
+    if(viajeAlcanzoCapacidad(snap)){
+      if(error) error.textContent = 'Este viaje ya llegó al límite de pasajeros.';
       return;
     }
     codigoViaje = codigo;
@@ -171,10 +193,11 @@ function renderAdminViajes(){
     cont.innerHTML = `<div class="section-label">Viajes guardados</div>` + codigos.map(c => {
       const pasajeros = Object.keys((datos[c].ranking && datos[c].ranking.puntos) || {}).length;
       const cerrado = !!datos[c].cerrado;
+      const capacidad = datos[c].capacidad;
       return `<div class="bingo-roster-item">
         <span>${c}${cerrado ? ' 🔒' : ''}</span>
         <span class="bingo-roster-derecha">
-          <span>${pasajeros} pasajero${pasajeros === 1 ? '' : 's'}</span>
+          <span>${pasajeros}${capacidad ? '/' + capacidad : ''} pasajero${pasajeros === 1 ? '' : 's'}</span>
           <button class="btn-finalizar-viaje" onclick="toggleCerrarViaje('${c}',${!cerrado})">${cerrado ? 'Reabrir' : 'Finalizar'}</button>
           <button class="btn-eliminar-pasajero" onclick="eliminarViaje('${c}')" title="Eliminar viaje">✕</button>
         </span>
@@ -445,7 +468,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     // Se abrió con un link compartido (?viaje=CODIGO): valida contra Firebase
     // antes de entrar directo, por si el código ya no existe.
     db.ref('salas/' + codigoURL).once('value').then(snap => {
-      if(snap.exists() && snap.child('creado').val() != null && !snap.child('cerrado').val()){
+      if(snap.exists() && snap.child('creado').val() != null && !snap.child('cerrado').val() && !viajeAlcanzoCapacidad(snap)){
         codigoViaje = codigoURL;
         localStorage.setItem('codigo-viaje', codigoViaje);
         showView('onboard');
@@ -453,9 +476,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
         codigoInput.value = codigoURL;
         actualizarBotonCodigoViaje();
         const error = document.getElementById('codigo-viaje-error');
-        if(error) error.textContent = snap.exists() && snap.child('cerrado').val()
-          ? 'Este viaje ya terminó y dejó de estar disponible.'
-          : 'Ese código ya no existe. Pedile uno nuevo al organizador.';
+        if(error) error.textContent = !snap.exists() || snap.child('creado').val() == null
+          ? 'Ese código ya no existe. Pedile uno nuevo al organizador.'
+          : snap.child('cerrado').val()
+            ? 'Este viaje ya terminó y dejó de estar disponible.'
+            : 'Este viaje ya llegó al límite de pasajeros.';
       }
     });
   } else if(codigoInput){
