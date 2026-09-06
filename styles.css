@@ -572,3 +572,14 @@ body{
   border-radius:10px; padding:8px 12px; margin-bottom:6px;
 }
 .dibujar-intento-correcto{border-color:#3B9B5A; color:#3B9B5A; font-weight:600;}
+.dibujar-herramientas{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  margin-bottom:14px;
+}
+.dibujar-colores{display:flex; gap:8px;}
+.dibujar-color-swatch{
+  width:30px; height:30px; border-radius:50%; border:2px solid #fff;
+  box-shadow:0 0 0 1.5px #ECE9E1; cursor:pointer; padding:0; flex-shrink:0;
+}
+.dibujar-color-swatch-selected{box-shadow:0 0 0 2.5px var(--navy);}
+.dibujar-btn-borrar{width:auto; margin-top:0; padding:8px 14px; font-size:12px; white-space:nowrap;}

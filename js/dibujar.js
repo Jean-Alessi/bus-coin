@@ -11,6 +11,13 @@
 
 const DIBUJAR_MIN_JUGADORES = 2;
 
+const DIBUJAR_COLORES = [
+  { nombre: 'Negro', valor: '#1A1A1A' },
+  { nombre: 'Rojo', valor: '#D64545' },
+  { nombre: 'Azul', valor: '#2D6CDF' },
+  { nombre: 'Amarillo', valor: '#F2B705' },
+];
+
 let dibujarEstado = null;
 let dibujarAnotados = {};
 let dibujarIntentos = {};
@@ -18,7 +25,8 @@ let dibujarRondaPremiada = null;
 let dibujarCanvas = null;
 let dibujarCtx = null;
 let dibujarDibujando = false;
-let dibujarTrazoActual = [];
+let dibujarTrazoActual = null;
+let dibujarColorActual = DIBUJAR_COLORES[0].valor;
 
 function dibujarEstadoVacio(){
   return { fase: 'lobby', jugadores: [], turno: 0, palabra: null, categoria: null, trazos: [], adivinada: false, ganador: null, ronda: 0 };
@@ -117,6 +125,21 @@ function dibujarTerminarJuego(){
   db.ref(`salas/${codigoViaje}/dibujar`).remove();
 }
 
+// Solo el que está dibujando puede borrar, y solo mientras nadie adivinó
+// todavía — así puede arrancar de nuevo si se equivocó o si no le entienden,
+// sin depender de una goma pixel por pixel (con la pantalla chica del
+// celular, borrar todo y volver a intentar es mucho más práctico).
+function dibujarBorrarTodo(){
+  if(!dibujarEstado || dibujarEstado.fase !== 'jugando' || dibujarEstado.adivinada) return;
+  if(String(miAsiento) !== String(dibujarAsientoDelTurno())) return;
+  dibujarRefEstado().update({ trazos: [] });
+}
+
+function dibujarElegirColor(valor){
+  dibujarColorActual = valor;
+  renderDibujar();
+}
+
 function dibujarNormalizar(s){
   return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
 }
@@ -172,23 +195,24 @@ function dibujarActivarDibujo(){
   const terminarTrazo = () => {
     if(!dibujarDibujando) return;
     dibujarDibujando = false;
-    if(dibujarTrazoActual.length > 1){
+    if(dibujarTrazoActual && dibujarTrazoActual.puntos.length > 1){
       const trazos = (dibujarEstado.trazos || []).concat([dibujarTrazoActual]);
       dibujarRefEstado().update({ trazos });
     }
-    dibujarTrazoActual = [];
+    dibujarTrazoActual = null;
   };
   dibujarCanvas.addEventListener('pointerdown', e => {
     const { x, y } = dibujarCoordsDesdeEvento(e);
     dibujarDibujando = true;
-    dibujarTrazoActual = [{ x, y }];
+    dibujarTrazoActual = { color: dibujarColorActual, puntos: [{ x, y }] };
+    dibujarCtx.strokeStyle = dibujarColorActual;
     dibujarCtx.beginPath();
     dibujarCtx.moveTo(x, y);
   });
   dibujarCanvas.addEventListener('pointermove', e => {
     if(!dibujarDibujando) return;
     const { x, y } = dibujarCoordsDesdeEvento(e);
-    dibujarTrazoActual.push({ x, y });
+    dibujarTrazoActual.puntos.push({ x, y });
     dibujarCtx.lineTo(x, y);
     dibujarCtx.stroke();
   });
@@ -199,15 +223,16 @@ function dibujarActivarDibujo(){
 function dibujarRedibujarTodo(){
   if(!dibujarCtx) return;
   dibujarCtx.clearRect(0, 0, dibujarCanvas.width, dibujarCanvas.height);
-  dibujarCtx.strokeStyle = '#0F2A4D';
   dibujarCtx.lineWidth = 5;
   dibujarCtx.lineCap = 'round';
   dibujarCtx.lineJoin = 'round';
   (dibujarEstado.trazos || []).forEach(trazo => {
-    if(!trazo || trazo.length < 2) return;
+    const puntos = trazo && trazo.puntos;
+    if(!puntos || puntos.length < 2) return;
+    dibujarCtx.strokeStyle = trazo.color || '#1A1A1A';
     dibujarCtx.beginPath();
-    dibujarCtx.moveTo(trazo[0].x, trazo[0].y);
-    trazo.slice(1).forEach(p => dibujarCtx.lineTo(p.x, p.y));
+    dibujarCtx.moveTo(puntos[0].x, puntos[0].y);
+    puntos.slice(1).forEach(p => dibujarCtx.lineTo(p.x, p.y));
     dibujarCtx.stroke();
   });
 }
@@ -271,9 +296,20 @@ function renderDibujar(){
     controlesHTML = `<p class="link-chico" onclick="dibujarSiguienteTurno()">Nadie adivinó, pasar de turno</p>`;
   }
 
+  const herramientasHTML = (soyDibujante && !dibujarEstado.adivinada) ? `
+    <div class="dibujar-herramientas">
+      <div class="dibujar-colores">
+        ${DIBUJAR_COLORES.map(c => `
+          <button class="dibujar-color-swatch ${dibujarColorActual === c.valor ? 'dibujar-color-swatch-selected' : ''}" style="background:${c.valor};" onclick="dibujarElegirColor('${c.valor}')" title="${c.nombre}" aria-label="${c.nombre}"></button>
+        `).join('')}
+      </div>
+      <button class="btn-ghost dibujar-btn-borrar" onclick="dibujarBorrarTodo()">🗑️ Borrar todo</button>
+    </div>` : '';
+
   cont.innerHTML = `
     ${encabezado}
     <canvas id="dibujar-canvas" class="dibujar-canvas" width="300" height="300"></canvas>
+    ${herramientasHTML}
     <div class="dibujar-intentos">${intentosHTML}</div>
     ${controlesHTML}`;
 
