@@ -29,6 +29,7 @@ const TARJETAS_GRUPO = [
   { icon: "pincel", title: "Dibujar y Adivinar", sub: "Uno dibuja con el dedo, el resto adivina", view: "dibujar" },
   { icon: "naipe", title: "Escoba de 15", sub: "De a 2, sumá 15 para llevarte las cartas", view: "escoba" },
   { icon: "cartas", title: "Chinchón", sub: "De 2 a 4, armá grupos y escaleras", view: "chinchon" },
+  { icon: "trebol", title: "Truco", sub: "De a 2, 4 o 6, con envido y sin flor", view: "truco" },
 ];
 
 
@@ -359,7 +360,7 @@ function renderJuegos(){
 
 // Trivia, Acertijos y Bingo se entran desde el menú "Juegos" del tabbar, así
 // que esa pestaña queda marcada activa aunque ya estés adentro de uno de ellos.
-const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'memoria', 'tutifruti', 'impostor', 'bingo', 'triviavivo', 'cuento', 'dibujar', 'escoba', 'chinchon'];
+const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'memoria', 'tutifruti', 'impostor', 'bingo', 'triviavivo', 'cuento', 'dibujar', 'escoba', 'chinchon', 'truco'];
 
 function showView(name){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
@@ -385,6 +386,7 @@ function showView(name){
   if(name==='dibujar'){ iniciarDibujar(); }
   if(name==='escoba'){ iniciarEscoba(); }
   if(name==='chinchon'){ iniciarChinchon(); }
+  if(name==='truco'){ iniciarTruco(); }
   if(name==='tienda'){ iniciarPremios(); }
 }
 

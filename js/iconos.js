@@ -26,7 +26,8 @@ const ICONOS = {
   lapiz: '<path d="M3 21l4-1 11-11-3-3L4 17l-1 4Z"/><path d="M14 5l3 3"/>',
   rayo: '<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/>',
   pincel: '<path d="M4 20l4-4"/><path d="M8 16 18 6a2.8 2.8 0 0 0-4-4L4 12l4 4Z"/>',
-  naipe: '<rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="9.5" r="2.3"/><path d="M12 13v5"/>'
+  naipe: '<rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="9.5" r="2.3"/><path d="M12 13v5"/>',
+  trebol: '<circle cx="9" cy="8" r="3.2"/><circle cx="15" cy="8" r="3.2"/><circle cx="12" cy="13" r="3.2"/><path d="M12 15v6"/>'
 };
 
 function icono(nombre, size){
