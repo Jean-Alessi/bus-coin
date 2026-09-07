@@ -1,6 +1,7 @@
 {
   "rules": {
     "salas": {
+      ".read": true,
       "$codigo": {
         ".read": true,
         ".write": true

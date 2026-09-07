@@ -69,6 +69,7 @@ function renderPinCodigoNuevo(){
     <div class="bingo-pin-box">
       <input type="text" id="codigo-personalizado-input" class="bingo-input-numero" style="text-transform:uppercase;" placeholder="Código a elección (opcional)">
       <input type="number" id="capacidad-viaje-input" class="bingo-input-numero" min="1" placeholder="Cantidad de pasajeros (opcional)">
+      <textarea id="lista-pasajeros-crear-input" rows="4" style="width:100%;font-family:monospace;font-size:12.5px;border:1px solid var(--line-color,#ccc);border-radius:10px;padding:10px;margin-bottom:10px;" placeholder="Opcional: pegá la lista de pasajeros desde Excel (Apellido${'\\t'}Nombre por fila) para que cada uno elija su nombre en vez de tipearlo"></textarea>
       <input type="password" id="pin-codigo-nuevo-input" class="bingo-input-numero" inputmode="numeric" maxlength="4" placeholder="PIN del organizador">
       <button class="btn-primary" onclick="confirmarGenerarCodigo()">Crear código de viaje</button>
       <p id="pin-codigo-nuevo-error" class="bingo-pin-error"></p>
@@ -104,6 +105,9 @@ function confirmarGenerarCodigo(){
     localStorage.setItem('codigo-viaje', codigoViaje);
     db.ref('salas/' + codigoViaje + '/creado').set(Date.now());
     if(capacidad > 0) db.ref('salas/' + codigoViaje + '/capacidad').set(capacidad);
+    const listaInput = document.getElementById('lista-pasajeros-crear-input');
+    const listaTexto = listaInput ? listaInput.value.trim() : '';
+    if(listaTexto) listaPasajerosGuardarEnViaje(codigoViaje, listaTexto);
     mostrandoPinCodigoNuevo = false;
     renderPinCodigoNuevo();
     showView('onboard');
@@ -197,15 +201,40 @@ function renderAdminViajes(){
       const pasajeros = Object.keys((datos[c].ranking && datos[c].ranking.puntos) || {}).length;
       const cerrado = !!datos[c].cerrado;
       const capacidad = datos[c].capacidad;
+      const listaLen = (datos[c].listaPasajeros || []).length;
+      const listaAbierta = adminListaAbiertaPara === c;
       return `<div class="bingo-roster-item">
         <span>${c}${cerrado ? ' 🔒' : ''}</span>
         <span class="bingo-roster-derecha">
           <span>${pasajeros}${capacidad ? '/' + capacidad : ''} pasajero${pasajeros === 1 ? '' : 's'}</span>
+          <button class="btn-eliminar-pasajero" style="width:auto;border-radius:10px;padding:4px 8px;font-size:11px;" onclick="adminToggleLista('${c}')" title="Cargar lista de pasajeros">📋${listaLen ? ' ' + listaLen : ''}</button>
           <button class="btn-finalizar-viaje" onclick="toggleCerrarViaje('${c}',${!cerrado})">${cerrado ? 'Reabrir' : 'Finalizar'}</button>
           <button class="btn-eliminar-pasajero" onclick="eliminarViaje('${c}')" title="Eliminar viaje">✕</button>
         </span>
-      </div>`;
+      </div>
+      ${listaAbierta ? `
+      <div style="margin:-6px 0 10px;">
+        <textarea id="admin-lista-input-${c}" rows="4" style="width:100%;font-family:monospace;font-size:12.5px;border:1px solid var(--line-color,#ccc);border-radius:10px;padding:10px;margin-bottom:6px;" placeholder="Pegá la lista desde Excel (Apellido${'\\t'}Nombre por fila)">${(datos[c].listaPasajeros || []).map(p => `${p.apellido}\t${p.nombre}`).join('\n')}</textarea>
+        <button class="btn-primary" style="margin-bottom:4px;" onclick="adminGuardarLista('${c}')">Guardar lista</button>
+      </div>` : ''}`;
     }).join('');
+  });
+}
+
+let adminListaAbiertaPara = null;
+
+function adminToggleLista(codigo){
+  adminListaAbiertaPara = adminListaAbiertaPara === codigo ? null : codigo;
+  renderAdminViajes();
+}
+
+function adminGuardarLista(codigo){
+  const input = document.getElementById('admin-lista-input-' + codigo);
+  const texto = input ? input.value.trim() : '';
+  listaPasajerosGuardarEnViaje(codigo, texto).then(cantidad => {
+    mostrarToast(cantidad ? `Lista cargada: ${cantidad} pasajeros` : 'Lista borrada');
+    adminListaAbiertaPara = null;
+    renderAdminViajes();
   });
 }
 
@@ -389,6 +418,7 @@ function showView(name){
   if(name==='chinchon'){ iniciarChinchon(); }
   if(name==='truco'){ iniciarTruco(); }
   if(name==='tienda'){ iniciarPremios(); }
+  if(name==='onboard'){ listaPasajerosCargarParaOnboarding(); }
 }
 
 const MEDALLAS_RANKING = ['🥇', '🥈', '🥉'];
