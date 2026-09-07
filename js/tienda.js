@@ -13,6 +13,16 @@ let premiosEleccionesPrevias = -1; // -1 = todavía no se leyó nada; evita fest
 
 function premiosRef(){ return db.ref('salas/' + codigoViaje + '/premios'); }
 
+// OJO: "elecciones" se guarda por asiento (ej. {"3": 1}), y Firebase convierte
+// automáticamente un objeto con claves todas numéricas en un array, rellenando
+// con null los índices que faltan (ej. eso queda como [null,null,null,1]).
+// Por eso NUNCA hay que contar con Object.keys(...).length acá — cuenta
+// también esos huecos null y da un número inflado. Se cuenta filtrando los
+// valores reales.
+function premiosCantidadElegida(){
+  return Object.values(premiosState.elecciones || {}).filter(v => v !== null && v !== undefined).length;
+}
+
 function iniciarPremios(){
   if(premiosListenersListos){ renderPremiosViaje(); return; }
   premiosListenersListos = true;
@@ -24,7 +34,7 @@ function iniciarPremios(){
       orden: val.orden || null,
       elecciones: val.elecciones || {},
     };
-    const cantidadElecciones = Object.keys(premiosState.elecciones).length;
+    const cantidadElecciones = premiosCantidadElegida();
     // Festejo corto cuando se suma una elección nueva (no la primera vez que
     // carga la pantalla, para no disparar el festejo con datos ya viejos).
     if(premiosEleccionesPrevias >= 0 && cantidadElecciones > premiosEleccionesPrevias) premiosFestejarUltimaEleccion();
@@ -64,16 +74,30 @@ function habilitarEleccionPremios(){
 }
 
 function elegirPremio(indexPremio){
-  const turnoIndex = Object.keys(premiosState.elecciones).length;
-  const turnoAsiento = premiosState.orden ? premiosState.orden[turnoIndex] : null;
+  const turnoIndex = premiosCantidadElegida();
+  const orden = premiosState.orden || [];
+  const turnoAsiento = orden[turnoIndex];
   if(String(turnoAsiento) !== String(miAsiento)) return;
   if(premiosState.elecciones[String(miAsiento)] != null) return;
-  premiosRef().child('elecciones').child(String(miAsiento)).set(indexPremio);
+  premiosRef().child('elecciones').child(String(miAsiento)).set(indexPremio).then(() => {
+    const eraElUltimo = (turnoIndex + 1) >= orden.length;
+    if(eraElUltimo) premiosCerrarViajeAutomaticamente();
+  });
+}
+
+// Red de seguridad para cuando el coordinador se olvida de cerrar el viaje:
+// en cuanto el último ganador elige su premio, el viaje se cierra solo (nadie
+// más puede entrar ni seguir jugando/sumando monedas). A propósito NO borra
+// nada todavía — solo lo marca "listo para borrar" en Administrar viajes,
+// para que el ranking y los premios elegidos sigan visibles mientras se
+// reparten los premios reales, y el borrado quede como un paso manual.
+function premiosCerrarViajeAutomaticamente(){
+  db.ref('salas/' + codigoViaje).update({ cerrado: true, listoParaBorrar: true });
 }
 
 function premiosFestejarUltimaEleccion(){
   const orden = premiosState.orden || [];
-  const cantidad = Object.keys(premiosState.elecciones).length;
+  const cantidad = premiosCantidadElegida();
   const asiento = orden[cantidad - 1];
   const nombre = (rankingPuntos[asiento] && rankingPuntos[asiento].nombre) || `Asiento ${asiento}`;
   const indicePremio = premiosState.elecciones[asiento];
@@ -125,7 +149,7 @@ function renderPremiosViaje(){
   }
 
   const orden = premiosState.orden || [];
-  const turnoIndex = Object.keys(premiosState.elecciones).length;
+  const turnoIndex = premiosCantidadElegida();
   const turnoAsiento = orden[turnoIndex];
   const elegidosPorIndice = {};
   orden.forEach(asiento => {
@@ -170,7 +194,7 @@ function renderPremiosViaje(){
       ${disponibles.map(o => `<button class="btn-primary" style="margin-top:8px;" onclick="elegirPremio(${o.i})">${o.p}</button>`).join('')}`;
   }
 
-  const terminado = Object.keys(premiosState.elecciones).length >= orden.length;
+  const terminado = premiosCantidadElegida() >= orden.length;
 
   cont.innerHTML = `
     <div class="section-label">Elección de premios</div>

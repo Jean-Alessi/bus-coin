@@ -203,8 +203,9 @@ function renderAdminViajes(){
       const capacidad = datos[c].capacidad;
       const listaLen = (datos[c].listaPasajeros || []).length;
       const listaAbierta = adminListaAbiertaPara === c;
+      const listoParaBorrar = !!datos[c].listoParaBorrar;
       return `<div class="bingo-roster-item">
-        <span>${c}${cerrado ? ' 🔒' : ''}</span>
+        <span>${c}${cerrado ? ' 🔒' : ''}${listoParaBorrar ? ' <span style="color:#B85A0B;font-weight:600;">· ✅ Listo para borrar</span>' : ''}</span>
         <span class="bingo-roster-derecha">
           <span>${pasajeros}${capacidad ? '/' + capacidad : ''} pasajero${pasajeros === 1 ? '' : 's'}</span>
           <button class="btn-eliminar-pasajero" style="width:auto;border-radius:10px;padding:4px 8px;font-size:11px;" onclick="adminToggleLista('${c}')" title="Cargar lista de pasajeros">📋${listaLen ? ' ' + listaLen : ''}</button>
@@ -309,6 +310,29 @@ function seleccionarEmoji(e){
   actualizarBotonContinuar();
 }
 
+// Si el viaje se cierra mientras alguien ya está adentro (por ejemplo, por el
+// cierre automático de premiosCerrarViajeAutomaticamente), esto lo saca de
+// vuelta a la pantalla de entrada para que no pueda seguir jugando ni sumando
+// monedas. A quien esté mirando Premios o Ranking no lo interrumpe de golpe
+// (justo ahí es donde el propio ganador ve la confirmación de su premio),
+// pero igual le oculta las pestañas para que no pueda volver a los juegos.
+let cierreDeViajeListenerActivo = false;
+
+function activarListenerCierreDeViaje(){
+  if(cierreDeViajeListenerActivo || !codigoViaje) return;
+  cierreDeViajeListenerActivo = true;
+  db.ref('salas/' + codigoViaje + '/cerrado').on('value', snap => {
+    if(!snap.val()) return;
+    mostrarToast('Este viaje ya terminó. ¡Gracias por jugar!');
+    document.getElementById('tabbar').style.display = 'none';
+    const vistaActual = document.querySelector('.view.active');
+    const enVistaSegura = vistaActual && (vistaActual.id === 'view-tienda' || vistaActual.id === 'view-ranking');
+    codigoViaje = '';
+    localStorage.removeItem('codigo-viaje');
+    if(!enVistaSegura) showView('codigo-viaje');
+  });
+}
+
 function goHome(){
   miNombre = document.getElementById('mi-nombre-input').value.trim();
   miAsiento = document.getElementById('mi-asiento-input').value.trim();
@@ -316,6 +340,7 @@ function goHome(){
   localStorage.setItem('mi-asiento', miAsiento);
   localStorage.setItem('mi-emoji', miEmoji);
   rankingUnirse();
+  activarListenerCierreDeViaje();
   showView('home');
   document.getElementById('tabbar').style.display = 'flex';
   actualizarMonedasEnPantalla();
