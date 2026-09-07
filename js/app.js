@@ -363,6 +363,7 @@ function renderJuegos(){
 const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'memoria', 'tutifruti', 'impostor', 'bingo', 'triviavivo', 'cuento', 'dibujar', 'escoba', 'chinchon', 'truco'];
 
 function showView(name){
+  analyticsAlCambiarVista(name);
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-'+name).classList.add('active');
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -438,6 +439,7 @@ function ganarMonedas(cantidad){
   const puntosActuales = (rankingPuntos[asiento] && rankingPuntos[asiento].pts) || 0;
   rankingPuntos[asiento] = { nombre: miNombre, pts: Math.max(0, puntosActuales + cantidad) };
   rankingRefPuntos().child(asiento).set(rankingPuntos[asiento]);
+  analyticsRegistrar('monedas_ganadas', { cantidad, juego: analyticsVistaActual });
 }
 
 

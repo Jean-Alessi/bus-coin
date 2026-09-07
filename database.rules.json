@@ -5,6 +5,10 @@
         ".read": true,
         ".write": true
       }
+    },
+    "analytics": {
+      ".read": true,
+      ".write": true
     }
   }
 }
