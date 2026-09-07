@@ -240,6 +240,16 @@ function dibujarRedibujarTodo(){
 function renderDibujar(){
   const cont = document.getElementById('dibujar-content');
   if(!cont || !dibujarEstado) return;
+
+  // Este render se dispara con cada trazo nuevo de quien dibuja y con cada
+  // intento de CUALQUIER jugador (no solo el tuyo) -- sin guardar esto, cada
+  // vez que otro escribía algo, reconstruir el HTML entero te borraba lo que
+  // vos estabas tipeando en tu propio campo de adivinanza.
+  const inputPrevio = document.getElementById('dibujar-adivinanza-input');
+  const valorPrevio = inputPrevio ? inputPrevio.value : '';
+  const teniaFoco = !!inputPrevio && inputPrevio === document.activeElement;
+  const cursorPrevio = inputPrevio ? inputPrevio.selectionStart : null;
+
   document.getElementById('dibujar-sub').textContent =
     dibujarEstado.fase === 'lobby' ? 'Para grupos chicos, no todo el micro' : 'Turno en curso';
 
@@ -317,4 +327,13 @@ function renderDibujar(){
   dibujarCtx = dibujarCanvas.getContext('2d');
   dibujarRedibujarTodo();
   if(soyDibujante && !dibujarEstado.adivinada) dibujarActivarDibujo();
+
+  const inputNuevo = document.getElementById('dibujar-adivinanza-input');
+  if(inputNuevo && valorPrevio){
+    inputNuevo.value = valorPrevio;
+    if(teniaFoco){
+      inputNuevo.focus();
+      if(cursorPrevio != null) inputNuevo.setSelectionRange(cursorPrevio, cursorPrevio);
+    }
+  }
 }
