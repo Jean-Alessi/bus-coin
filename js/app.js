@@ -292,22 +292,17 @@ function rankingUnirse(){
 function actualizarBotonContinuar(){
   const nombreOk = document.getElementById('mi-nombre-input').value.trim().length > 0;
   const asientoOk = Number(document.getElementById('mi-asiento-input').value) > 0;
-  document.getElementById('btn-continuar').disabled = !(miEmoji && nombreOk && asientoOk);
+  document.getElementById('btn-continuar').disabled = !(nombreOk && asientoOk);
 }
 
-function renderEmojiGrid(){
-  const grid = document.getElementById('emoji-grid');
-  if(!grid) return;
-  grid.innerHTML = EMOJIS_DISPONIBLES.map(e =>
-    `<button class="emoji-opcion${e === miEmoji ? ' selected' : ''}" data-emoji="${e}" onclick="seleccionarEmoji('${e}')">${e}</button>`
-  ).join('');
-}
-
-function seleccionarEmoji(e){
-  miEmoji = e;
-  document.querySelectorAll('.emoji-opcion').forEach(b => b.classList.remove('selected'));
-  document.querySelector(`.emoji-opcion[data-emoji="${e}"]`).classList.add('selected');
-  actualizarBotonContinuar();
+// Ya no se elige a mano: se asigna solo (pero siempre el mismo para la misma
+// persona, no cambia en cada visita) para no sumarle una pantalla más al
+// arranque solo por elegir un emoji.
+function elegirEmojiAutomatico(nombre, asiento){
+  const base = String(nombre || '') + String(asiento || '');
+  let hash = 0;
+  for(let i = 0; i < base.length; i++) hash = (hash * 31 + base.charCodeAt(i)) >>> 0;
+  return EMOJIS_DISPONIBLES[hash % EMOJIS_DISPONIBLES.length];
 }
 
 // Si el viaje se cierra mientras alguien ya está adentro (por ejemplo, por el
@@ -336,6 +331,7 @@ function activarListenerCierreDeViaje(){
 function goHome(){
   miNombre = document.getElementById('mi-nombre-input').value.trim();
   miAsiento = document.getElementById('mi-asiento-input').value.trim();
+  miEmoji = elegirEmojiAutomatico(miNombre, miAsiento);
   localStorage.setItem('mi-nombre', miNombre);
   localStorage.setItem('mi-asiento', miAsiento);
   localStorage.setItem('mi-emoji', miEmoji);
@@ -518,7 +514,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.querySelectorAll('[data-icon]').forEach(el=>{
     el.innerHTML = icono(el.dataset.icon);
   });
-  renderEmojiGrid();
   const nombreInput = document.getElementById('mi-nombre-input');
   if(nombreInput && miNombre) nombreInput.value = miNombre;
   const asientoInput = document.getElementById('mi-asiento-input');

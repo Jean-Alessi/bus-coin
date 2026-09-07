@@ -143,14 +143,6 @@ body{
 }
 .home-logo-banner img{height:88px; width:auto;}
 
-.emoji-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px;}
-.emoji-opcion{
-  background:#fff; border-radius:16px; border:2px solid transparent;
-  padding:14px 0; font-size:26px; cursor:pointer; transition:.15s;
-  font-family:'Poppins',sans-serif;
-}
-.emoji-opcion:hover{border-color:var(--orange);}
-.emoji-opcion.selected{border-color:var(--orange); background:var(--orange-light);}
 .btn-primary{
   background:var(--orange); color:#fff; border:none;
   padding:16px; border-radius:16px; font-size:15px; font-weight:600;
