@@ -140,7 +140,7 @@ function trucoUnirseAMesa(mesaId){
     Object.assign(updates, {
       mano: trucoRepartirMano(jugadores),
       manoAsiento: jugadores[0], turno: jugadores[0], trickLider: jugadores[0],
-      trickNumero: 0, trickJugadas: [], tricksResultados: [],
+      trickNumero: 0, trickJugadas: [], tricksResultados: [], historialTricks: [],
       puntajeEquipos: { A: 0, B: 0 },
       metaPuntos: mesa.capacidad === 2 ? 15 : 30,
       truco: { nivel: 0, estado: null }, pendienteTruco: null,
@@ -202,7 +202,7 @@ function trucoAplicarPuntosYContinuar(mesa, equipoGanador, puntos, resumenExtra)
     puntajeEquipos, resultadoMano,
     mano: trucoRepartirMano(mesa.jugadores),
     manoAsiento, turno: manoAsiento, trickLider: manoAsiento,
-    trickNumero: 0, trickJugadas: [], tricksResultados: [],
+    trickNumero: 0, trickJugadas: [], tricksResultados: [], historialTricks: [],
     truco: { nivel: 0, estado: null }, pendienteTruco: null,
     envido: { estado: 'nadie' }, pendienteEnvido: null,
     manoNumero: (mesa.manoNumero || 1) + 1,
@@ -245,6 +245,7 @@ function trucoJugarCarta(indice){
   const nuevoTrickNumero = (mesa.trickNumero || 0) + 1;
   const nuevoLider = asientoGanador || mesa.trickLider;
 
+  updates.historialTricks = (mesa.historialTricks || []).concat([trickJugadas]);
   updates.trickJugadas = [];
   updates.tricksResultados = tricksResultados;
   updates.trickNumero = nuevoTrickNumero;
@@ -485,6 +486,21 @@ function renderTrucoMesa(){
       <div style="font-size:10px;color:var(--gray);">${String(j.asiento) === String(miAsiento) ? 'Vos' : mesa.nombres[j.asiento]}</div>
     </div>`).join('') || '<p style="color:var(--gray);font-size:12px;">Nadie jugó todavía en esta ronda.</p>';
 
+  // Sin esto, apenas se resuelve una ronda las cartas jugadas desaparecían
+  // del todo y no quedaba forma de ver qué se tiró antes en esta mano — igual
+  // que en la mesa real, donde las cartas ya jugadas quedan a la vista.
+  const historialHTML = (mesa.historialTricks || []).map((trick, ti) => {
+    const resultado = (mesa.tricksResultados || [])[ti];
+    const textoResultado = resultado == null ? 'Empataron (parda)' : resultado === miEquipo ? 'Ganó tu equipo' : 'Ganó el rival';
+    return `
+      <div class="section-label">Ronda ${ti + 1} — ${textoResultado}</div>
+      <div class="escoba-fila">${trick.map(j => `
+        <div style="text-align:center;">
+          ${escobaCartaHTML(j.carta, false, null)}
+          <div style="font-size:10px;color:var(--gray);">${String(j.asiento) === String(miAsiento) ? 'Vos' : mesa.nombres[j.asiento]}</div>
+        </div>`).join('')}</div>`;
+  }).join('');
+
   let accionesHTML = '';
   if(soyTurno){
     const chipsEnvido = trucoEnvidoDisponible(mesa) ? `
@@ -511,7 +527,8 @@ function renderTrucoMesa(){
       ${accionesHTML}`}
     ${envidoResuelto}
     ${trucoEstadoTxt}
-    <div class="section-label">Mesa (esta ronda)</div>
+    ${historialHTML}
+    <div class="section-label">${(mesa.historialTricks || []).length ? 'Ronda actual' : 'Mesa (esta ronda)'}</div>
     <div class="escoba-fila">${trickHTML}</div>
     <div class="section-label">Tu mano</div>
     <div class="escoba-fila">${miMano.map((c, i) => escobaCartaHTML(c, false, soyTurno ? `trucoJugarCarta(${i})` : null)).join('')}</div>

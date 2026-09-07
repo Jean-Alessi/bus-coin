@@ -151,7 +151,11 @@ function escobaJugarCarta(){
   const indicesMesa = Array.from(escobaMesaSeleccionada);
   const nuevaMano = miMano.filter((_, i) => i !== escobaCartaSeleccionada);
 
-  let nuevaMesaCartas, capturas = Object.assign({}, mesa.capturas || {}), escobas = Object.assign({}, mesa.escobas || {}), ganadorUltimaCaptura = mesa.ganadorUltimaCaptura;
+  // OJO: Firebase no guarda un valor "null" como tal (equivale a borrar esa
+  // key), así que el "ganadorUltimaCaptura: null" inicial del reparto nunca
+  // queda escrito de verdad -- acá lee undefined, no null. Sin este "|| null"
+  // el update de abajo rompía apenas nadie había capturado nada todavía.
+  let nuevaMesaCartas, capturas = Object.assign({}, mesa.capturas || {}), escobas = Object.assign({}, mesa.escobas || {}), ganadorUltimaCaptura = mesa.ganadorUltimaCaptura || null;
   if(indicesMesa.length > 0){
     const capturadas = indicesMesa.map(i => mesa.mesaCartas[i]).concat([carta]);
     nuevaMesaCartas = mesa.mesaCartas.filter((_, i) => !indicesMesa.includes(i));
@@ -168,8 +172,12 @@ function escobaJugarCarta(){
     [`mano/${miAsiento}`]: nuevaMano,
     mesaCartas: nuevaMesaCartas,
     turno: otro,
-    [`capturas/${miAsiento}`]: capturas[miAsiento],
-    [`escobas/${miAsiento}`]: escobas[miAsiento],
+    // Sin el "|| []" / "|| 0", si todavía no capturaste nada en la partida
+    // esto queda undefined (Firebase borró el array vacío inicial al
+    // repartir) y Firebase rechaza el update entero -- por eso "jugar sin
+    // capturar" antes de tu primera captura no se guardaba.
+    [`capturas/${miAsiento}`]: capturas[miAsiento] || [],
+    [`escobas/${miAsiento}`]: escobas[miAsiento] || 0,
     ganadorUltimaCaptura,
   };
 
