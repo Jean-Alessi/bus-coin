@@ -340,7 +340,7 @@ function renderEscobaMesa(){
     <div class="tapete-mesa"><div class="escoba-fila">${mesaCartasHTML}</div></div>
     <div class="section-label">Tu mano</div>
     <div class="escoba-fila">${manoHTML}</div>
-    ${soyTurno ? `<button class="btn-primary" onclick="escobaJugarCarta()" ${escobaJugadaValida(mesa) ? '' : 'disabled'}>${escobaMesaSeleccionada.size ? 'Capturar' : 'Jugar sin capturar'}</button>` : ''}
+    ${soyTurno ? `<button class="btn-primary" onclick="escobaJugarCarta()" ${escobaJugadaValida(mesa) ? '' : 'disabled'}>${escobaMesaSeleccionada.size ? 'Alzar' : 'Tirar'}</button>` : ''}
     <p class="link-chico" onclick="escobaTerminarMesa('${escobaMesaIdActual}')">Abandonar esta mesa</p>`;
 }
 
