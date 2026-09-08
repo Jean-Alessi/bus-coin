@@ -129,7 +129,8 @@ function escobaToggleCartaMesa(indice){
 }
 
 function escobaSumaSeleccionMesa(mesa){
-  return Array.from(escobaMesaSeleccionada).reduce((acc, i) => acc + escobaValor(mesa.mesaCartas[i].numero), 0);
+  const mesaCartas = mesa.mesaCartas || [];
+  return Array.from(escobaMesaSeleccionada).reduce((acc, i) => acc + escobaValor(mesaCartas[i].numero), 0);
 }
 
 // true si lo que hay tocado (carta de mano + cartas de mesa elegidas) es una
@@ -170,15 +171,20 @@ function escobaJugarCarta(){
   // key), así que el "ganadorUltimaCaptura: null" inicial del reparto nunca
   // queda escrito de verdad -- acá lee undefined, no null. Sin este "|| null"
   // el update de abajo rompía apenas nadie había capturado nada todavía.
+  // Firebase también borra "mesaCartas" cuando queda en un array vacío (una
+  // escoba completa la deja así) -- de ahí este "|| []", sin el cual la
+  // jugada siguiente rompía leyendo .filter/.concat de undefined y el juego
+  // quedaba trabado justo después de hacer una escoba.
+  const mesaCartasActual = mesa.mesaCartas || [];
   let nuevaMesaCartas, capturas = Object.assign({}, mesa.capturas || {}), escobas = Object.assign({}, mesa.escobas || {}), ganadorUltimaCaptura = mesa.ganadorUltimaCaptura || null;
   if(indicesMesa.length > 0){
-    const capturadas = indicesMesa.map(i => mesa.mesaCartas[i]).concat([carta]);
-    nuevaMesaCartas = mesa.mesaCartas.filter((_, i) => !indicesMesa.includes(i));
+    const capturadas = indicesMesa.map(i => mesaCartasActual[i]).concat([carta]);
+    nuevaMesaCartas = mesaCartasActual.filter((_, i) => !indicesMesa.includes(i));
     capturas[miAsiento] = (capturas[miAsiento] || []).concat(capturadas);
     ganadorUltimaCaptura = String(miAsiento);
     if(nuevaMesaCartas.length === 0) escobas[miAsiento] = (escobas[miAsiento] || 0) + 1;
   } else {
-    nuevaMesaCartas = mesa.mesaCartas.concat([carta]);
+    nuevaMesaCartas = mesaCartasActual.concat([carta]);
   }
 
   const otro = escobaOtroJugador(mesa);
@@ -318,7 +324,7 @@ function renderEscobaMesa(){
     return;
   }
 
-  const mesaCartasHTML = mesa.mesaCartas.map((c, i) => escobaCartaHTML(c, escobaMesaSeleccionada.has(i), soyTurno ? `escobaToggleCartaMesa(${i})` : null)).join('') || '<p style="font-size:12px;">Mesa vacía</p>';
+  const mesaCartasHTML = (mesa.mesaCartas || []).map((c, i) => escobaCartaHTML(c, escobaMesaSeleccionada.has(i), soyTurno ? `escobaToggleCartaMesa(${i})` : null)).join('') || '<p style="font-size:12px;">Mesa vacía</p>';
   const manoHTML = miMano.map((c, i) => escobaCartaHTML(c, escobaCartaSeleccionada === i, soyTurno ? `escobaToggleCartaMano(${i})` : null)).join('');
   const sumaActual = escobaCartaSeleccionada != null ? escobaSumaSeleccionMesa(mesa) + escobaValor(miMano[escobaCartaSeleccionada].numero) : null;
 
