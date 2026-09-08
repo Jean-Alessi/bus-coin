@@ -279,9 +279,9 @@ function chinchonPremiarSiCorresponde(mesa){
 }
 
 function chinchonCartaHTML(carta, seleccionada, onclick){
-  return `<button class="escoba-carta ${seleccionada ? 'escoba-carta-seleccionada' : ''}" ${onclick ? `onclick="${onclick}"` : 'disabled'}>
+  return `<button class="escoba-carta escoba-carta-${carta.palo} ${seleccionada ? 'escoba-carta-seleccionada' : ''}" ${onclick ? `onclick="${onclick}"` : 'disabled'}>
     <span class="escoba-carta-numero">${carta.numero === 10 ? 'Sota' : carta.numero === 11 ? 'Caballo' : carta.numero === 12 ? 'Rey' : carta.numero}</span>
-    <span class="escoba-carta-palo">${ESCOBA_SIMBOLO_PALO[carta.palo]}</span>
+    <span class="escoba-carta-palo">${escobaIconoPalo(carta.palo)}</span>
   </button>`;
 }
 

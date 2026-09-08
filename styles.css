@@ -582,14 +582,23 @@ body{
   color:var(--navy); background:#fff; border:1px solid #ECE9E1; border-radius:12px;
   padding:10px 14px; margin-bottom:8px;
 }
-.escoba-fila{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+.escoba-fila{display:flex; flex-wrap:wrap; gap:9px; margin-bottom:14px;}
 .escoba-carta{
-  width:46px; height:64px; border-radius:8px; border:1.5px solid #ECE9E1;
-  background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  width:50px; height:70px; border-radius:10px; border:1.5px solid #ECE9E1;
+  background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
   font-family:'Poppins',sans-serif; cursor:pointer; flex-shrink:0; padding:0;
+  box-shadow:0 2px 4px rgba(15,42,77,.08); border-bottom-width:3px;
+  transition:transform .1s ease;
 }
-.escoba-carta:disabled{cursor:default; opacity:.85;}
+.escoba-carta:disabled{cursor:default; opacity:.9;}
+.escoba-carta:not(:disabled):active{transform:scale(.95);}
 .escoba-carta-numero{font-size:13px; font-weight:700; color:var(--navy);}
-.escoba-carta-palo{font-size:15px;}
+.escoba-carta-palo{display:flex; line-height:0;}
 .escoba-carta-seleccionada{border-color:var(--orange); box-shadow:0 0 0 2px var(--orange-light); background:var(--orange-light);}
+.escoba-carta-oro{border-bottom-color:#F5C242;}
+.escoba-carta-copa{border-bottom-color:#D64545;}
+.escoba-carta-espada{border-bottom-color:#2D3E50;}
+.escoba-carta-basto{border-bottom-color:#A9713F;}
+.escoba-carta-seleccionada.escoba-carta-oro, .escoba-carta-seleccionada.escoba-carta-copa,
+.escoba-carta-seleccionada.escoba-carta-espada, .escoba-carta-seleccionada.escoba-carta-basto{border-bottom-color:var(--orange);}
 .escoba-carta-dorso{background:var(--navy); border-color:var(--navy-light);}
