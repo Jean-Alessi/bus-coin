@@ -143,6 +143,36 @@ function escobaJugadaValida(mesa){
   return escobaSumaSeleccionMesa(mesa) + escobaValor(carta.numero) === 15;
 }
 
+// Regla de "alzar de la mesa": si entre las cartas que ya están sobre la
+// mesa hay una combinación que suma 15 (sin necesitar ninguna carta de tu
+// mano), el que tiene el turno la puede levantar gratis, y recién después
+// juega su carta normal -- no le consume el turno. Pasa lo mismo con el
+// reparto inicial: si las 4 cartas del centro ya suman 15 entre ellas, el
+// primero en jugar (jugadores[0]) es el único con el turno en ese momento,
+// así que tiene la prioridad de alzarlas antes que nadie más juegue.
+function escobaAlzarLibreDeMesa(){
+  const mesa = escobaMesaActual();
+  if(!mesa || mesa.fase !== 'jugando' || String(mesa.turno) !== String(miAsiento)) return;
+  const indicesMesa = Array.from(escobaMesaSeleccionada);
+  if(indicesMesa.length < 2 || escobaSumaSeleccionMesa(mesa) !== 15) return;
+
+  const mesaCartasActual = mesa.mesaCartas || [];
+  const capturadas = indicesMesa.map(i => mesaCartasActual[i]);
+  const nuevaMesaCartas = mesaCartasActual.filter((_, i) => !indicesMesa.includes(i));
+  const capturas = Object.assign({}, mesa.capturas || {});
+  capturas[miAsiento] = (capturas[miAsiento] || []).concat(capturadas);
+  const escobas = Object.assign({}, mesa.escobas || {});
+  if(nuevaMesaCartas.length === 0) escobas[miAsiento] = (escobas[miAsiento] || 0) + 1;
+
+  escobaMesaSeleccionada = new Set();
+  escobaRefMesas().child(escobaMesaIdActual).update({
+    mesaCartas: nuevaMesaCartas,
+    [`capturas/${miAsiento}`]: capturas[miAsiento] || [],
+    [`escobas/${miAsiento}`]: escobas[miAsiento] || 0,
+    ganadorUltimaCaptura: String(miAsiento),
+  });
+}
+
 function escobaCalcularResultado(mesa, capturas, escobas){
   const [a, b] = mesa.jugadores;
   const cartasA = (capturas[a] || []).length, cartasB = (capturas[b] || []).length;
@@ -326,21 +356,39 @@ function renderEscobaMesa(){
 
   const mesaCartasHTML = (mesa.mesaCartas || []).map((c, i) => escobaCartaHTML(c, escobaMesaSeleccionada.has(i), soyTurno ? `escobaToggleCartaMesa(${i})` : null)).join('') || '<p style="font-size:12px;">Mesa vacía</p>';
   const manoHTML = miMano.map((c, i) => escobaCartaHTML(c, escobaCartaSeleccionada === i, soyTurno ? `escobaToggleCartaMano(${i})` : null)).join('');
+  const sumaMesaSola = escobaCartaSeleccionada == null && escobaMesaSeleccionada.size > 0 ? escobaSumaSeleccionMesa(mesa) : null;
   const sumaActual = escobaCartaSeleccionada != null ? escobaSumaSeleccionMesa(mesa) + escobaValor(miMano[escobaCartaSeleccionada].numero) : null;
+  const sumaParaMostrar = sumaActual != null ? sumaActual : sumaMesaSola;
+
+  // Si tocás solo cartas de la mesa (sin elegir ninguna de tu mano) y ya
+  // suman 15 entre ellas, se pueden alzar gratis -- sin gastar tu jugada.
+  // Recién después seguís tu turno normal (elegís tu carta y jugás como
+  // siempre). Cubre tanto un 15 que quedó pendiente de una jugada anterior
+  // como el caso del reparto inicial, si las 4 cartas del centro ya suman
+  // 15: en ese momento solo el primero en jugar tiene el turno, así que
+  // tiene la prioridad para alzarlas antes que nadie más toque nada.
+  let botonAccionHTML = '';
+  if(soyTurno){
+    if(escobaCartaSeleccionada != null){
+      botonAccionHTML = `<button class="btn-primary" onclick="escobaJugarCarta()" ${escobaJugadaValida(mesa) ? '' : 'disabled'}>${escobaMesaSeleccionada.size ? 'Alzar' : 'Tirar'}</button>`;
+    } else if(escobaMesaSeleccionada.size >= 2){
+      botonAccionHTML = `<button class="btn-primary" onclick="escobaAlzarLibreDeMesa()" ${sumaMesaSola === 15 ? '' : 'disabled'}>Alzar de la mesa (sin jugar carta)</button>`;
+    }
+  }
 
   cont.innerHTML = `
     ${cabezeraHTML}
     <div class="hero" style="margin-top:8px;">
       <h2>${soyTurno ? 'Tu turno' : `Turno de ${mesa.nombres[otro]}`}</h2>
-      <p>${soyTurno ? 'Tocá una carta tuya y, si querés, cartas de la mesa que sumen 15 con ella.' : 'Esperá a que juegue su carta.'}</p>
+      <p>${soyTurno ? 'Tocá una carta tuya y, si querés, cartas de la mesa que sumen 15 con ella. Si ves cartas de la mesa que ya suman 15 entre ellas, las podés alzar gratis antes de jugar tu carta.' : 'Esperá a que juegue su carta.'}</p>
     </div>
     <div class="section-label">Cartas de ${mesa.nombres[otro]} (${manoOtroLen})</div>
     <div class="escoba-fila">${Array.from({ length: manoOtroLen }).map(() => '<div class="escoba-carta escoba-carta-dorso"></div>').join('')}</div>
-    <div class="section-label">Mesa${escobaCartaSeleccionada != null ? ` — suma elegida: ${sumaActual}/15` : ''}</div>
+    <div class="section-label">Mesa${sumaParaMostrar != null ? ` — suma elegida: ${sumaParaMostrar}/15` : ''}</div>
     <div class="tapete-mesa"><div class="escoba-fila">${mesaCartasHTML}</div></div>
     <div class="section-label">Tu mano</div>
     <div class="escoba-fila">${manoHTML}</div>
-    ${soyTurno ? `<button class="btn-primary" onclick="escobaJugarCarta()" ${escobaJugadaValida(mesa) ? '' : 'disabled'}>${escobaMesaSeleccionada.size ? 'Alzar' : 'Tirar'}</button>` : ''}
+    ${botonAccionHTML}
     <p class="link-chico" onclick="escobaTerminarMesa('${escobaMesaIdActual}')">Abandonar esta mesa</p>`;
 }
 
