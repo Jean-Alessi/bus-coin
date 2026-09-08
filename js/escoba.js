@@ -18,7 +18,7 @@ const ESCOBA_NOMBRE_NUMERO = { 10: 'Sota', 11: 'Caballo', 12: 'Rey' };
 const ESCOBA_ICONO_PALO = {
   oro: '<circle cx="12" cy="12" r="8.5" fill="#F5C242" stroke="#B8860B" stroke-width="1.4"/><circle cx="12" cy="12" r="4.5" fill="none" stroke="#B8860B" stroke-width="1.1"/>',
   copa: '<path d="M6.5 3.5h11l-.6 5.2a5 5 0 0 1-9.8 0l-.6-5.2Z" fill="#D64545" stroke="#8B2E2E" stroke-width="1.1"/><path d="M12 13.5V18M8.3 20.5h7.4" stroke="#8B2E2E" stroke-width="1.4" fill="none" stroke-linecap="round"/>',
-  espada: '<path d="M12 2.2v13.3" stroke="#2D3E50" stroke-width="2.3" stroke-linecap="round"/><path d="M7.8 6.6h8.4" stroke="#2D3E50" stroke-width="1.9" stroke-linecap="round"/><path d="M12 15.5l-2.4 4.6h4.8L12 15.5Z" fill="#2D3E50"/>',
+  espada: '<path d="M12 2 13.5 14.6h-3Z" fill="#2D3E50"/><path d="M7.6 15h8.8" stroke="#2D3E50" stroke-width="2" stroke-linecap="round"/><rect x="11.1" y="15.6" width="1.8" height="3.6" rx="0.8" fill="#2D3E50"/><circle cx="12" cy="20.1" r="1.2" fill="#2D3E50"/>',
   basto: '<path d="M7.5 20 17 5.3" stroke="#8B5E34" stroke-width="4.6" stroke-linecap="round"/><circle cx="17" cy="5.3" r="3" fill="#A9713F" stroke="#6B4423" stroke-width="1"/>',
 };
 
