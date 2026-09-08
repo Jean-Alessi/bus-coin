@@ -601,7 +601,7 @@ body{
 .escoba-carta-basto{border-bottom-color:#A9713F;}
 .escoba-carta-seleccionada.escoba-carta-oro, .escoba-carta-seleccionada.escoba-carta-copa,
 .escoba-carta-seleccionada.escoba-carta-espada, .escoba-carta-seleccionada.escoba-carta-basto{border-bottom-color:var(--orange);}
-.escoba-carta-dorso{background:var(--navy); border-color:var(--navy-light);}
+.escoba-carta-dorso{background:var(--navy) url('icons/icon-192.png') center/68% no-repeat; border-color:var(--navy-light);}
 
 /* El "tapete": marca bien cuál es la mesa compartida (donde se apilan o se
    juegan cartas comunes), separada de tu mano o del mazo. Siempre 2 cartas

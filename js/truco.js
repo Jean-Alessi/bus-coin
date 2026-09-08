@@ -480,6 +480,12 @@ function renderTrucoMesa(){
   const miMano = (mesa.mano && mesa.mano[String(miAsiento)]) || [];
   const soyTurno = !mesa.pendienteTruco && !mesa.pendienteEnvido && String(mesa.turno) === String(miAsiento);
 
+  const otrosDorsoHTML = mesa.jugadores.filter(a => a !== String(miAsiento)).map(a => {
+    const cant = (mesa.mano && mesa.mano[a] || []).length;
+    return `<div class="section-label">Cartas de ${mesa.nombres[a]} (${cant})</div>
+      <div class="escoba-fila">${Array.from({ length: cant }).map(() => '<div class="escoba-carta escoba-carta-dorso"></div>').join('')}</div>`;
+  }).join('');
+
   const trickHTML = (mesa.trickJugadas || []).map(j => `
     <div style="text-align:center;">
       ${escobaCartaHTML(j.carta, false, null)}
@@ -527,6 +533,7 @@ function renderTrucoMesa(){
       ${accionesHTML}`}
     ${envidoResuelto}
     ${trucoEstadoTxt}
+    ${otrosDorsoHTML}
     ${historialHTML}
     <div class="section-label">${(mesa.historialTricks || []).length ? 'Ronda actual' : 'Mesa (esta ronda)'}</div>
     <div class="tapete-mesa"><div class="escoba-fila">${trickHTML}</div></div>

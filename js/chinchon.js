@@ -367,13 +367,19 @@ function renderChinchonMesa(){
   }
 
   const otros = mesa.jugadores.filter(a => a !== String(miAsiento));
+  const otrosDorsoHTML = otros.map(a => {
+    const cant = (mesa.mano[a] || []).length;
+    return `<div class="section-label">Cartas de ${mesa.nombres[a]} (${cant})</div>
+      <div class="escoba-fila">${Array.from({ length: cant }).map(() => '<div class="escoba-carta escoba-carta-dorso"></div>').join('')}</div>`;
+  }).join('');
 
   cont.innerHTML = `
     ${marcadorHTML}
     <div class="hero" style="margin-top:8px;">
       <h2>${soyTurno ? (mesa.robado ? 'Elegí qué descartar' : 'Tu turno: robá una carta') : `Turno de ${mesa.nombres[mesa.turno]}`}</h2>
-      <p>Mano ${mesa.manoNumero}. ${otros.map(a => `${mesa.nombres[a]}: ${(mesa.mano[a] || []).length} cartas`).join(' · ')}</p>
+      <p>Mano ${mesa.manoNumero}</p>
     </div>
+    ${otrosDorsoHTML}
     ${accionesHTML}
     <div class="section-label">Descarte${descarteTope ? '' : ' (vacío)'}</div>
     <div class="tapete-mesa"><div class="escoba-fila">${descarteTope ? chinchonCartaHTML(descarteTope, false, null) : '<p style="font-size:12px;">Sin descarte todavía</p>'}</div></div>
