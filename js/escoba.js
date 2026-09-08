@@ -318,7 +318,7 @@ function renderEscobaMesa(){
     return;
   }
 
-  const mesaCartasHTML = mesa.mesaCartas.map((c, i) => escobaCartaHTML(c, escobaMesaSeleccionada.has(i), soyTurno ? `escobaToggleCartaMesa(${i})` : null)).join('') || '<p style="color:var(--gray);font-size:12px;">Mesa vacía</p>';
+  const mesaCartasHTML = mesa.mesaCartas.map((c, i) => escobaCartaHTML(c, escobaMesaSeleccionada.has(i), soyTurno ? `escobaToggleCartaMesa(${i})` : null)).join('') || '<p style="font-size:12px;">Mesa vacía</p>';
   const manoHTML = miMano.map((c, i) => escobaCartaHTML(c, escobaCartaSeleccionada === i, soyTurno ? `escobaToggleCartaMano(${i})` : null)).join('');
   const sumaActual = escobaCartaSeleccionada != null ? escobaSumaSeleccionMesa(mesa) + escobaValor(miMano[escobaCartaSeleccionada].numero) : null;
 
@@ -331,7 +331,7 @@ function renderEscobaMesa(){
     <div class="section-label">Cartas de ${mesa.nombres[otro]} (${manoOtroLen})</div>
     <div class="escoba-fila">${Array.from({ length: manoOtroLen }).map(() => '<div class="escoba-carta escoba-carta-dorso"></div>').join('')}</div>
     <div class="section-label">Mesa${escobaCartaSeleccionada != null ? ` — suma elegida: ${sumaActual}/15` : ''}</div>
-    <div class="escoba-fila">${mesaCartasHTML}</div>
+    <div class="tapete-mesa"><div class="escoba-fila">${mesaCartasHTML}</div></div>
     <div class="section-label">Tu mano</div>
     <div class="escoba-fila">${manoHTML}</div>
     ${soyTurno ? `<button class="btn-primary" onclick="escobaJugarCarta()" ${escobaJugadaValida(mesa) ? '' : 'disabled'}>${escobaMesaSeleccionada.size ? 'Capturar' : 'Jugar sin capturar'}</button>` : ''}

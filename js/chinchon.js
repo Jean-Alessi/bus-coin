@@ -376,7 +376,7 @@ function renderChinchonMesa(){
     </div>
     ${accionesHTML}
     <div class="section-label">Descarte${descarteTope ? '' : ' (vacío)'}</div>
-    <div class="escoba-fila">${descarteTope ? chinchonCartaHTML(descarteTope, false, null) : ''}</div>
+    <div class="tapete-mesa"><div class="escoba-fila">${descarteTope ? chinchonCartaHTML(descarteTope, false, null) : '<p style="font-size:12px;">Sin descarte todavía</p>'}</div></div>
     <div class="section-label">Tu mano</div>
     <div class="escoba-fila">${miMano.map((c, i) => chinchonCartaHTML(c, chinchonCartaSeleccionada === i, soyTurno && mesa.robado ? `chinchonToggleCarta(${i})` : null)).join('')}</div>
     <p class="link-chico" onclick="chinchonTerminarMesa('${chinchonMesaIdActual}')">Abandonar esta mesa</p>`;

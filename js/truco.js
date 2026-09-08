@@ -483,8 +483,8 @@ function renderTrucoMesa(){
   const trickHTML = (mesa.trickJugadas || []).map(j => `
     <div style="text-align:center;">
       ${escobaCartaHTML(j.carta, false, null)}
-      <div style="font-size:10px;color:var(--gray);">${String(j.asiento) === String(miAsiento) ? 'Vos' : mesa.nombres[j.asiento]}</div>
-    </div>`).join('') || '<p style="color:var(--gray);font-size:12px;">Nadie jugó todavía en esta ronda.</p>';
+      <div style="font-size:10px;color:#EAF3EC;">${String(j.asiento) === String(miAsiento) ? 'Vos' : mesa.nombres[j.asiento]}</div>
+    </div>`).join('') || '<p style="font-size:12px;">Nadie jugó todavía en esta ronda.</p>';
 
   // Sin esto, apenas se resuelve una ronda las cartas jugadas desaparecían
   // del todo y no quedaba forma de ver qué se tiró antes en esta mano — igual
@@ -494,11 +494,11 @@ function renderTrucoMesa(){
     const textoResultado = resultado == null ? 'Empataron (parda)' : resultado === miEquipo ? 'Ganó tu equipo' : 'Ganó el rival';
     return `
       <div class="section-label">Ronda ${ti + 1} — ${textoResultado}</div>
-      <div class="escoba-fila">${trick.map(j => `
+      <div class="tapete-mesa"><div class="escoba-fila">${trick.map(j => `
         <div style="text-align:center;">
           ${escobaCartaHTML(j.carta, false, null)}
-          <div style="font-size:10px;color:var(--gray);">${String(j.asiento) === String(miAsiento) ? 'Vos' : mesa.nombres[j.asiento]}</div>
-        </div>`).join('')}</div>`;
+          <div style="font-size:10px;color:#EAF3EC;">${String(j.asiento) === String(miAsiento) ? 'Vos' : mesa.nombres[j.asiento]}</div>
+        </div>`).join('')}</div></div>`;
   }).join('');
 
   let accionesHTML = '';
@@ -529,7 +529,7 @@ function renderTrucoMesa(){
     ${trucoEstadoTxt}
     ${historialHTML}
     <div class="section-label">${(mesa.historialTricks || []).length ? 'Ronda actual' : 'Mesa (esta ronda)'}</div>
-    <div class="escoba-fila">${trickHTML}</div>
+    <div class="tapete-mesa"><div class="escoba-fila">${trickHTML}</div></div>
     <div class="section-label">Tu mano</div>
     <div class="escoba-fila">${miMano.map((c, i) => escobaCartaHTML(c, false, soyTurno ? `trucoJugarCarta(${i})` : null)).join('')}</div>
     <p class="link-chico" onclick="trucoTerminarMesa('${trucoMesaIdActual}')">Abandonar esta mesa</p>`;
