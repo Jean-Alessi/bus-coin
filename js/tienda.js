@@ -7,7 +7,12 @@
 const PREMIOS_DEFAULT = ['Viaje gratis', '50% de descuento en tu próximo viaje', 'Remera Busmac', 'Caja de Bon o Bon'];
 const PREMIOS_MEDALLAS = ['🥇', '🥈', '🥉', '🎗️'];
 
-let premiosState = { lista: PREMIOS_DEFAULT.slice(), habilitado: false, orden: null, elecciones: {} };
+// La lista arranca en blanco (no con PREMIOS_DEFAULT) para cada código de
+// viaje nuevo: si el organizador se olvida de cargarla, mejor que se note
+// vacía a que queden puestos premios de ejemplo como si fueran los reales.
+function premiosListaVacia(){ return ['', '', '', '']; }
+
+let premiosState = { lista: premiosListaVacia(), habilitado: false, orden: null, elecciones: {} };
 let premiosListenersListos = false;
 let premiosEleccionesPrevias = -1; // -1 = todavía no se leyó nada; evita festejar de más al entrar a la pantalla
 
@@ -29,7 +34,7 @@ function iniciarPremios(){
   premiosRef().on('value', snap => {
     const val = snap.val() || {};
     premiosState = {
-      lista: (val.lista && val.lista.length === 4) ? val.lista : PREMIOS_DEFAULT.slice(),
+      lista: (val.lista && val.lista.length === 4) ? val.lista : premiosListaVacia(),
       habilitado: !!val.habilitado,
       orden: val.orden || null,
       elecciones: val.elecciones || {},
@@ -46,8 +51,7 @@ function iniciarPremios(){
 function guardarListaPremios(){
   const valores = [0, 1, 2, 3].map(i => {
     const el = document.getElementById('premio-input-' + i);
-    const v = el ? el.value.trim() : '';
-    return v || PREMIOS_DEFAULT[i];
+    return el ? el.value.trim() : '';
   });
   premiosRef().child('lista').set(valores);
   mostrarToast('Premios guardados');
@@ -59,6 +63,10 @@ function guardarListaPremios(){
 // con datos viejos si justo llegó un punto nuevo.
 function habilitarEleccionPremios(){
   if(!bingoEsOrganizador()) return;
+  if(!premiosState.lista.every(p => p && p.trim())){
+    mostrarToast('Cargá los 4 premios antes de habilitar la elección');
+    return;
+  }
   rankingRefPuntos().once('value').then(snap => {
     const puntos = snap.val() || {};
     const orden = Object.keys(puntos)
@@ -119,7 +127,7 @@ function premiosGridHTML(elegidosPorIndice){
       <div class="premio-card premio-card-${i} ${elegido ? 'premio-card-elegido' : ''}">
         <div class="premio-card-medalla">${PREMIOS_MEDALLAS[i]}</div>
         <div class="premio-card-puesto">${i + 1}° puesto</div>
-        <div class="premio-card-nombre">${p}</div>
+        <div class="premio-card-nombre">${p || 'Sin definir todavía'}</div>
         ${elegido ? `<div class="premio-card-tag">✓ Elegido por ${elegido}</div>` : ''}
       </div>`;
   }).join('')}</div>`;
@@ -134,7 +142,7 @@ function renderPremiosViaje(){
   if(!premiosState.habilitado){
     const editorHTML = esOrganizador ? `
       <div class="section-label">Editá los premios de este viaje</div>
-      ${premiosState.lista.map((p, i) => `<input type="text" id="premio-input-${i}" class="bingo-input-numero" style="width:100%;" value="${p.replace(/"/g, '&quot;')}">`).join('')}
+      ${premiosState.lista.map((p, i) => `<input type="text" id="premio-input-${i}" class="bingo-input-numero" style="width:100%;" placeholder="Ej: ${PREMIOS_DEFAULT[i]}" value="${(p || '').replace(/"/g, '&quot;')}">`).join('')}
       <button class="btn-ghost" onclick="guardarListaPremios()">Guardar premios</button>
       <button class="btn-primary" onclick="habilitarEleccionPremios()">Habilitar elección de premios</button>` : '';
 
