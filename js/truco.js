@@ -93,11 +93,31 @@ function iniciarTruco(){
     trucoListenersListos = true;
     trucoRefMesas().on('value', snap => {
       trucoMesas = snap.val() || {};
+      trucoRevisarFoldNuevo();
       renderTruco();
     });
   } else {
     renderTruco();
   }
+}
+
+// La app no "hace trampa", pero sin ver las cartas de quien se fue al mazo
+// no hay forma de confirmarlo. Cuando alguien se va, se le muestra a todos
+// (una sola vez, con un toast) con qué cartas se fue.
+let trucoFoldBaseline = {};
+
+function trucoRevisarFoldNuevo(){
+  const mesa = trucoMesaActual();
+  if(!mesa || !trucoMesaIdActual) return;
+  const clave = mesa.resultadoMano && mesa.resultadoMano.motivo === 'mazo' ? String(mesa.resultadoMano.manoNumero) : null;
+  const previa = trucoFoldBaseline[trucoMesaIdActual];
+  trucoFoldBaseline[trucoMesaIdActual] = clave;
+  if(previa === undefined || !clave || clave === previa) return;
+  const r = mesa.resultadoMano;
+  const soyYo = String(r.seFue) === String(miAsiento);
+  const cartasTxt = (r.manoRevelada || []).map(c => escobaNombreCarta(c)).join(', ') || 'sin cartas';
+  const quien = soyYo ? 'Te fuiste' : `${mesa.nombres[r.seFue] || `Asiento ${r.seFue}`} se fue`;
+  mostrarToast(`🏳️ ${quien} al mazo con: ${cartasTxt}`);
 }
 
 function trucoMesaActual(){
@@ -318,7 +338,8 @@ function trucoIrseAlMazo(){
   const miEquipo = trucoEquipoDe(mesa.jugadores, miAsiento);
   const equipoRival = trucoOtroEquipo(miEquipo);
   const puntos = mesa.truco && mesa.truco.estado === 'aceptado' ? TRUCO_PUNTOS_QUERIDO[mesa.truco.nivel] : 1;
-  const updates = trucoAplicarPuntosYContinuar(mesa, equipoRival, puntos, { motivo: 'mazo', seFue: String(miAsiento) });
+  const miManoActual = (mesa.mano && mesa.mano[String(miAsiento)]) || [];
+  const updates = trucoAplicarPuntosYContinuar(mesa, equipoRival, puntos, { motivo: 'mazo', seFue: String(miAsiento), manoRevelada: miManoActual });
   updates.pendienteTruco = null;
   updates.pendienteEnvido = null;
   trucoRefMesas().child(trucoMesaIdActual).update(updates);
