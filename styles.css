@@ -103,6 +103,7 @@ body{
 }
 .memoria-carta-volteada{background:#fff; border:1.5px solid var(--orange);}
 .memoria-carta-resuelta{background:var(--orange-light); border:1.5px solid var(--orange); opacity:.55; cursor:default;}
+.memoria-logo-img{width:60%; height:60%; object-fit:contain; border-radius:20%;}
 .btn-mute{
   background:#F7F5F0; border:1px solid #ECE9E1; border-radius:50%;
   width:34px; height:34px; font-size:15px; cursor:pointer; flex-shrink:0;

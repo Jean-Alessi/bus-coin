@@ -3,7 +3,8 @@
 // pares — 4, 8 y 16 pares (8, 16 y 32 cartas) — para que se pueda jugar un
 // rato corto o largo según las ganas.
 
-const MEMORIA_EMOJIS = ['🚌','🧳','🗺️','🎫','📸','🕶️','⛰️','🏖️','🌅','🎒','🧭','🍔','🥤','🎶','📱','🛣️'];
+const MEMORIA_LOGO = 'busmac-logo';
+const MEMORIA_EMOJIS = ['🚌','🧳','🗺️','🎫','📸','🕶️','⛰️','🏖️','🌅','🎒','🧭','🍔','🥤','🎶','📱','🛣️', MEMORIA_LOGO];
 const MEMORIA_NIVELES = [4, 8, 16]; // pares por nivel
 
 let memoriaNivel = 0;
@@ -97,7 +98,8 @@ function renderMemoria(){
   const cartasHTML = memoriaCartas.map((c, i) => {
     const volteada = c.resuelta || memoriaVolteadas.includes(i);
     const clase = 'memoria-carta' + (volteada ? ' memoria-carta-volteada' : '') + (c.resuelta ? ' memoria-carta-resuelta' : '');
-    return `<button class="${clase}" onclick="tocarCartaMemoria(${i})">${volteada ? c.emoji : ''}</button>`;
+    const contenido = c.emoji === MEMORIA_LOGO ? '<img src="icons/icon-192.png" alt="Busmac" class="memoria-logo-img">' : c.emoji;
+    return `<button class="${clase}" onclick="tocarCartaMemoria(${i})">${volteada ? contenido : ''}</button>`;
   }).join('');
 
   cont.innerHTML = `
