@@ -157,6 +157,26 @@ body{
   font-family:'Poppins',sans-serif; cursor:pointer; width:100%; margin-top:10px;
 }
 
+/* Onboarding: en vez de un botón de texto, se toca el logo -- así el
+   arranque de cada viaje suma una repetición más de marca. */
+.btn-continuar-logo{
+  background:none; border:none; cursor:pointer; padding:0;
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  width:100%; margin-top:auto; padding-top:24px;
+}
+.btn-continuar-logo-img{
+  width:96px; height:96px; border-radius:22px;
+  box-shadow:0 6px 16px rgba(15,42,77,.25);
+  transition:transform .15s ease, opacity .15s ease, filter .15s ease;
+}
+.btn-continuar-logo span{
+  font-family:'Poppins',sans-serif; font-weight:600; font-size:14px; color:var(--navy);
+}
+.btn-continuar-logo:disabled{cursor:not-allowed;}
+.btn-continuar-logo:disabled .btn-continuar-logo-img{opacity:.35; filter:grayscale(70%); box-shadow:none;}
+.btn-continuar-logo:disabled span{color:#9AA3B0;}
+.btn-continuar-logo:not(:disabled):active .btn-continuar-logo-img{transform:scale(.92);}
+
 /* ---- Home ---- */
 .card{
   background:#fff; border-radius:18px; padding:16px; margin-bottom:12px;
