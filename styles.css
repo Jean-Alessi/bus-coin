@@ -114,6 +114,29 @@ body{
 .memoria-carta-volteada{background:#fff; border:1.5px solid var(--orange);}
 .memoria-carta-resuelta{background:var(--orange-light); border:1.5px solid var(--orange); opacity:.55; cursor:default;}
 .memoria-logo-img{width:60%; height:60%; object-fit:contain; border-radius:20%;}
+
+/* ---- Sudoku ---- */
+.sudoku-tablero{display:flex; flex-direction:column; border:2px solid var(--navy); border-radius:8px; overflow:hidden; margin:10px 0 16px;}
+.sudoku-fila{display:flex;}
+.sudoku-celda{
+  flex:1; aspect-ratio:1; border:1px solid #E3E7ED; background:#fff;
+  font-family:'Poppins',sans-serif; font-weight:700; font-size:15px; color:var(--navy);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+}
+.sudoku-celda-fija{background:var(--navy-soft); cursor:default;}
+.sudoku-celda-correcta{color:var(--orange);}
+.sudoku-celda-incorrecta{color:#D9534F;}
+.sudoku-celda-elegida{background:var(--orange-light);}
+.sudoku-borde-derecho{border-right:2px solid var(--navy);}
+.sudoku-borde-abajo{border-bottom:2px solid var(--navy);}
+.sudoku-teclado{display:grid; grid-template-columns:repeat(5,1fr); gap:8px;}
+.sudoku-tecla{
+  aspect-ratio:1; border-radius:12px; border:none; background:var(--navy-soft); color:var(--navy);
+  font-family:'Poppins',sans-serif; font-weight:700; font-size:16px; cursor:pointer;
+  box-shadow:0 2px 6px rgba(15,42,77,.08); transition:transform .1s ease;
+}
+.sudoku-tecla:active{transform:scale(.92);}
+.sudoku-tecla-borrar{background:#FBE4E1; color:#D9534F;}
 .btn-mute{
   background:#fff; border:none; border-radius:50%;
   width:34px; height:34px; font-size:15px; cursor:pointer; flex-shrink:0;

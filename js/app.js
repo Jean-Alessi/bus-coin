@@ -16,8 +16,9 @@ const TARJETAS_SOLO = [
   { icon: "rompecabezas", title: "Pensamiento lateral", sub: "Resolvé el caso a puro sí o no", view: "pensamiento" },
   { icon: "libro", title: "Ahorcado", sub: "Adiviná la palabra letra por letra", view: "ahorcado" },
   { icon: "lupa", title: "4+1", sub: "4 imágenes, 1 palabra", view: "cuatrouno" },
-  { icon: "valija", title: "Valija Express", sub: "20 segundos para armar la valija", view: "valija" },
+  { icon: "valija", title: "Valija Express", sub: "25 segundos para armar la valija", view: "valija" },
   { icon: "cartas", title: "Memoria", sub: "Encontrá los pares, cada nivel más grande", view: "memoria" },
+  { icon: "sudoku", title: "Sudoku", sub: "Sin cronómetro, elegí tu nivel", view: "sudoku" },
 ];
 
 const TARJETAS_GRUPO = [
@@ -410,7 +411,7 @@ function renderJuegos(){
 
 // Trivia, Acertijos y Bingo se entran desde el menú "Juegos" del tabbar, así
 // que esa pestaña queda marcada activa aunque ya estés adentro de uno de ellos.
-const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'memoria', 'tutifruti', 'impostor', 'bingo', 'triviavivo', 'cuento', 'dibujar', 'escoba', 'chinchon', 'truco'];
+const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'memoria', 'sudoku', 'tutifruti', 'impostor', 'bingo', 'triviavivo', 'cuento', 'dibujar', 'escoba', 'chinchon', 'truco'];
 
 function showView(name){
   analyticsAlCambiarVista(name);
@@ -428,6 +429,7 @@ function showView(name){
   if(name==='cuatrouno'){ iniciarCuatrouno(); }
   if(name==='valija'){ iniciarValija(); }
   if(name==='memoria'){ iniciarMemoria(); }
+  if(name==='sudoku'){ iniciarSudoku(); }
   if(name==='tutifruti'){ iniciarTutifruti(); }
   if(name==='impostor'){ iniciarImpostor(); }
   if(name==='ranking'){ renderRanking(); }
