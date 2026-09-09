@@ -1,4 +1,4 @@
-// Valija Express: 20 segundos para armar la valija con hasta 10 objetos de
+// Valija Express: 25 segundos para armar la valija con hasta 10 objetos de
 // los 20 que se muestran (10 correctos para el destino + 10 señuelos). Cada
 // correcto suma 2 monedas; los incorrectos no restan, pero ocupan uno de los
 // 10 lugares disponibles, así que elegir mal sí "cuesta" sin hacer perder
@@ -69,9 +69,9 @@ let valijaOrden = [];
 let valijaIndex = 0;
 let valijaDestinoActual = null;
 let valijaSeleccionados = new Set();
-let valijaTiempoRestante = 20;
+let valijaTiempoRestante = 25;
 let valijaTimerId = null;
-let valijaFase = 'jugando'; // 'jugando' | 'resultado'
+let valijaFase = 'inicio'; // 'inicio' | 'jugando' | 'resultado'
 let valijaUltimoResultado = null;
 // Los tonos (reproducirTono) viven en sonido.js, compartidos con todos los
 // juegos, así el mute de uno aplica a todos.
@@ -80,6 +80,14 @@ function iniciarValija(){
   valijaOrden = barajar([...Array(VALIJA_DESTINOS.length).keys()]);
   valijaOrden.push('sorpresa');
   valijaIndex = 0;
+  valijaFase = 'inicio';
+  renderValija();
+}
+
+// Antes arrancaba el cronómetro de una al entrar, así que perdías la primera
+// ronda mientras todavía estabas leyendo de qué iba el juego. Ahora se
+// explica primero y el cronómetro arranca recién con este botón.
+function comenzarValija(){
   prepararRondaValija();
 }
 
@@ -99,7 +107,7 @@ function prepararRondaValija(){
     opciones,
   };
   valijaSeleccionados = new Set();
-  valijaTiempoRestante = 20;
+  valijaTiempoRestante = 25;
   valijaFase = 'jugando';
   renderValija();
   valijaTimerId = setInterval(tickValija, 1000);
@@ -158,6 +166,19 @@ function siguienteValija(){
 function renderValija(){
   const cont = document.getElementById('valija-content');
   if(!cont) return;
+
+  if(valijaFase === 'inicio'){
+    document.getElementById('valija-sub').textContent = 'Valija Express';
+    cont.innerHTML = `
+      <div class="hero" style="margin-top:8px;">
+        <h2>🧳 Valija Express</h2>
+        <p>Tenés 25 segundos por destino para armar la valija: elegí hasta 10 objetos, los que creas que hacen falta para ese viaje.</p>
+        <p>Cada acierto suma 2 monedas. Un error no te resta nada, pero ocupa uno de los 10 lugares — así que pensarlo vale la pena. Si la armás perfecta (10 de 10), sumás 10 de bonus.</p>
+      </div>
+      <button class="btn-primary" onclick="comenzarValija()">Comenzar</button>`;
+    return;
+  }
+
   document.getElementById('valija-sub').textContent = `Destino ${valijaIndex + 1} de ${valijaOrden.length}`;
   const d = valijaDestinoActual;
 
