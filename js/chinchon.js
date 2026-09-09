@@ -1,33 +1,53 @@
 // Chinchón, para 2 a 4 jugadores. Usa el mismo sistema de "mesas" que
 // Escoba: varias mesas pueden convivir dentro del mismo código de viaje.
 //
-// Versión simplificada a propósito (sin comodines, sin "hueso"/corte con
-// penalidad parcial): podés cerrar la mano cuando, formando tus grupos
-// (mismo número, palos distintos) y escaleras (3+ consecutivas del mismo
-// palo), te queda como máximo 1 carta suelta. Si te quedan las 7 cartas
-// combinadas (0 sueltas), es un "Chinchón" y los demás duplican lo que
-// sumarían esa mano. Se juegan manos seguidas hasta que alguien llega a
-// 100 puntos acumulados — ahí gana quien tenga MENOS puntos.
+// Mazo de 50 cartas: las 48 del palo español completo (con 8 y 9 incluidos,
+// a diferencia de Escoba/Truco que los sacan) más 2 comodines. Un comodín
+// reemplaza cualquier carta dentro de un grupo o una escalera. Podés cerrar
+// la mano cuando, formando tus grupos (mismo número, palos distintos) y
+// escaleras (3+ consecutivas del mismo palo), te queda como máximo 1 carta
+// suelta. Si te quedan las 7 cartas combinadas (0 sueltas), es un "Chinchón"
+// y los demás duplican lo que sumarían esa mano. Se juegan manos seguidas
+// hasta que alguien llega a 100 puntos acumulados — ahí gana quien tenga
+// MENOS puntos. Sin "hueso"/corte con penalidad parcial: eso queda afuera
+// a propósito para no complicar de más.
 
-const CHINCHON_ORDEN = [1, 2, 3, 4, 5, 6, 7, 10, 11, 12];
+const CHINCHON_ORDEN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const CHINCHON_META_PUNTOS = 100;
+const CHINCHON_VALOR_COMODIN_SUELTO = 20;
 
-function chinchonValor(numero){ return numero <= 7 ? numero : 10; }
+function chinchonValor(numero){ return numero <= 9 ? numero : 10; }
+function chinchonValorSuelta(carta){ return carta.comodin ? CHINCHON_VALOR_COMODIN_SUELTO : chinchonValor(carta.numero); }
 
 function chinchonEsGrupo(cartas){
   if(cartas.length < 3) return false;
-  const numero = cartas[0].numero;
-  if(!cartas.every(c => c.numero === numero)) return false;
-  return new Set(cartas.map(c => c.palo)).size === cartas.length;
+  const reales = cartas.filter(c => !c.comodin);
+  if(!reales.length) return false;
+  const numero = reales[0].numero;
+  if(!reales.every(c => c.numero === numero)) return false;
+  const palos = reales.map(c => c.palo);
+  return new Set(palos).size === palos.length;
 }
 
+// Con comodines, una escalera ya no exige que todas las posiciones estén
+// presentes: alcanza con que las cartas reales quepan en un tramo del mismo
+// palo, y que haya suficientes comodines (más lugar libre en las puntas)
+// para tapar los huecos que falten.
 function chinchonEsEscalera(cartas){
   if(cartas.length < 3) return false;
-  const palo = cartas[0].palo;
-  if(!cartas.every(c => c.palo === palo)) return false;
-  const posiciones = cartas.map(c => CHINCHON_ORDEN.indexOf(c.numero)).sort((a, b) => a - b);
-  for(let i = 1; i < posiciones.length; i++) if(posiciones[i] !== posiciones[i - 1] + 1) return false;
-  return true;
+  const reales = cartas.filter(c => !c.comodin);
+  const comodines = cartas.length - reales.length;
+  if(!reales.length) return false;
+  const palo = reales[0].palo;
+  if(!reales.every(c => c.palo === palo)) return false;
+  const posiciones = reales.map(c => CHINCHON_ORDEN.indexOf(c.numero));
+  if(new Set(posiciones).size !== posiciones.length) return false;
+  const min = Math.min(...posiciones), max = Math.max(...posiciones);
+  const huecosInternos = (max - min + 1) - reales.length;
+  if(huecosInternos > comodines) return false;
+  const comodinesSobrantes = comodines - huecosInternos;
+  const espacioDisponible = min + (CHINCHON_ORDEN.length - 1 - max);
+  return comodinesSobrantes <= espacioDisponible;
 }
 
 function chinchonEsCombinacionValida(cartas){
@@ -53,10 +73,10 @@ function chinchonTodasCombinaciones(mano){
 function chinchonMejorParticion(mano){
   const combos = chinchonTodasCombinaciones(mano);
   const todosIndices = mano.map((_, i) => i);
-  let mejor = { deadwood: mano.reduce((s, c) => s + chinchonValor(c.numero), 0), sueltas: todosIndices };
+  let mejor = { deadwood: mano.reduce((s, c) => s + chinchonValorSuelta(c), 0), sueltas: todosIndices };
   function buscar(usados){
     const sueltas = todosIndices.filter(i => !usados.has(i));
-    const deadwood = sueltas.reduce((s, i) => s + chinchonValor(mano[i].numero), 0);
+    const deadwood = sueltas.reduce((s, i) => s + chinchonValorSuelta(mano[i]), 0);
     if(deadwood < mejor.deadwood) mejor = { deadwood, sueltas };
     for(const combo of combos){
       if(combo.some(i => usados.has(i))) continue;
@@ -119,6 +139,7 @@ function chinchonCrearMesa(){
 function chinchonCrearMazo(){
   const mazo = [];
   ESCOBA_PALOS.forEach(palo => CHINCHON_ORDEN.forEach(numero => mazo.push({ palo, numero })));
+  mazo.push({ comodin: true }, { comodin: true });
   return barajar(mazo);
 }
 
@@ -155,6 +176,8 @@ function chinchonUnirseAMesa(mesaId){
 function chinchonVolverAlLobby(){
   chinchonMesaIdActual = null;
   chinchonCartaSeleccionada = null;
+  chinchonModoOrden = false;
+  chinchonOrdenElegido = null;
   renderChinchon();
 }
 
@@ -168,7 +191,10 @@ function chinchonSiguienteJugador(mesa, asiento){
   return mesa.jugadores[(idx + 1) % mesa.jugadores.length];
 }
 
-function chinchonRobarMazo(){
+// Se toca directamente la carta del mazo/descarte en la mesa (como en
+// Escoba), en vez de un botón aparte. "Levantar" = del mazo boca abajo,
+// "alzar" = el descarte boca arriba, siguiendo la jerga real del juego.
+function chinchonLevantarDelMazo(){
   const mesa = chinchonMesaActual();
   if(!mesa || mesa.fase !== 'jugando' || String(mesa.turno) !== String(miAsiento) || mesa.robado) return;
   const mazo = (mesa.mazo || []).slice();
@@ -178,7 +204,7 @@ function chinchonRobarMazo(){
   chinchonRefMesas().child(chinchonMesaIdActual).update({ mazo, [`mano/${miAsiento}`]: mano, robado: true });
 }
 
-function chinchonRobarDescarte(){
+function chinchonAlzarDescarte(){
   const mesa = chinchonMesaActual();
   if(!mesa || mesa.fase !== 'jugando' || String(mesa.turno) !== String(miAsiento) || mesa.robado) return;
   const descarte = (mesa.descarte || []).slice();
@@ -191,6 +217,36 @@ function chinchonRobarDescarte(){
 function chinchonToggleCarta(indice){
   chinchonCartaSeleccionada = chinchonCartaSeleccionada === indice ? null : indice;
   renderChinchon();
+}
+
+// Modo para acomodar tu propia mano en el orden que quieras (no afecta el
+// juego para nada, es solo para vos): tocás una carta, tocás otra, y se
+// intercambian de lugar. Se guarda en Firebase para que el orden no se
+// pierda en el próximo render, pero solo vos lo ves así.
+let chinchonModoOrden = false;
+let chinchonOrdenElegido = null;
+
+function chinchonToggleModoOrden(){
+  chinchonModoOrden = !chinchonModoOrden;
+  chinchonOrdenElegido = null;
+  chinchonCartaSeleccionada = null;
+  renderChinchon();
+}
+
+function chinchonOrdenarTocar(indice){
+  const mesa = chinchonMesaActual();
+  if(!mesa) return;
+  if(chinchonOrdenElegido == null || chinchonOrdenElegido === indice){
+    chinchonOrdenElegido = chinchonOrdenElegido === indice ? null : indice;
+    renderChinchon();
+    return;
+  }
+  const miMano = (mesa.mano[String(miAsiento)] || []).slice();
+  const tmp = miMano[chinchonOrdenElegido];
+  miMano[chinchonOrdenElegido] = miMano[indice];
+  miMano[indice] = tmp;
+  chinchonOrdenElegido = null;
+  chinchonRefMesas().child(chinchonMesaIdActual).update({ [`mano/${miAsiento}`]: miMano });
 }
 
 function chinchonDescartar(){
@@ -279,10 +335,31 @@ function chinchonPremiarSiCorresponde(mesa){
 }
 
 function chinchonCartaHTML(carta, seleccionada, onclick){
+  if(carta.comodin){
+    return `<button class="escoba-carta escoba-carta-comodin ${seleccionada ? 'escoba-carta-seleccionada' : ''}" ${onclick ? `onclick="${onclick}"` : 'disabled'}>
+      <span class="escoba-carta-numero" style="font-size:20px;">★</span>
+      <span style="font-size:9px;font-weight:700;">Comodín</span>
+    </button>`;
+  }
   return `<button class="escoba-carta escoba-carta-${carta.palo} ${seleccionada ? 'escoba-carta-seleccionada' : ''}" ${onclick ? `onclick="${onclick}"` : 'disabled'}>
     <span class="escoba-carta-numero">${carta.numero === 10 ? 'Sota' : carta.numero === 11 ? 'Caballo' : carta.numero === 12 ? 'Rey' : carta.numero}</span>
     <span class="escoba-carta-palo">${escobaIconoPalo(carta.palo)}</span>
   </button>`;
+}
+
+// Las cartas del rival en abanico (boca abajo), como se ven en una mesa
+// real, en vez de una fila plana. Cada una se rota y se corre un poco según
+// qué tan lejos está del centro de la mano.
+function chinchonAbanicoHTML(cantidad){
+  const medio = (cantidad - 1) / 2;
+  const cartas = Array.from({ length: cantidad }).map((_, i) => {
+    const offset = i - medio;
+    const rot = offset * 9;
+    const dx = offset * 24;
+    const dy = Math.abs(offset) * 5;
+    return `<div class="escoba-carta escoba-carta-dorso" style="position:absolute; left:50%; top:0; margin-left:-25px; transform:translate(${dx}px, ${dy}px) rotate(${rot}deg); z-index:${i};"></div>`;
+  }).join('');
+  return `<div class="abanico-cartas">${cartas}</div>`;
 }
 
 function renderChinchonLobby(){
@@ -352,39 +429,53 @@ function renderChinchonMesa(){
   const miMano = (mesa.mano && mesa.mano[String(miAsiento)]) || [];
   const descarteTope = (mesa.descarte || [])[(mesa.descarte || []).length - 1];
   const puedoCerrar = soyTurno && mesa.robado && chinchonPuedeCerrar(miMano);
+  const puedeLevantar = soyTurno && !mesa.robado;
+  const mazoLen = (mesa.mazo || []).length;
+
+  // Se toca directamente el mazo o el descarte sobre el tapete, como en
+  // Escoba, en vez de botones aparte.
+  const mazoHTML = `<div style="text-align:center;">
+    <button class="escoba-carta escoba-carta-dorso" ${puedeLevantar && mazoLen ? `onclick="chinchonLevantarDelMazo()"` : 'disabled'}></button>
+    <div style="font-size:10px;color:#EAF3EC;">Mazo (${mazoLen})</div>
+  </div>`;
+  const descarteHTML = descarteTope ? `<div style="text-align:center;">
+    ${chinchonCartaHTML(descarteTope, false, puedeLevantar ? 'chinchonAlzarDescarte()' : null)}
+    <div style="font-size:10px;color:#EAF3EC;">Descarte</div>
+  </div>` : `<p style="font-size:12px;">Sin descarte todavía</p>`;
 
   let accionesHTML = '';
-  if(soyTurno && !mesa.robado){
+  if(soyTurno && mesa.robado){
     accionesHTML = `
-      <div class="chip-row" style="margin-bottom:10px;">
-        <div class="chip" onclick="chinchonRobarMazo()">🂠 Robar del mazo (${(mesa.mazo || []).length})</div>
-        ${descarteTope ? `<div class="chip" onclick="chinchonRobarDescarte()">Robar el descarte</div>` : ''}
-      </div>`;
-  } else if(soyTurno && mesa.robado){
-    accionesHTML = `
-      <button class="btn-primary" onclick="chinchonDescartar()" ${chinchonCartaSeleccionada == null ? 'disabled' : ''}>Descartar la carta elegida</button>
+      <button class="btn-primary" onclick="chinchonDescartar()" ${chinchonCartaSeleccionada == null ? 'disabled' : ''}>Descartarme</button>
       ${puedoCerrar ? `<button class="btn-ghost" onclick="chinchonCerrar()">🏁 Cerrar la mano</button>` : ''}`;
   }
 
   const otros = mesa.jugadores.filter(a => a !== String(miAsiento));
-  const otrosDorsoHTML = otros.map(a => {
+  const otrosAbanicoHTML = otros.map(a => {
     const cant = (mesa.mano[a] || []).length;
-    return `<div class="section-label">Cartas de ${mesa.nombres[a]} (${cant})</div>
-      <div class="escoba-fila">${Array.from({ length: cant }).map(() => '<div class="escoba-carta escoba-carta-dorso"></div>').join('')}</div>`;
+    return `<div class="section-label">Cartas de ${mesa.nombres[a]} (${cant})</div>${chinchonAbanicoHTML(cant)}`;
   }).join('');
+
+  const manoHTML = miMano.map((c, i) => chinchonModoOrden
+    ? chinchonCartaHTML(c, chinchonOrdenElegido === i, `chinchonOrdenarTocar(${i})`)
+    : chinchonCartaHTML(c, chinchonCartaSeleccionada === i, soyTurno && mesa.robado ? `chinchonToggleCarta(${i})` : null)
+  ).join('');
 
   cont.innerHTML = `
     ${marcadorHTML}
     <div class="hero" style="margin-top:8px;">
-      <h2>${soyTurno ? (mesa.robado ? 'Elegí qué descartar' : 'Tu turno: robá una carta') : `Turno de ${mesa.nombres[mesa.turno]}`}</h2>
+      <h2>${soyTurno ? (mesa.robado ? 'Elegí qué descartar' : 'Tu turno: tocá el mazo o el descarte') : `Turno de ${mesa.nombres[mesa.turno]}`}</h2>
       <p>Mano ${mesa.manoNumero}</p>
     </div>
-    ${otrosDorsoHTML}
+    ${otrosAbanicoHTML}
+    <div class="section-label">Mesa</div>
+    <div class="tapete-mesa"><div class="escoba-fila">${mazoHTML}${descarteHTML}</div></div>
     ${accionesHTML}
-    <div class="section-label">Descarte${descarteTope ? '' : ' (vacío)'}</div>
-    <div class="tapete-mesa"><div class="escoba-fila">${descarteTope ? chinchonCartaHTML(descarteTope, false, null) : '<p style="font-size:12px;">Sin descarte todavía</p>'}</div></div>
-    <div class="section-label">Tu mano</div>
-    <div class="escoba-fila">${miMano.map((c, i) => chinchonCartaHTML(c, chinchonCartaSeleccionada === i, soyTurno && mesa.robado ? `chinchonToggleCarta(${i})` : null)).join('')}</div>
+    <div class="section-label" style="display:flex; justify-content:space-between; align-items:center;">
+      <span>Tu mano</span>
+      <span class="link-chico" style="margin:0;" onclick="chinchonToggleModoOrden()">${chinchonModoOrden ? '✅ Listo' : '🔀 Ordenar mis cartas'}</span>
+    </div>
+    <div class="escoba-fila">${manoHTML}</div>
     <p class="link-chico" onclick="chinchonTerminarMesa('${chinchonMesaIdActual}')">Abandonar esta mesa</p>`;
 }
 

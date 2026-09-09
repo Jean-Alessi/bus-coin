@@ -602,6 +602,13 @@ body{
 .escoba-carta-seleccionada.escoba-carta-oro, .escoba-carta-seleccionada.escoba-carta-copa,
 .escoba-carta-seleccionada.escoba-carta-espada, .escoba-carta-seleccionada.escoba-carta-basto{border-bottom-color:var(--orange);}
 .escoba-carta-dorso{background:var(--navy) url('icons/icon-192.png') center/68% no-repeat; border-color:var(--navy-light);}
+.escoba-carta-comodin{border-bottom-color:#8E44AD; color:#8E44AD;}
+.escoba-carta-comodin .escoba-carta-numero{color:#8E44AD;}
+.escoba-carta-seleccionada.escoba-carta-comodin{border-bottom-color:var(--orange);}
+
+/* El abanico de cartas del rival: cada carta se posiciona absoluta dentro de
+   este contenedor (el JS calcula la rotación y el corrimiento de cada una). */
+.abanico-cartas{ position:relative; height:92px; margin-bottom:14px; }
 
 /* El "tapete": marca bien cuál es la mesa compartida (donde se apilan o se
    juegan cartas comunes), separada de tu mano o del mazo. Siempre 2 cartas
