@@ -307,6 +307,23 @@ function trucoResponderTruco(accion){
   }
 }
 
+// Cualquiera se puede ir al mazo en cualquier momento de la mano (no hace
+// falta que sea tu turno): se termina ahí mismo y el equipo rival se lleva
+// los puntos que estaban en juego (el valor del truco ya aceptado, o 1 si
+// todavía no se cantó nada).
+function trucoIrseAlMazo(){
+  const mesa = trucoMesaActual();
+  if(!mesa || mesa.fase !== 'jugando') return;
+  if(!confirm('¿Seguro que te vas al mazo? El equipo rival se lleva los puntos de esta mano.')) return;
+  const miEquipo = trucoEquipoDe(mesa.jugadores, miAsiento);
+  const equipoRival = trucoOtroEquipo(miEquipo);
+  const puntos = mesa.truco && mesa.truco.estado === 'aceptado' ? TRUCO_PUNTOS_QUERIDO[mesa.truco.nivel] : 1;
+  const updates = trucoAplicarPuntosYContinuar(mesa, equipoRival, puntos, { motivo: 'mazo', seFue: String(miAsiento) });
+  updates.pendienteTruco = null;
+  updates.pendienteEnvido = null;
+  trucoRefMesas().child(trucoMesaIdActual).update(updates);
+}
+
 function trucoEnvidoDisponible(mesa){
   return mesa && mesa.fase === 'jugando' && (mesa.trickNumero || 0) === 0 && (mesa.truco.nivel || 0) === 0
     && !mesa.pendienteTruco && !mesa.pendienteEnvido && mesa.envido && mesa.envido.estado === 'nadie';
@@ -539,6 +556,7 @@ function renderTrucoMesa(){
     <div class="tapete-mesa"><div class="escoba-fila">${trickHTML}</div></div>
     <div class="section-label">Tu mano</div>
     <div class="escoba-fila">${miMano.map((c, i) => escobaCartaHTML(c, false, soyTurno ? `trucoJugarCarta(${i})` : null)).join('')}</div>
+    <p class="link-chico" onclick="trucoIrseAlMazo()">🏳️ Irme al mazo</p>
     <p class="link-chico" onclick="trucoTerminarMesa('${trucoMesaIdActual}')">Abandonar esta mesa</p>`;
 }
 
