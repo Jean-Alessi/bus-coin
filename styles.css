@@ -1,7 +1,9 @@
 :root{
   --navy:#0F2A4D;
   --navy-light:#1C3F6E;
+  --navy-soft:#EAF0F8;
   --orange:#E8720F;
+  --orange-soft:#F5A64B;
   --orange-light:#FDEBDA;
   --cream:#F7F5F0;
   --gray:#8A94A3;
@@ -84,15 +86,23 @@ body{
   display:flex; align-items:center; gap:5px; flex-shrink:0;
   padding:6px 12px; border-radius:20px;
   font-size:12px; font-weight:700; letter-spacing:.3px; white-space:nowrap;
+  box-shadow:0 2px 8px rgba(232,114,15,.15);
 }
-.chip-monedas-juego{background:var(--orange-light); color:var(--orange);}
+.chip-monedas-juego{background:linear-gradient(135deg, var(--orange-light), #FBDCB8); color:var(--orange);}
 .chip-row{display:flex; flex-wrap:wrap; gap:8px;}
 .chip{
-  padding:8px 16px; border-radius:999px; border:1.5px solid #ECE9E1;
-  font-size:13px; font-weight:600; color:var(--navy); background:#fff;
+  padding:9px 16px; border-radius:999px; border:none;
+  font-size:13px; font-weight:600; color:var(--navy); background:var(--navy-soft);
   cursor:pointer; font-family:'Poppins',sans-serif; display:inline-block;
+  box-shadow:0 2px 6px rgba(15,42,77,.08);
+  transition:transform .12s ease, box-shadow .12s ease;
 }
-.chip.selected{background:var(--navy); border-color:var(--navy); color:#fff;}
+.chip:active{transform:scale(.96);}
+.chip.selected{
+  background:linear-gradient(135deg, var(--orange-soft), var(--orange));
+  border-color:transparent; color:#fff;
+  box-shadow:0 4px 12px rgba(232,114,15,.35);
+}
 
 /* ---- Memoria ---- */
 .memoria-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:14px 0;}
@@ -105,20 +115,22 @@ body{
 .memoria-carta-resuelta{background:var(--orange-light); border:1.5px solid var(--orange); opacity:.55; cursor:default;}
 .memoria-logo-img{width:60%; height:60%; object-fit:contain; border-radius:20%;}
 .btn-mute{
-  background:#F7F5F0; border:1px solid #ECE9E1; border-radius:50%;
+  background:#fff; border:none; border-radius:50%;
   width:34px; height:34px; font-size:15px; cursor:pointer; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
   font-family:'Poppins',sans-serif;
+  box-shadow:0 2px 8px rgba(15,42,77,.12);
 }
 
 /* ---- Onboarding: elegir emoji ---- */
 .hero{
-  background:var(--navy);
+  background:linear-gradient(155deg, var(--navy-light), var(--navy));
   border-radius:24px;
   padding:24px 20px;
   color:#fff;
   margin-bottom:20px;
   margin-top:8px;
+  box-shadow:0 10px 24px rgba(15,42,77,.22);
 }
 .hero h2{font-size:20px; font-weight:600; margin-bottom:4px;}
 .hero p{font-size:13px; color:#C6D3E8; font-weight:400;}
@@ -128,8 +140,8 @@ body{
   border-radius:20px; padding:18px 18px;
   margin-bottom:10px; cursor:pointer; color:#fff;
 }
-.categoria-juegos-solo{background:var(--navy);}
-.categoria-juegos-grupo{background:var(--orange);}
+.categoria-juegos-solo{background:linear-gradient(135deg, var(--navy-light), var(--navy)); box-shadow:0 8px 18px rgba(15,42,77,.28);}
+.categoria-juegos-grupo{background:linear-gradient(135deg, var(--orange-soft), var(--orange)); box-shadow:0 8px 18px rgba(232,114,15,.32);}
 .categoria-juegos-icono{font-size:28px; flex-shrink:0;}
 .categoria-juegos-info{flex:1; min-width:0;}
 .categoria-juegos-info h2{font-size:17px; font-weight:700; margin-bottom:2px;}
@@ -145,17 +157,23 @@ body{
 .home-logo-banner img{height:88px; width:auto;}
 
 .btn-primary{
-  background:var(--orange); color:#fff; border:none;
-  padding:16px; border-radius:16px; font-size:15px; font-weight:600;
+  background:linear-gradient(135deg, var(--orange-soft), var(--orange)); color:#fff; border:none;
+  padding:16px; border-radius:999px; font-size:15px; font-weight:600;
   font-family:'Poppins',sans-serif; cursor:pointer; width:100%;
   margin-top:auto;
+  box-shadow:0 6px 16px rgba(232,114,15,.32);
+  transition:transform .12s ease, box-shadow .12s ease;
 }
-.btn-primary:disabled{background:#D9DEE6; color:#9AA3B0; cursor:not-allowed;}
+.btn-primary:not(:disabled):active{transform:scale(.97); box-shadow:0 3px 8px rgba(232,114,15,.28);}
+.btn-primary:disabled{background:#E3E7ED; color:#AEB6C2; box-shadow:none; cursor:not-allowed;}
 .btn-ghost{
-  background:none; border:1.5px solid var(--navy); color:var(--navy);
-  padding:12px; border-radius:14px; font-size:13px; font-weight:600;
+  background:var(--navy-soft); border:none; color:var(--navy);
+  padding:12px; border-radius:999px; font-size:13px; font-weight:600;
   font-family:'Poppins',sans-serif; cursor:pointer; width:100%; margin-top:10px;
+  box-shadow:0 3px 10px rgba(15,42,77,.12);
+  transition:transform .12s ease;
 }
+.btn-ghost:active{transform:scale(.97);}
 
 /* Onboarding: en vez de un botón de texto, se toca el logo -- así el
    arranque de cada viaje suma una repetición más de marca. */
@@ -182,12 +200,15 @@ body{
   background:#fff; border-radius:18px; padding:16px; margin-bottom:12px;
   display:flex; gap:14px; align-items:center; cursor:pointer;
   border:1px solid #ECE9E1;
+  box-shadow:0 3px 10px rgba(15,42,77,.06);
+  transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
 }
-.card:hover{border-color:var(--orange);}
+.card:hover{border-color:var(--orange); box-shadow:0 4px 14px rgba(232,114,15,.14);}
+.card:active{transform:scale(.98);}
 .card .icon{
   width:44px; height:44px; border-radius:12px; flex-shrink:0;
   display:flex; align-items:center; justify-content:center;
-  background:var(--orange-light); color:var(--orange);
+  background:linear-gradient(135deg, var(--orange-light), #FBDCB8); color:var(--orange);
 }
 .card .icon svg{width:22px; height:22px;}
 .card .txt h3{font-size:14px; font-weight:600; color:var(--navy); margin-bottom:2px;}
