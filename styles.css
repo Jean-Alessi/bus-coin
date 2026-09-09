@@ -425,8 +425,8 @@ body{
   background:none; border:none; font-family:'Poppins',sans-serif;
 }
 .tab.active{color:var(--orange); font-weight:600;}
-.tab .dot{width:20px; height:20px; display:flex; align-items:center; justify-content:center;}
-.tab .dot svg{width:18px; height:18px;}
+.tab .dot{width:28px; height:28px; display:flex; align-items:center; justify-content:center;}
+.tab .dot svg{width:26px; height:26px;}
 
 .toast{
   position:absolute; top:56px; left:20px; right:20px;

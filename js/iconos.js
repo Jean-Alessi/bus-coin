@@ -27,7 +27,9 @@ const ICONOS = {
   rayo: '<path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z"/>',
   pincel: '<path d="M4 20l4-4"/><path d="M8 16 18 6a2.8 2.8 0 0 0-4-4L4 12l4 4Z"/>',
   naipe: '<rect x="4" y="3" width="16" height="18" rx="2"/><circle cx="12" cy="9.5" r="2.3"/><path d="M12 13v5"/>',
-  trebol: '<circle cx="9" cy="8" r="3.2"/><circle cx="15" cy="8" r="3.2"/><circle cx="12" cy="13" r="3.2"/><path d="M12 15v6"/>'
+  trebol: '<circle cx="9" cy="8" r="3.2"/><circle cx="15" cy="8" r="3.2"/><circle cx="12" cy="13" r="3.2"/><path d="M12 15v6"/>',
+  control: '<rect x="2" y="7.5" width="20" height="10" rx="5"/><path d="M7 10.5v4M5 12.5h4"/><circle cx="15.3" cy="11" r="1"/><circle cx="17.3" cy="13" r="1"/>',
+  regalo: '<rect x="3" y="8.5" width="18" height="12" rx="1.2"/><path d="M3 8.5h18v3.8H3z"/><path d="M12 8.5v12"/><path d="M12 8.5c-1.8-4-6.8-3.4-6.8-.7 0 1.6 2.6 1.4 6.8.7Z"/><path d="M12 8.5c1.8-4 6.8-3.4 6.8-.7 0 1.6-2.6 1.4-6.8.7Z"/>'
 };
 
 function icono(nombre, size){
