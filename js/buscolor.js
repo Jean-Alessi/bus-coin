@@ -384,8 +384,9 @@ function renderBuscolorMesa(){
     return;
   }
 
+  const mazoSeVePuedeUsar = puedeLevantar && mazoLen;
   const mazoHTML = `<div style="text-align:center;">
-    <button class="escoba-carta escoba-carta-dorso" ${puedeLevantar && mazoLen ? `onclick="buscolorLevantar()"` : 'disabled'}></button>
+    <button class="escoba-carta escoba-carta-dorso" style="${mazoSeVePuedeUsar ? '' : 'opacity:.4;filter:grayscale(.6);cursor:not-allowed;'}" ${mazoSeVePuedeUsar ? `onclick="buscolorLevantar()"` : 'disabled'}></button>
     <div style="font-size:10px;color:#EAF3EC;">Mazo (${mazoLen})</div>
   </div>`;
   const descarteHTML = descarteTope ? `<div style="text-align:center;">
@@ -395,9 +396,11 @@ function renderBuscolorMesa(){
 
   const colorActualHTML = `<div class="buscolor-color-actual"><span class="buscolor-color-punto" style="background:${BUSCOLOR_COLOR_HEX[mesa.colorActual]};"></span>Color actual: ${BUSCOLOR_COLOR_NOMBRE[mesa.colorActual]}</div>`;
 
+  const hayJugada = miMano.some(c => buscolorPuedeJugarCarta(c, mesa));
+
   let accionesHTML = '';
   if(soyTurno && mesa.robado){
-    accionesHTML = `<button class="btn-ghost" onclick="buscolorPasarTurno()">Pasar turno</button>`;
+    accionesHTML = `<button class="btn-primary" onclick="buscolorPasarTurno()">🚫 Pasar turno, no tengo con qué jugar</button>`;
   }
 
   const otros = mesa.jugadores.filter(a => a !== String(miAsiento));
@@ -406,13 +409,30 @@ function renderBuscolorMesa(){
     return `<div class="section-label">Cartas de ${mesa.nombres[a]} (${cant})</div>${chinchonAbanicoHTML(cant)}`;
   }).join('');
 
-  const manoHTML = miMano.map((c, i) => buscolorCartaHTML(c, false, soyTurno ? `buscolorTocarCarta(${i})` : null)).join('');
+  // Las cartas que no combinan se muestran apagadas y sin acción: así queda
+  // claro de un vistazo cuáles sirven, en vez de tocar y que no pase nada.
+  const manoHTML = miMano.map((c, i) => {
+    const jugable = soyTurno && buscolorPuedeJugarCarta(c, mesa);
+    return buscolorCartaHTML(c, false, jugable ? `buscolorTocarCarta(${i})` : null);
+  }).join('');
+
+  let mensajeTurno;
+  if(!soyTurno) mensajeTurno = `Turno de ${mesa.nombres[mesa.turno]}`;
+  else if(hayJugada) mensajeTurno = 'Tu turno';
+  else if(!mesa.robado) mensajeTurno = 'Tu turno — sin jugada';
+  else mensajeTurno = 'Tu turno — seguís sin jugada';
+
+  let mensajeAyuda;
+  if(!soyTurno) mensajeAyuda = 'Tocá una carta tuya que combine, o tocá el mazo para levantar.';
+  else if(hayJugada) mensajeAyuda = 'Tocá una carta tuya que combine, o tocá el mazo para levantar.';
+  else if(!mesa.robado) mensajeAyuda = 'Ninguna de tus cartas combina. Tocá el mazo para levantar una.';
+  else mensajeAyuda = 'Levantaste y seguís sin ninguna que combine. Tocá "Pasar turno" para seguir.';
 
   cont.innerHTML = `
     ${marcadorHTML}
     <div class="hero" style="margin-top:8px;">
-      <h2>${soyTurno ? 'Tu turno' : `Turno de ${mesa.nombres[mesa.turno]}`}</h2>
-      <p>Tocá una carta tuya que combine, o tocá el mazo para levantar.</p>
+      <h2>${mensajeTurno}</h2>
+      <p>${mensajeAyuda}</p>
     </div>
     ${otrosAbanicoHTML}
     <div class="section-label">Mesa</div>
