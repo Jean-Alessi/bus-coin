@@ -708,6 +708,13 @@ body{
 }
 .tapete-mesa p{ color:#EAF3EC; text-align:center; margin:6px 0; }
 
+/* BusColor tiene su propio tapete: el verde de fieltro se confundía con la
+   carta verde. Un gris grafito no compite con ninguno de los 4 colores. */
+.tapete-mesa-buscolor{
+  background:linear-gradient(155deg, #384354, #1B222E);
+  border-color:#0F2A4D;
+}
+
 /* ---- BusColor: cartas a todo color, lo más parecidas posible a las de un
    mazo de cartas de colores real, para que no se confundan al jugarlas. El
    lomo reutiliza el mismo dorso con el logo B que el resto de los juegos. ---- */

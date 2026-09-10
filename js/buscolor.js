@@ -436,7 +436,7 @@ function renderBuscolorMesa(){
     </div>
     ${otrosAbanicoHTML}
     <div class="section-label">Mesa</div>
-    <div class="tapete-mesa">
+    <div class="tapete-mesa tapete-mesa-buscolor">
       <div class="escoba-fila">${mazoHTML}${descarteHTML}</div>
       <p>${colorActualHTML}</p>
     </div>
