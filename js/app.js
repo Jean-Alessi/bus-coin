@@ -70,7 +70,7 @@ function renderPinCodigoNuevo(){
     <div class="bingo-pin-box">
       <input type="text" id="codigo-personalizado-input" class="bingo-input-numero" style="text-transform:uppercase;" placeholder="Código a elección (opcional)">
       <input type="number" id="capacidad-viaje-input" class="bingo-input-numero" min="1" placeholder="Cantidad de pasajeros (opcional)">
-      <textarea id="lista-pasajeros-crear-input" rows="4" style="width:100%;font-family:monospace;font-size:12.5px;border:1px solid var(--line-color,#ccc);border-radius:10px;padding:10px;margin-bottom:10px;" placeholder="Opcional: pegá la lista de pasajeros desde Excel (Apellido${'\\t'}Nombre por fila) para que cada uno elija su nombre en vez de tipearlo"></textarea>
+      <textarea id="lista-pasajeros-crear-input" rows="4" style="width:100%;font-family:monospace;font-size:12.5px;border:1px solid var(--line-color,#ccc);border-radius:10px;padding:10px;margin-bottom:10px;" placeholder="Opcional: seleccioná en Excel las columnas de Apellido y Nombre, copialas (Ctrl+C) y pegalas acá (Ctrl+V) — así cada uno elige su nombre en vez de tipearlo"></textarea>
       <input type="password" id="pin-codigo-nuevo-input" class="bingo-input-numero" inputmode="numeric" maxlength="4" placeholder="PIN del organizador">
       <button class="btn-primary" onclick="confirmarGenerarCodigo()">Crear código de viaje</button>
       <p id="pin-codigo-nuevo-error" class="bingo-pin-error"></p>
@@ -216,7 +216,7 @@ function renderAdminViajes(){
       </div>
       ${listaAbierta ? `
       <div style="margin:-6px 0 10px;">
-        <textarea id="admin-lista-input-${c}" rows="4" style="width:100%;font-family:monospace;font-size:12.5px;border:1px solid var(--line-color,#ccc);border-radius:10px;padding:10px;margin-bottom:6px;" placeholder="Pegá la lista desde Excel (Apellido${'\\t'}Nombre por fila)">${(datos[c].listaPasajeros || []).map(p => `${p.apellido}\t${p.nombre}`).join('\n')}</textarea>
+        <textarea id="admin-lista-input-${c}" rows="4" style="width:100%;font-family:monospace;font-size:12.5px;border:1px solid var(--line-color,#ccc);border-radius:10px;padding:10px;margin-bottom:6px;" placeholder="Seleccioná en Excel las columnas de Apellido y Nombre, copialas (Ctrl+C) y pegalas acá (Ctrl+V)">${(datos[c].listaPasajeros || []).map(p => `${p.apellido}\t${p.nombre}`).join('\n')}</textarea>
         <button class="btn-primary" style="margin-bottom:4px;" onclick="adminGuardarLista('${c}')">Guardar lista</button>
       </div>` : ''}`;
     }).join('');
