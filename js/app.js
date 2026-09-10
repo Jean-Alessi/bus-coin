@@ -369,12 +369,18 @@ function renderHome(){
     ${raspaditaHTML()}`;
 }
 
-// Con 10 juegos la lista se hacía larga para escanear de un vistazo, así
-// que quedan agrupados atrás de dos botones grandes que se despliegan al
+// Con tantos juegos la lista se hacía larga para escanear de un vistazo, así
+// que quedan agrupados atrás de botones grandes que se despliegan al
 // tocarlos (cada uno se abre y cierra por separado). Se muestran igual en
 // Inicio y en Juegos, así en Inicio no se repite toda la lista suelta —
 // por eso las funciones llevan un "vista" para no chocar los mismos ids.
-let juegosAbiertos = { solo: false, grupo: false };
+// Dentro de "jugar en grupo" separamos los de cartas del resto, para no
+// mezclar en una sola tira Truco con Bingo o Dibujar y Adivinar.
+let juegosAbiertos = { solo: false, grupoCartas: false, grupoOtros: false };
+
+const TARJETAS_GRUPO_CARTAS_VISTAS = new Set(['escoba', 'chinchon', 'truco', 'buscolor']);
+const TARJETAS_GRUPO_CARTAS = TARJETAS_GRUPO.filter(t => TARJETAS_GRUPO_CARTAS_VISTAS.has(t.view));
+const TARJETAS_GRUPO_OTROS = TARJETAS_GRUPO.filter(t => !TARJETAS_GRUPO_CARTAS_VISTAS.has(t.view));
 
 function toggleCategoriaJuegos(categoria){
   juegosAbiertos[categoria] = !juegosAbiertos[categoria];
@@ -398,12 +404,14 @@ function categoriaJuegosHTML(vista, categoria, clase, icono, titulo, sub){
 
 function categoriasJuegosHTML(vista){
   return categoriaJuegosHTML(vista, 'solo', 'categoria-juegos-solo', '🧠', 'Desafiá tu mente', `${TARJETAS_SOLO.length} juegos para vos solo`) +
-    categoriaJuegosHTML(vista, 'grupo', 'categoria-juegos-grupo', '🤝', 'Jugar en grupo, conecta.', `${TARJETAS_GRUPO.length} juegos para tu grupo`);
+    categoriaJuegosHTML(vista, 'grupoCartas', 'categoria-juegos-cartas', '🃏', 'Juegos de cartas', `${TARJETAS_GRUPO_CARTAS.length} juegos de cartas en grupo`) +
+    categoriaJuegosHTML(vista, 'grupoOtros', 'categoria-juegos-grupo', '🤝', 'Jugar en grupo, conecta.', `${TARJETAS_GRUPO_OTROS.length} juegos para tu grupo`);
 }
 
 function renderCategoriasEnListas(vista){
   if(juegosAbiertos.solo) renderTarjetas(TARJETAS_SOLO, `lista-${vista}-solo`);
-  if(juegosAbiertos.grupo) renderTarjetas(TARJETAS_GRUPO, `lista-${vista}-grupo`);
+  if(juegosAbiertos.grupoCartas) renderTarjetas(TARJETAS_GRUPO_CARTAS, `lista-${vista}-grupoCartas`);
+  if(juegosAbiertos.grupoOtros) renderTarjetas(TARJETAS_GRUPO_OTROS, `lista-${vista}-grupoOtros`);
 }
 
 function renderJuegos(){

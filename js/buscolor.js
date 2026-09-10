@@ -5,10 +5,15 @@
 // igual que en Escoba/Chinchón/Truco. Usa el mismo sistema de "mesas" que
 // esos juegos: varias mesas pueden convivir dentro del mismo código de viaje.
 //
-// Simplificaciones a propósito, para no complicar de más: no hay que "decir"
-// la última carta (la app avisa sola y así nadie puede hacer trampa ni
-// discutir), y los +2/+4 no se acumulan entre sí (el que le toca, roba y
-// pierde el turno, sin poder pasarle la carga al siguiente).
+// Cuando a alguien le queda 1 sola carta tiene que avisar tocando el botón
+// de "Última carta" antes de que un rival lo agarre: pasados 3 segundos sin
+// avisar, cualquier otro jugador puede tocar "Se olvidó" y le hace levantar 2
+// de penitencia. Igual que en el mazo real, agrega tensión sin depender de
+// que alguien "diga" nada en voz alta (todo queda registrado en la mesa).
+//
+// Simplificación a propósito, para no complicar de más: los +2/+4 no se
+// acumulan entre sí (el que le toca, roba y pierde el turno, sin poder
+// pasarle la carga al siguiente).
 
 const BUSCOLOR_COLORES = ['rojo', 'amarillo', 'verde', 'azul'];
 const BUSCOLOR_COLOR_HEX = { rojo: '#C22F2F', amarillo: '#E3A916', verde: '#2A8A4A', azul: '#2258A8' };
@@ -154,6 +159,20 @@ function buscolorRobarUnaCarta(mazo, descarte){
   return { carta: null, mazo: [], descarte };
 }
 
+// Guarda o limpia, dentro del mismo objeto de updates que ya se va a mandar
+// a Firebase, el aviso de "última carta" de un asiento puntual. Va por
+// asiento (no un solo campo para toda la mesa) porque en una mesa de 3 a 6
+// puede haber más de un jugador con 1 sola carta al mismo tiempo.
+function buscolorActualizarUltimaCarta(mesa, asiento, nuevaLongitud, updates){
+  asiento = String(asiento);
+  const yaFlagueado = mesa.ultimaCarta && mesa.ultimaCarta[asiento];
+  if(nuevaLongitud === 1){
+    updates[`ultimaCarta/${asiento}`] = { avisada: false, momento: Date.now() };
+  } else if(yaFlagueado){
+    updates[`ultimaCarta/${asiento}`] = null;
+  }
+}
+
 function buscolorCalcularSiguienteTurno(mesa, jugadorQueJugo, carta){
   let sentido = mesa.sentido || 1;
   let saltos = 1;
@@ -180,9 +199,11 @@ function buscolorLevantar(){
   const r = buscolorRobarUnaCarta((mesa.mazo || []).slice(), (mesa.descarte || []).slice());
   if(!r.carta) return;
   const mano = (mesa.mano[String(miAsiento)] || []).concat([r.carta]);
-  buscolorRefMesas().child(buscolorMesaIdActual).update({
+  const updates = {
     mazo: r.mazo, descarte: r.descarte, [`mano/${miAsiento}`]: mano, robado: true,
-  });
+  };
+  buscolorActualizarUltimaCarta(mesa, miAsiento, mano.length, updates);
+  buscolorRefMesas().child(buscolorMesaIdActual).update(updates);
 }
 
 function buscolorPasarTurno(){
@@ -227,11 +248,13 @@ function buscolorJugarCarta(indice, colorElegido){
   buscolorEligiendoIndice = null;
 
   if(nuevaMano.length === 0){
-    buscolorRefMesas().child(buscolorMesaIdActual).update({
+    const updatesFin = {
       [`mano/${miAsiento}`]: nuevaMano, descarte,
       colorActual, tipoActual: carta.tipo, numeroActual: carta.tipo === 'numero' ? carta.numero : null,
       fase: 'terminado', ganador: String(miAsiento), robado: false,
-    });
+    };
+    buscolorActualizarUltimaCarta(mesa, miAsiento, 0, updatesFin);
+    buscolorRefMesas().child(buscolorMesaIdActual).update(updatesFin);
     return;
   }
 
@@ -241,6 +264,7 @@ function buscolorJugarCarta(indice, colorElegido){
     colorActual, tipoActual: carta.tipo, numeroActual: carta.tipo === 'numero' ? carta.numero : null,
     sentido, turno: siguienteTurno, robado: false,
   };
+  buscolorActualizarUltimaCarta(mesa, miAsiento, nuevaMano.length, updates);
 
   if(cartasPenalizado && jugadorPenalizado){
     let mazo = (mesa.mazo || []).slice();
@@ -254,9 +278,46 @@ function buscolorJugarCarta(indice, colorElegido){
     updates[`mano/${jugadorPenalizado}`] = manoPenalizado;
     updates.mazo = mazo;
     updates.descarte = descarteTrabajo;
+    buscolorActualizarUltimaCarta(mesa, jugadorPenalizado, manoPenalizado.length, updates);
   }
 
   buscolorRefMesas().child(buscolorMesaIdActual).update(updates);
+}
+
+// Avisar a tiempo: el propio jugador toca el botón apenas ve que le queda 1
+// sola carta, así queda a salvo de que lo agarren.
+function buscolorCantarUltimaCarta(){
+  const mesa = buscolorMesaActual();
+  if(!mesa) return;
+  const flag = mesa.ultimaCarta && mesa.ultimaCarta[String(miAsiento)];
+  if(!flag || flag.avisada) return;
+  buscolorRefMesas().child(buscolorMesaIdActual).update({ [`ultimaCarta/${miAsiento}/avisada`]: true });
+}
+
+// Agarrar a un rival que se olvidó de avisar: solo se puede pasados los 3
+// segundos, y le hace levantar 2 cartas de penitencia.
+function buscolorAtraparOlvido(asientoOlvidadizo){
+  const mesa = buscolorMesaActual();
+  if(!mesa) return;
+  asientoOlvidadizo = String(asientoOlvidadizo);
+  if(asientoOlvidadizo === String(miAsiento)) return;
+  const flag = mesa.ultimaCarta && mesa.ultimaCarta[asientoOlvidadizo];
+  if(!flag || flag.avisada) return;
+  if(Date.now() - (flag.momento || 0) < 3000) return;
+
+  let mazo = (mesa.mazo || []).slice();
+  let descarte = (mesa.descarte || []).slice();
+  const mano = (mesa.mano[asientoOlvidadizo] || []).slice();
+  for(let i = 0; i < 2; i++){
+    const r = buscolorRobarUnaCarta(mazo, descarte);
+    mazo = r.mazo; descarte = r.descarte;
+    if(r.carta) mano.push(r.carta);
+  }
+  buscolorRefMesas().child(buscolorMesaIdActual).update({
+    [`mano/${asientoOlvidadizo}`]: mano, mazo, descarte,
+    [`ultimaCarta/${asientoOlvidadizo}`]: null,
+    avisoOlvido: { asiento: asientoOlvidadizo, momento: Date.now() },
+  });
 }
 
 let buscolorPremiadoMesa = null;
@@ -274,24 +335,53 @@ function buscolorPremiarSiCorresponde(mesa){
   }
 }
 
-// Aviso transparente (nadie puede discutir "no dijiste BusColor"): apenas
-// alguien queda con 1 sola carta, la app le avisa a todos sola.
-let buscolorUltimaBaseline = {};
+// Avisos de "última carta": comparo el mapa ultimaCarta (y el marcador
+// avisoOlvido) contra lo que había en el render anterior, para mostrarle a
+// TODOS los jugadores el mismo aviso en el mismo momento, sin depender de
+// quién hizo el toque que originó el cambio.
+let buscolorEstadoBaseline = {};
 
 function buscolorRevisarUltimaCarta(mesa){
-  if(!mesa || mesa.fase !== 'jugando' || !mesa.jugadores) return;
+  if(!mesa || mesa.fase !== 'jugando') return;
   const clave = buscolorMesaIdActual;
-  if(!buscolorUltimaBaseline[clave]) buscolorUltimaBaseline[clave] = {};
-  const base = buscolorUltimaBaseline[clave];
-  mesa.jugadores.forEach(a => {
-    const cant = ((mesa.mano || {})[a] || []).length;
-    const antes = base[a];
-    if(antes !== undefined && antes > 1 && cant === 1){
-      const quien = String(a) === String(miAsiento) ? 'Te quedaste' : `${mesa.nombres[a]} se quedó`;
-      mostrarToast(`🔔 ${quien} con 1 carta — ¡BusColor!`);
+  const anterior = buscolorEstadoBaseline[clave] || { flags: {}, olvidoMomento: null };
+  const actualFlags = mesa.ultimaCarta || {};
+
+  Object.keys(actualFlags).forEach(asiento => {
+    const actual = actualFlags[asiento];
+    const previo = anterior.flags[asiento];
+    if(!previo){
+      const quien = String(asiento) === String(miAsiento) ? 'Te quedaste' : `${mesa.nombres[asiento]} se quedó`;
+      mostrarToast(`🔔 ${quien} con 1 carta — ¡que no se olvide de avisar!`);
+    } else if(actual.avisada && !previo.avisada){
+      const quien = String(asiento) === String(miAsiento) ? '¡Avisaste' : `${mesa.nombres[asiento]} avisó`;
+      mostrarToast(`📣 ${quien} "última carta" a tiempo!`);
     }
-    base[a] = cant;
   });
+
+  const olvidoMomento = (mesa.avisoOlvido && mesa.avisoOlvido.momento) || null;
+  if(olvidoMomento && olvidoMomento !== anterior.olvidoMomento){
+    const asientoOlvido = mesa.avisoOlvido.asiento;
+    const quien = String(asientoOlvido) === String(miAsiento) ? 'Te olvidaste' : `${mesa.nombres[asientoOlvido]} se olvidó`;
+    mostrarToast(`😅 ${quien} de avisar "última carta" — levantó 2 de penitencia`);
+  }
+
+  const flagsCopia = {};
+  Object.keys(actualFlags).forEach(a => { flagsCopia[a] = { avisada: !!actualFlags[a].avisada }; });
+  buscolorEstadoBaseline[clave] = { flags: flagsCopia, olvidoMomento };
+}
+
+// Mientras un rival todavía está dentro de la ventana de 3 segundos, no hay
+// ningún cambio en Firebase que dispare un re-render cuando se cumplan: hay
+// que programarlo del lado del cliente para que el botón "Se olvidó" aparezca solo.
+let buscolorTimerCatch = null;
+
+function buscolorProgramarRevisionCatch(ms){
+  if(buscolorTimerCatch) return;
+  buscolorTimerCatch = setTimeout(() => {
+    buscolorTimerCatch = null;
+    renderBuscolor();
+  }, Math.max(ms, 50));
 }
 
 function buscolorCartaHTML(carta, seleccionada, onclick){
@@ -351,9 +441,11 @@ function renderBuscolorMesa(){
     return;
   }
 
-  const marcadorHTML = `<div class="escoba-marcador">${mesa.jugadores.map(a =>
-    `<div>${String(a) === String(miAsiento) ? '🫲 Vos' : mesa.nombres[a]}: ${((mesa.mano || {})[a] || []).length} cartas</div>`
-  ).join('')}</div>`;
+  const marcadorHTML = `<div class="escoba-marcador">${mesa.jugadores.map(a => {
+    const flag = (mesa.ultimaCarta || {})[a];
+    const badge = flag && !flag.avisada ? ' 🔔' : '';
+    return `<div>${String(a) === String(miAsiento) ? '🫲 Vos' : mesa.nombres[a]}: ${((mesa.mano || {})[a] || []).length} cartas${badge}</div>`;
+  }).join('')}</div>`;
 
   if(mesa.fase === 'terminado'){
     cont.innerHTML = `
@@ -403,6 +495,23 @@ function renderBuscolorMesa(){
     accionesHTML = `<button class="btn-primary" onclick="buscolorPasarTurno()">🚫 Pasar turno, no tengo con qué jugar</button>`;
   }
 
+  // El aviso de "última carta" y la posibilidad de agarrar a un rival que se
+  // olvidó valen en cualquier momento, sea o no tu turno.
+  let ultimaCartaHTML = '';
+  const miFlag = (mesa.ultimaCarta || {})[String(miAsiento)];
+  if(miFlag && !miFlag.avisada){
+    ultimaCartaHTML += `<button class="btn-primary" style="background:#8E44AD;border-color:#8E44AD;margin-bottom:8px;" onclick="buscolorCantarUltimaCarta()">🔔 ¡Avisar "Última carta"!</button>`;
+  }
+  Object.keys(mesa.ultimaCarta || {}).filter(a => a !== String(miAsiento) && mesa.ultimaCarta[a] && !mesa.ultimaCarta[a].avisada).forEach(a => {
+    const flag = mesa.ultimaCarta[a];
+    const faltan = 3000 - (Date.now() - (flag.momento || 0));
+    if(faltan <= 0){
+      ultimaCartaHTML += `<button class="btn-ghost" style="margin-bottom:8px;" onclick="buscolorAtraparOlvido('${a}')">😅 ¡${mesa.nombres[a]} se olvidó de avisar! Agarralo (+2)</button>`;
+    } else {
+      buscolorProgramarRevisionCatch(faltan);
+    }
+  });
+
   const otros = mesa.jugadores.filter(a => a !== String(miAsiento));
   const otrosAbanicoHTML = otros.map(a => {
     const cant = ((mesa.mano || {})[a] || []).length;
@@ -434,6 +543,7 @@ function renderBuscolorMesa(){
       <h2>${mensajeTurno}</h2>
       <p>${mensajeAyuda}</p>
     </div>
+    ${ultimaCartaHTML}
     ${otrosAbanicoHTML}
     <div class="section-label">Mesa</div>
     <div class="tapete-mesa tapete-mesa-buscolor">

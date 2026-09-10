@@ -183,6 +183,7 @@ body{
 }
 .categoria-juegos-solo{background:linear-gradient(135deg, var(--navy-light), var(--navy)); box-shadow:0 8px 18px rgba(15,42,77,.28);}
 .categoria-juegos-grupo{background:linear-gradient(135deg, var(--orange-soft), var(--orange)); box-shadow:0 8px 18px rgba(232,114,15,.32);}
+.categoria-juegos-cartas{background:linear-gradient(135deg, #3B9B5A, #1E5C3A); box-shadow:0 8px 18px rgba(30,92,58,.32);}
 .categoria-juegos-icono{font-size:28px; flex-shrink:0;}
 .categoria-juegos-info{flex:1; min-width:0;}
 .categoria-juegos-info h2{font-size:17px; font-weight:700; margin-bottom:2px;}
