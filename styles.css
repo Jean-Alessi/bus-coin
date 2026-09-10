@@ -137,6 +137,24 @@ body{
 }
 .sudoku-tecla:active{transform:scale(.92);}
 .sudoku-tecla-borrar{background:#FBE4E1; color:#D9534F;}
+
+/* ---- Patrones ---- */
+.patrones-secuencia{display:flex; gap:8px; justify-content:center; align-items:center; margin:14px 0 20px; flex-wrap:wrap;}
+.patron-celda{
+  width:56px; height:56px; border-radius:12px; background:#fff; border:1.5px solid #ECE9E1;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  box-shadow:0 2px 6px rgba(15,42,77,.06);
+}
+.patron-celda-incognita{background:var(--navy-soft); border-style:dashed; font-size:22px; font-weight:700; color:var(--navy);}
+.patrones-opciones{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
+.patron-opcion{
+  aspect-ratio:1; border-radius:16px; background:#fff; border:2px solid #ECE9E1; cursor:pointer; padding:8px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 3px 10px rgba(15,42,77,.08); transition:transform .12s ease;
+}
+.patron-opcion:not(:disabled):active{transform:scale(.95);}
+.patron-opcion-correcta{border-color:var(--orange); background:var(--orange-light);}
+.patron-opcion-incorrecta{border-color:#D9534F; background:#FBE4E1;}
 .btn-mute{
   background:#fff; border:none; border-radius:50%;
   width:34px; height:34px; font-size:15px; cursor:pointer; flex-shrink:0;
