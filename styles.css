@@ -181,17 +181,8 @@ body{
 }
 .sopa-palabra-encontrada{background:var(--orange-light); color:var(--orange); text-decoration:line-through;}
 
-/* ---- Escuchar: audiolibros y música cortos, alojados en la propia app ---- */
-.tarjeta-escuchar{
-  display:flex; align-items:center; gap:16px;
-  background:linear-gradient(135deg, var(--calma-soft), var(--calma));
-  border-radius:22px; padding:20px; margin-bottom:16px; cursor:pointer;
-  color:#fff; box-shadow:0 10px 22px rgba(44,84,144,.32);
-}
-.tarjeta-escuchar .icono{font-size:34px; flex-shrink:0;}
-.tarjeta-escuchar h2{font-size:19px; font-weight:700; margin-bottom:3px;}
-.tarjeta-escuchar p{font-size:13px; color:rgba(255,255,255,.85);}
-.tarjeta-escuchar .flecha{font-size:20px; opacity:.85;}
+/* ---- Poemas cortos: audio real alojado en la propia app ---- */
+.categoria-juegos-poemas{background:linear-gradient(135deg, var(--calma-soft), var(--calma)); box-shadow:0 8px 18px rgba(44,84,144,.32);}
 
 .hero-calma{
   background:linear-gradient(155deg, var(--calma-soft), var(--calma));
