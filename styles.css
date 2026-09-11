@@ -155,6 +155,27 @@ body{
 .patron-opcion:not(:disabled):active{transform:scale(.95);}
 .patron-opcion-correcta{border-color:var(--orange); background:var(--orange-light);}
 .patron-opcion-incorrecta{border-color:#D9534F; background:#FBE4E1;}
+
+/* ---- Sopa de letras ---- */
+.sopa-grilla{
+  display:flex; flex-direction:column; gap:2px; align-items:center;
+  background:#fff; border:2px solid var(--navy); border-radius:8px;
+  padding:6px; margin:10px 0 16px; overflow-x:auto;
+}
+.sopa-fila{display:flex; gap:2px;}
+.sopa-celda{
+  border:1px solid #ECE9E1; border-radius:4px; background:#fff;
+  font-family:'Poppins',sans-serif; font-weight:700; color:var(--navy);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+}
+.sopa-celda-seleccionada{background:var(--orange-light); border-color:var(--orange);}
+.sopa-celda-encontrada{background:var(--navy); color:#fff; border-color:var(--navy);}
+.sopa-lista-palabras{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px;}
+.sopa-palabra{
+  font-size:12px; font-weight:700; color:var(--navy); background:var(--navy-soft);
+  border-radius:8px; padding:5px 10px;
+}
+.sopa-palabra-encontrada{background:var(--orange-light); color:var(--orange); text-decoration:line-through;}
 .btn-mute{
   background:#fff; border:none; border-radius:50%;
   width:34px; height:34px; font-size:15px; cursor:pointer; flex-shrink:0;

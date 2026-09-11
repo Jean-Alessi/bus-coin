@@ -20,6 +20,7 @@ const TARJETAS_SOLO = [
   { icon: "cartas", title: "Memoria", sub: "Encontrá los pares, cada nivel más grande", view: "memoria" },
   { icon: "sudoku", title: "Sudoku", sub: "Sin cronómetro, elegí tu nivel", view: "sudoku" },
   { icon: "patrones", title: "Patrones", sub: "Descubrí la regla y completá la secuencia", view: "patrones" },
+  { icon: "sopaletras", title: "Sopa de letras", sub: "Destinos y cosas del viaje, escondidos en la grilla", view: "sopa" },
 ];
 
 const TARJETAS_GRUPO = [
@@ -421,7 +422,7 @@ function renderJuegos(){
 
 // Trivia, Acertijos y Bingo se entran desde el menú "Juegos" del tabbar, así
 // que esa pestaña queda marcada activa aunque ya estés adentro de uno de ellos.
-const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'memoria', 'sudoku', 'patrones', 'tutifruti', 'impostor', 'bingo', 'triviavivo', 'cuento', 'dibujar', 'escoba', 'chinchon', 'truco', 'buscolor'];
+const TABS_HIJOS_DE_JUEGOS = ['trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'memoria', 'sudoku', 'patrones', 'sopa', 'tutifruti', 'impostor', 'bingo', 'triviavivo', 'cuento', 'dibujar', 'escoba', 'chinchon', 'truco', 'buscolor'];
 
 function showView(name){
   analyticsAlCambiarVista(name);
@@ -441,6 +442,7 @@ function showView(name){
   if(name==='memoria'){ iniciarMemoria(); }
   if(name==='sudoku'){ iniciarSudoku(); }
   if(name==='patrones'){ iniciarPatrones(); }
+  if(name==='sopa'){ iniciarSopa(); }
   if(name==='tutifruti'){ iniciarTutifruti(); }
   if(name==='impostor'){ iniciarImpostor(); }
   if(name==='ranking'){ renderRanking(); }
