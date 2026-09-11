@@ -6,7 +6,7 @@
 <title>Busmac Viajes y Turismo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=63">
+<link rel="stylesheet" href="styles.css?v=64">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -64,6 +64,30 @@
       </div>
 
       <div id="home-content"></div>
+    </div>
+
+    <!-- ESCUCHAR -->
+    <div class="view" id="view-escuchar">
+      <div class="app-header">
+        <div>
+          <h1>Escuchar</h1>
+          <div class="sub">Elegí qué te gustaría</div>
+        </div>
+      </div>
+      <div id="escuchar-content"></div>
+      <p class="link-chico" onclick="showView('home')">‹ Volver a Inicio</p>
+    </div>
+
+    <!-- AUDIOLIBROS -->
+    <div class="view" id="view-audiolibros">
+      <div class="app-header">
+        <div>
+          <h1>Audiolibros clásicos</h1>
+          <div class="sub">Tocá uno para escucharlo</div>
+        </div>
+      </div>
+      <div id="audiolibros-content"></div>
+      <p class="link-chico" onclick="showView('escuchar')">‹ Volver</p>
     </div>
 
     <!-- JUEGOS (menú) -->
@@ -347,23 +371,24 @@
      este número cada vez que cambies styles.css o algún archivo de js/. -->
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
-<script src="js/firebase-config.js?v=63"></script>
-<script src="js/iconos.js?v=63"></script>
-<script src="js/sonido.js?v=63"></script>
-<script src="js/trivia.js?v=63"></script>
-<script src="js/acertijos.js?v=63"></script>
-<script src="js/pensamiento.js?v=63"></script>
-<script src="js/ahorcado.js?v=63"></script>
-<script src="js/cuatrouno.js?v=63"></script>
-<script src="js/valija.js?v=63"></script>
+<script src="js/firebase-config.js?v=64"></script>
+<script src="js/iconos.js?v=64"></script>
+<script src="js/sonido.js?v=64"></script>
+<script src="js/trivia.js?v=64"></script>
+<script src="js/acertijos.js?v=64"></script>
+<script src="js/pensamiento.js?v=64"></script>
+<script src="js/ahorcado.js?v=64"></script>
+<script src="js/cuatrouno.js?v=64"></script>
+<script src="js/valija.js?v=64"></script>
 <script src="js/memoria.js?v=3"></script>
 <script src="js/sudoku.js?v=1"></script>
 <script src="js/patrones.js?v=2"></script>
 <script src="js/sopa.js?v=2"></script>
-<script src="js/bingo.js?v=63"></script>
-<script src="js/tutifruti.js?v=63"></script>
+<script src="js/escuchar.js?v=1"></script>
+<script src="js/bingo.js?v=64"></script>
+<script src="js/tutifruti.js?v=64"></script>
 <script src="js/impostor.js?v=8"></script>
-<script src="js/tienda.js?v=63"></script>
+<script src="js/tienda.js?v=64"></script>
 <script src="js/raspadita.js?v=1"></script>
 <script src="js/pwa.js?v=2"></script>
 <script src="js/triviaVivo.js?v=1"></script>
@@ -375,6 +400,6 @@
 <script src="js/buscolor.js?v=4"></script>
 <script src="js/analytics.js?v=1"></script>
 <script src="js/listaPasajeros.js?v=1"></script>
-<script src="js/app.js?v=63"></script>
+<script src="js/app.js?v=64"></script>
 </body>
 </html>
