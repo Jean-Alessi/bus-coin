@@ -366,14 +366,6 @@ function renderHome(){
   // raspadita del día, sin repetir lo que ya está a un toque de distancia.
   document.getElementById('home-content').innerHTML = `
     <div class="home-logo-banner"><img src="Logo Busmac2.png" alt="Busmac"></div>
-    <div class="tarjeta-escuchar" onclick="showView('escuchar')">
-      <span class="icono">🎧</span>
-      <div style="flex:1;">
-        <h2>Escuchar algo tranquilo</h2>
-        <p>Audiolibros o música relajada, sin nada que jugar</p>
-      </div>
-      <span class="flecha">›</span>
-    </div>
     ${pwaInstalarHTML()}
     ${raspaditaHTML()}`;
 }
@@ -462,8 +454,6 @@ function showView(name){
   if(name==='chinchon'){ iniciarChinchon(); }
   if(name==='truco'){ iniciarTruco(); }
   if(name==='buscolor'){ iniciarBuscolor(); }
-  if(name==='escuchar'){ iniciarEscuchar(); }
-  if(name==='audiolibros'){ renderAudiolibros(); }
   if(name==='tienda'){ iniciarPremios(); }
   if(name==='onboard'){ listaPasajerosCargarParaOnboarding(); }
 }
