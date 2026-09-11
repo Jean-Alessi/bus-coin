@@ -167,6 +167,7 @@ body{
   border:1px solid #ECE9E1; border-radius:4px; background:#fff;
   font-family:'Poppins',sans-serif; font-weight:700; color:var(--navy);
   display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;
+  touch-action:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
 }
 .sopa-celda-seleccionada{background:var(--orange-light); border-color:var(--orange);}
 .sopa-celda-encontrada{background:var(--navy); color:#fff; border-color:var(--navy);}

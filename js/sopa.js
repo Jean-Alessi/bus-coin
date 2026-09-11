@@ -21,10 +21,10 @@ let sopaIndice = 0;
 let sopaPuzzle = null;
 let sopaEncontradas = new Set();
 let sopaCeldasEncontradas = {};
-let sopaInicio = null;
 
 function iniciarSopa(){
   sopaNivel = null;
+  sopaAdjuntarListeners();
   renderSopa();
 }
 
@@ -61,25 +61,48 @@ function sopaCeldasEncontradasSet(){
   return set;
 }
 
-function sopaTocarCelda(fila, col){
-  if(!sopaInicio){
-    sopaInicio = { fila, col };
-    renderSopa();
-    return;
-  }
-  const inicio = sopaInicio;
-  sopaInicio = null;
+// Selección por arrastre: apoyás el dedo en la primera letra, arrastrás
+// hasta la última y soltás — se ve resaltada toda la línea a medida que
+// pasás por las letras. También funciona con dos toques separados (apoyar
+// y soltar en la primera letra sin arrastrar, después tocar la última) para
+// quien prefiera ir letra por letra.
+let sopaInicioArrastre = null;
+let sopaFinArrastre = null;
+let sopaArrastreActivo = false;
 
-  if(inicio.fila === fila && inicio.col === col){ renderSopa(); return; }
+function sopaEsLineaRecta(inicio, fin){
+  const df = fin.fila - inicio.fila, dc = fin.col - inicio.col;
+  return df === 0 || dc === 0 || Math.abs(df) === Math.abs(dc);
+}
 
-  const df = Math.sign(fila - inicio.fila);
-  const dc = Math.sign(col - inicio.col);
-  const distFila = Math.abs(fila - inicio.fila);
-  const distCol = Math.abs(col - inicio.col);
-  const esLineaRecta = df === 0 || dc === 0 || distFila === distCol;
-  if(!esLineaRecta){ renderSopa(); return; }
+// Todas las celdas entre inicio y fin (si forman línea recta), para
+// resaltar la selección completa mientras se arrastra el dedo.
+function sopaCeldasSeleccionActual(){
+  if(!sopaInicioArrastre) return new Set();
+  const inicio = sopaInicioArrastre;
+  const fin = sopaFinArrastre || sopaInicioArrastre;
+  if(!sopaEsLineaRecta(inicio, fin)) return new Set([sopaClaveCelda(inicio.fila, inicio.col)]);
+  const df = Math.sign(fin.fila - inicio.fila), dc = Math.sign(fin.col - inicio.col);
+  const largo = Math.max(Math.abs(fin.fila - inicio.fila), Math.abs(fin.col - inicio.col)) + 1;
+  const set = new Set();
+  let f = inicio.fila, c = inicio.col;
+  for(let i = 0; i < largo; i++){ set.add(sopaClaveCelda(f, c)); f += df; c += dc; }
+  return set;
+}
 
-  const largo = Math.max(distFila, distCol) + 1;
+function sopaFinalizarSeleccion(){
+  const inicio = sopaInicioArrastre;
+  const fin = sopaFinArrastre;
+  sopaInicioArrastre = null;
+  sopaFinArrastre = null;
+  sopaArrastreActivo = false;
+
+  if(!inicio || !fin || (inicio.fila === fin.fila && inicio.col === fin.col)){ renderSopa(); return; }
+  if(!sopaEsLineaRecta(inicio, fin)){ renderSopa(); return; }
+
+  const df = Math.sign(fin.fila - inicio.fila);
+  const dc = Math.sign(fin.col - inicio.col);
+  const largo = Math.max(Math.abs(fin.fila - inicio.fila), Math.abs(fin.col - inicio.col)) + 1;
   let leida = '';
   const celdas = [];
   let f = inicio.fila, c = inicio.col;
@@ -109,15 +132,83 @@ function sopaTocarCelda(fila, col){
   renderSopa();
 }
 
+function sopaCeldaEnPunto(x, y){
+  const el = document.elementFromPoint(x, y);
+  const btn = el && el.closest ? el.closest('.sopa-celda') : null;
+  if(!btn) return null;
+  return { fila: Number(btn.dataset.fila), col: Number(btn.dataset.col) };
+}
+
+function sopaManejarInicio(celda){
+  if(!sopaPuzzle || !celda) return;
+  if(sopaInicioArrastre && !sopaArrastreActivo){
+    // Ya había una primera letra elegida con un toque simple (sin arrastre):
+    // este es el segundo toque, así que cierra la selección.
+    if(celda.fila === sopaInicioArrastre.fila && celda.col === sopaInicioArrastre.col){
+      sopaInicioArrastre = null; sopaFinArrastre = null; renderSopa();
+      return;
+    }
+    sopaFinArrastre = celda;
+    sopaFinalizarSeleccion();
+    return;
+  }
+  sopaInicioArrastre = celda;
+  sopaFinArrastre = celda;
+  sopaArrastreActivo = true;
+  renderSopa();
+}
+
+function sopaManejarMovimiento(celda){
+  if(!sopaArrastreActivo || !celda || !sopaInicioArrastre) return;
+  if(!sopaEsLineaRecta(sopaInicioArrastre, celda)) return;
+  if(sopaFinArrastre && sopaFinArrastre.fila === celda.fila && sopaFinArrastre.col === celda.col) return;
+  sopaFinArrastre = celda;
+  renderSopa();
+}
+
+function sopaManejarFin(){
+  if(!sopaArrastreActivo) return;
+  sopaArrastreActivo = false;
+  const inicio = sopaInicioArrastre, fin = sopaFinArrastre;
+  if(inicio && fin && (inicio.fila !== fin.fila || inicio.col !== fin.col)){
+    sopaFinalizarSeleccion(); // fue un arrastre real: ya cierra la selección
+  }
+  // si soltó en la misma celda (fue un toque simple), queda "armada" la
+  // primera letra esperando el segundo toque — no se resetea acá.
+}
+
+// Delegado sobre el contenedor (no cada celda), así sigue funcionando
+// después de que renderSopa() rearma todo el HTML de adentro.
+function sopaAdjuntarListeners(){
+  const cont = document.getElementById('sopa-content');
+  if(!cont || cont.dataset.sopaListo) return;
+  cont.dataset.sopaListo = '1';
+
+  cont.addEventListener('pointerdown', e => {
+    const celda = sopaCeldaEnPunto(e.clientX, e.clientY);
+    if(!celda) return;
+    e.preventDefault();
+    sopaManejarInicio(celda);
+  });
+  cont.addEventListener('pointermove', e => {
+    if(!sopaArrastreActivo) return;
+    sopaManejarMovimiento(sopaCeldaEnPunto(e.clientX, e.clientY));
+  });
+  cont.addEventListener('pointerup', sopaManejarFin);
+  cont.addEventListener('pointercancel', () => {
+    sopaArrastreActivo = false; sopaInicioArrastre = null; sopaFinArrastre = null; renderSopa();
+  });
+}
+
 function sopaCeldaHTML(fila, col, tamano){
   const letra = sopaPuzzle.grid[fila][col];
   const clave = sopaClaveCelda(fila, col);
   const encontrada = sopaCeldasEncontradasSet().has(clave);
-  const seleccionada = sopaInicio && sopaInicio.fila === fila && sopaInicio.col === col;
+  const seleccionada = sopaCeldasSeleccionActual().has(clave);
   const clases = ['sopa-celda'];
   if(encontrada) clases.push('sopa-celda-encontrada');
   if(seleccionada) clases.push('sopa-celda-seleccionada');
-  return `<button class="${clases.join(' ')}" style="width:${tamano}px;height:${tamano}px;font-size:${Math.round(tamano*0.42)}px;" onclick="sopaTocarCelda(${fila},${col})">${letra}</button>`;
+  return `<button class="${clases.join(' ')}" data-fila="${fila}" data-col="${col}" style="width:${tamano}px;height:${tamano}px;font-size:${Math.round(tamano*0.42)}px;">${letra}</button>`;
 }
 
 function renderSopaNiveles(){
@@ -125,7 +216,7 @@ function renderSopaNiveles(){
   cont.innerHTML = `
     <div class="hero" style="margin-top:8px;">
       <h2>🔎 Sopa de letras</h2>
-      <p>Destinos y cosas del micro y del viaje, escondidos en la grilla. Tocá la primera letra y después la última para marcar una palabra.</p>
+      <p>Destinos y cosas del micro y del viaje, escondidos en la grilla. Arrastrá el dedo desde la primera letra hasta la última para marcar una palabra (o tocá una y después la otra, sin arrastrar).</p>
     </div>
     <div class="section-label">Elegí un nivel</div>
     ${Object.keys(SOPA_NOMBRE_NIVEL).map(n => `<button class="btn-primary" style="margin-bottom:10px;" onclick="sopaElegirNivel('${n}')">${SOPA_NOMBRE_NIVEL[n]}</button>`).join('')}`;
@@ -133,6 +224,7 @@ function renderSopaNiveles(){
 
 function renderSopaJuego(){
   const cont = document.getElementById('sopa-content');
+  sopaAdjuntarListeners();
   const tamano = sopaPuzzle.size <= 8 ? 36 : 27;
   const filasHTML = sopaPuzzle.grid.map((_, fila) =>
     `<div class="sopa-fila">${sopaPuzzle.grid[fila].split('').map((_, col) => sopaCeldaHTML(fila, col, tamano)).join('')}</div>`
