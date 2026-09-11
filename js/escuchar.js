@@ -37,6 +37,14 @@ const ESCUCHAR_AUDIOLIBROS = [
       { titulo: 'La tortuga gigante', autor: 'Horacio Quiroga · 11:27', url: 'audio/tortuga-gigante.mp3' },
     ],
   },
+  {
+    categoria: '😂 Comedia y sátira',
+    items: [
+      { titulo: 'Lazarillo de Tormes (tratados finales)', autor: 'Anónimo, 1554 · 7:23', url: 'audio/lazarillo-final.mp3' },
+      { titulo: 'Oficiosidad no agradecida', autor: 'Ricardo Palma · 3:59', url: 'audio/oficiosidad-no-agradecida.mp3' },
+      { titulo: 'Por beber una copa de oro', autor: 'Ricardo Palma · 3:21', url: 'audio/copa-de-oro.mp3' },
+    ],
+  },
 ];
 
 const ESCUCHAR_TODO = ESCUCHAR_MUSICA.concat(ESCUCHAR_AUDIOLIBROS.flatMap(sec => sec.items));
