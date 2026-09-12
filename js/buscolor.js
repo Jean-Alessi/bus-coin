@@ -384,7 +384,10 @@ function buscolorProgramarRevisionCatch(ms){
   }, Math.max(ms, 50));
 }
 
-function buscolorCartaHTML(carta, seleccionada, onclick){
+// "soloVista" es para cartas que se muestran pero nunca se tocan (el tope
+// del descarte): tienen que verse a todo color igual, no "apagadas" como
+// una carta de la mano que no combina.
+function buscolorCartaHTML(carta, seleccionada, onclick, soloVista){
   const claseColor = carta.color ? `buscolor-carta-${carta.color}` : 'buscolor-carta-negra';
   let contenido;
   if(carta.tipo === 'numero') contenido = `<span class="buscolor-carta-simbolo">${carta.numero}</span>`;
@@ -393,7 +396,10 @@ function buscolorCartaHTML(carta, seleccionada, onclick){
   else if(carta.tipo === '+2') contenido = `<span class="buscolor-carta-simbolo">+2</span>`;
   else if(carta.tipo === 'comodin') contenido = `<span class="buscolor-carta-comodin-icono"></span>`;
   else contenido = `<span class="buscolor-carta-comodin-icono"></span><span class="buscolor-carta-mas4">+4</span>`;
-  return `<button class="buscolor-carta ${claseColor} ${seleccionada ? 'buscolor-carta-seleccionada' : ''}" ${onclick ? `onclick="${onclick}"` : 'disabled'}>${contenido}</button>`;
+  const clases = `buscolor-carta ${claseColor} ${seleccionada ? 'buscolor-carta-seleccionada' : ''} ${soloVista ? 'buscolor-carta-vista' : ''}`;
+  const atributos = onclick ? `onclick="${onclick}"` : (soloVista ? '' : 'disabled');
+  const etiqueta = soloVista ? 'div' : 'button';
+  return `<${etiqueta} class="${clases}" ${atributos}>${contenido}</${etiqueta}>`;
 }
 
 function renderBuscolorLobby(){
@@ -482,7 +488,7 @@ function renderBuscolorMesa(){
     <div style="font-size:10px;color:#EAF3EC;">Mazo (${mazoLen})</div>
   </div>`;
   const descarteHTML = descarteTope ? `<div style="text-align:center;">
-    ${buscolorCartaHTML(descarteTope, false, null)}
+    ${buscolorCartaHTML(descarteTope, false, null, true)}
     <div style="font-size:10px;color:#EAF3EC;">Descarte</div>
   </div>` : '<p style="font-size:12px;">Sin descarte todavía</p>';
 
