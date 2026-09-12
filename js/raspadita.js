@@ -1,8 +1,8 @@
 // Raspadita del día: una por pasajero por día (se guarda en este celular,
 // no hace falta Firebase). 3 cuadraditos que se tocan para revelar — no es
 // un raspado de verdad con el dedo (eso es mucho más frágil entre celulares
-// distintos), pero se siente igual de bien. 3 logos de Busmac = 100
-// monedas; 3 iguales que no sean el logo = 10 monedas.
+// distintos), pero se siente igual de bien. 3 logos = 100 monedas;
+// 3 iguales que no sean el logo = 10 monedas.
 
 // Pesos para que el premio grande sea especial y poco frecuente, pero pase
 // "algo" con más regularidad que si todos los símbolos salieran parejo.
@@ -90,7 +90,7 @@ function raspaditaCasilleroHTML(i){
     return `<button class="raspadita-casillero" onclick="raspaditaTocar(${i})">🎫</button>`;
   }
   const simbolo = raspaditaResultado[i];
-  const contenido = simbolo.tipo === 'logo' ? `<img src="Logo Busmac2.png" alt="Busmac">` : simbolo.emoji;
+  const contenido = simbolo.tipo === 'logo' ? `<img src="logo-empresa.png" alt="Logo">` : simbolo.emoji;
   return `<button class="raspadita-casillero raspadita-revelada" disabled>${contenido}</button>`;
 }
 
@@ -100,7 +100,7 @@ function raspaditaHTML(){
     ? (raspaditaPremio > 0
         ? `¡Ganaste ${raspaditaPremio} monedas! Volvé mañana por otra raspadita.`
         : 'Nada esta vez. Volvé mañana por otra raspadita.')
-    : 'Tocá los 3 cuadraditos: 3 logos de Busmac son 100 monedas, 3 iguales son 10.';
+    : 'Tocá los 3 cuadraditos: 3 logos son 100 monedas, 3 iguales son 10.';
   return `
     <div class="card raspadita-card">
       <div class="raspadita-titulo">🎟️ Raspadita del día</div>

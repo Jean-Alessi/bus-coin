@@ -4,7 +4,7 @@
 // quedando; al último ya no le queda otra opción que el que sobró. Todo se
 // sincroniza en Firebase para que cada pasajero vea su turno en su celular.
 
-const PREMIOS_DEFAULT = ['Viaje gratis', '50% de descuento en tu próximo viaje', 'Remera Busmac', 'Caja de Bon o Bon'];
+const PREMIOS_DEFAULT = ['Viaje gratis', '50% de descuento en tu próximo viaje', 'Remera de regalo', 'Caja de Bon o Bon'];
 const PREMIOS_MEDALLAS = ['🥇', '🥈', '🥉', '🎗️'];
 
 // La lista arranca en blanco (no con PREMIOS_DEFAULT) para cada código de

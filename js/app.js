@@ -365,7 +365,7 @@ function renderHome(){
   // pestaña; Inicio se queda solo con el logo (más publicidad) y la
   // raspadita del día, sin repetir lo que ya está a un toque de distancia.
   document.getElementById('home-content').innerHTML = `
-    <div class="home-logo-banner"><img src="Logo Busmac2.png" alt="Busmac"></div>
+    <div class="home-logo-banner"><img src="logo-empresa.png" alt="Logo"></div>
     ${pwaInstalarHTML()}
     ${raspaditaHTML()}`;
 }

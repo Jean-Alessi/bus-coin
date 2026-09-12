@@ -1,7 +1,7 @@
 {
   "name": "Bus Coin",
   "short_name": "Bus Coin",
-  "description": "Juegos y desafíos para los viajes de Busmac",
+  "description": "Juegos y desafíos para tu viaje",
   "start_url": "index.html",
   "scope": ".",
   "display": "standalone",
