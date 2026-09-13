@@ -518,11 +518,25 @@ function renderBuscolorMesa(){
     }
   });
 
+  // Antes había un abanico grande de cartas por cada rival, uno debajo del
+  // otro: con 5-6 jugadores eso obligaba a scrollear un montón para llegar a
+  // la mesa. Ahora es una fila compacta de chips (nombre + cuánto le queda),
+  // que además resalta de un vistazo a quién le toca jugar.
   const otros = mesa.jugadores.filter(a => a !== String(miAsiento));
-  const otrosAbanicoHTML = otros.map(a => {
-    const cant = ((mesa.mano || {})[a] || []).length;
-    return `<div class="section-label">Cartas de ${mesa.nombres[a]} (${cant})</div>${chinchonAbanicoHTML(cant)}`;
-  }).join('');
+  const otrosAbanicoHTML = otros.length ? `
+    <div class="buscolor-rivales">
+      ${otros.map(a => {
+        const cant = ((mesa.mano || {})[a] || []).length;
+        const flag = (mesa.ultimaCarta || {})[a];
+        const badge = flag && !flag.avisada ? ' 🔔' : '';
+        const esSuTurno = String(mesa.turno) === a;
+        return `<div class="buscolor-rival-chip ${esSuTurno ? 'buscolor-rival-chip-turno' : ''}">
+          <span class="buscolor-rival-dorso">🂠</span>
+          <span class="buscolor-rival-nombre">${mesa.nombres[a]}</span>
+          <span class="buscolor-rival-cant">${cant}${badge}</span>
+        </div>`;
+      }).join('')}
+    </div>` : '';
 
   // Las cartas que no combinan se muestran apagadas y sin acción: así queda
   // claro de un vistazo cuáles sirven, en vez de tocar y que no pase nada.

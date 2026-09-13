@@ -103,6 +103,17 @@ function premiosCerrarViajeAutomaticamente(){
   db.ref('salas/' + codigoViaje).update({ cerrado: true, listoParaBorrar: true });
 }
 
+// Para cuando alguien no elige (ya bajó del micro, se le acabó la batería,
+// etc.) y el organizador no quiere quedarse esperando: cierra el viaje
+// igual, aunque falten elecciones. Requiere confirmar porque nadie más va a
+// poder entrar ni elegir premio después de esto.
+function premiosFinalizarIgual(){
+  if(!bingoEsOrganizador()) return;
+  if(!confirm('¿Finalizar el viaje igual, aunque todavía falten elegir premios?')) return;
+  premiosCerrarViajeAutomaticamente();
+  mostrarToast('Viaje finalizado');
+}
+
 function premiosFestejarUltimaEleccion(){
   const orden = premiosState.orden || [];
   const cantidad = premiosCantidadElegida();
@@ -210,5 +221,6 @@ function renderPremiosViaje(){
     ${cuartoPuesto}
     ${miTurnoHTML}
     ${premiosGridHTML(elegidosPorIndice)}
-    ${terminado ? '<p class="tienda-nota">🎊 Ya eligieron todos. ¡Felicitaciones a los ganadores!</p>' : ''}`;
+    ${terminado ? '<p class="tienda-nota">🎊 Ya eligieron todos. ¡Felicitaciones a los ganadores!</p>' : ''}
+    ${esOrganizador && !terminado ? '<p class="link-chico" onclick="premiosFinalizarIgual()">Finalizar el viaje igual, aunque falten elegir premios</p>' : ''}`;
 }

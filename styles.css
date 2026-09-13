@@ -774,3 +774,20 @@ body{
   width:48px; height:48px; border-radius:50%; border:3px solid #fff; cursor:pointer;
   box-shadow:0 2px 6px rgba(15,42,77,.3);
 }
+
+/* Fila compacta de rivales: reemplaza el abanico grande de cartas por
+   jugador (que con 5-6 en la mesa obligaba a scrollear un montón). */
+.buscolor-rivales{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+.buscolor-rival-chip{
+  display:flex; align-items:center; gap:6px;
+  background:#fff; border:1.5px solid #ECE9E1; border-radius:999px;
+  padding:6px 12px; font-size:12.5px; font-weight:600; color:var(--navy);
+  box-shadow:0 2px 6px rgba(15,42,77,.06);
+}
+.buscolor-rival-chip-turno{border-color:var(--orange); background:var(--orange-light);}
+.buscolor-rival-dorso{font-size:15px; line-height:0;}
+.buscolor-rival-cant{
+  background:var(--navy-soft); color:var(--navy); border-radius:999px;
+  padding:1px 7px; font-size:11.5px; font-weight:700;
+}
+.buscolor-rival-chip-turno .buscolor-rival-cant{background:var(--orange); color:#fff;}
