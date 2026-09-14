@@ -69,6 +69,14 @@ function comerciosVerCodigo(comercioId){
   renderComercios();
 }
 
+// Algunos links de flyer no son una imagen directa (un PDF, o la página de
+// vista previa de Drive), así que si falla como <img> lo mostramos en un
+// iframe: siempre se ve adentro de la app, nunca abriendo otra pestaña.
+function comerciosFlyerComoIframe(contenedorId, url){
+  const cont = document.getElementById(contenedorId);
+  if(cont) cont.innerHTML = `<iframe src="${url}" class="comercio-flyer-iframe" loading="lazy"></iframe>`;
+}
+
 function comerciosUrlCanje(comercioId){
   return `${location.origin}${location.pathname}?canjear=1&viaje=${encodeURIComponent(codigoViaje)}&asiento=${encodeURIComponent(miAsiento)}&comercio=${encodeURIComponent(comercioId)}`;
 }
@@ -90,22 +98,25 @@ function renderComercios(){
   if(comerciosVerCodigoDe){
     const c = comerciosCatalogoActual[comerciosVerCodigoDe];
     if(!c){ comerciosVerCodigoDe = null; renderComercios(); return; }
+    const flyerBoxId = `comercio-flyer-${comerciosVerCodigoDe}`;
+    const flyerUrlSeguro = (c.flyerUrl || '').replace(/"/g, '&quot;');
     const flyerHTML = c.flyerUrl ? `
       <div class="comercio-flyer-box">
-        ${/\.pdf($|\?)/i.test(c.flyerUrl)
-          ? `<a class="btn-ghost" href="${c.flyerUrl}" target="_blank" rel="noopener">📄 Ver flyer con los productos</a>`
-          : `<a href="${c.flyerUrl}" target="_blank" rel="noopener"><img src="${c.flyerUrl}" alt="Flyer de ${c.nombre}" class="comercio-flyer-img"></a>`}
+        <p class="section-label" style="margin-top:0;">Productos de ${c.nombre}</p>
+        <div id="${flyerBoxId}">
+          <img src="${flyerUrlSeguro}" alt="Flyer de ${c.nombre}" class="comercio-flyer-img" onerror="comerciosFlyerComoIframe('${flyerBoxId}', '${flyerUrlSeguro}')">
+        </div>
       </div>` : '';
     cont.innerHTML = `
       <div class="hero" style="margin-top:8px;">
         <h2>${c.nombre}</h2>
         <p>${c.descuento}</p>
       </div>
-      ${flyerHTML}
       <div class="comercio-qr-box">
         <div id="comercio-qr-canvas"></div>
         <p class="comercio-qr-nota">Mostrale esta pantalla al comercio: la escanean con su celular y te confirman el descuento ahí mismo.</p>
       </div>
+      ${flyerHTML}
       <p class="link-chico" onclick="comerciosVerCodigoDe=null; renderComercios();">‹ Volver a la lista</p>`;
     const qrCont = document.getElementById('comercio-qr-canvas');
     if(qrCont && window.QRCode){
@@ -326,8 +337,8 @@ function renderAdminComercios(){
       <label class="comercio-admin-checkbox"><input type="checkbox" id="ca-oficial-${c.id}" ${c.oficial ? 'checked' : ''}> Es la parada oficial de este destino</label>
       <input type="number" id="ca-montofijo-${c.id}" class="bingo-input-numero" style="width:100%;" placeholder="Monto fijo por ser la parada oficial ($)" value="${c.montoFijoOficial || ''}">
       <label class="comercio-admin-checkbox"><input type="checkbox" id="ca-activo-${c.id}" ${c.activo !== false ? 'checked' : ''}> Activo (visible para los pasajeros)</label>
-      <input type="text" id="ca-flyer-${c.id}" class="bingo-input-numero" style="width:100%;" placeholder="Link al flyer (imagen o PDF subido a Drive, Fotos, etc.)" value="${(c.flyerUrl || '').replace(/"/g, '&quot;')}">
-      ${c.flyerUrl ? `<p style="font-size:12px;color:var(--gray);margin:2px 0 8px;">Flyer actual: <a href="${c.flyerUrl}" target="_blank" rel="noopener">ver</a></p>` : ''}
+      <input type="text" id="ca-flyer-${c.id}" class="bingo-input-numero" style="width:100%;" placeholder="Link al flyer (imagen, o PDF con /preview si es de Drive)" value="${(c.flyerUrl || '').replace(/"/g, '&quot;')}">
+      <p style="font-size:11.5px;color:var(--gray);margin:2px 0 8px;">Si es un link de Google Drive, usá el que termina en <b>/preview</b> (no /view) para que se vea dentro de la app.${c.flyerUrl ? ` Flyer actual: <a href="${c.flyerUrl}" target="_blank" rel="noopener">ver</a>` : ''}</p>
       <div style="display:flex; gap:8px; margin-top:6px;">
         <button class="btn-ghost" style="margin-top:0;" onclick="comerciosAdminGuardar('${c.id}')">Guardar</button>
         <button class="btn-eliminar-pasajero" onclick="comerciosAdminEliminar('${c.id}')" title="Eliminar">✕</button>
@@ -347,7 +358,8 @@ function renderAdminComercios(){
       <input type="number" id="ca-nuevo-precio" class="bingo-input-numero" style="width:100%;" placeholder="Precio por canje ($)">
       <label class="comercio-admin-checkbox"><input type="checkbox" id="ca-nuevo-oficial"> Es la parada oficial de este destino</label>
       <input type="number" id="ca-nuevo-montofijo" class="bingo-input-numero" style="width:100%;" placeholder="Monto fijo por ser la parada oficial ($)">
-      <input type="text" id="ca-nuevo-flyer" class="bingo-input-numero" style="width:100%;" placeholder="Link al flyer (imagen o PDF subido a Drive, Fotos, etc.)">
+      <input type="text" id="ca-nuevo-flyer" class="bingo-input-numero" style="width:100%;" placeholder="Link al flyer (imagen, o PDF con /preview si es de Drive)">
+      <p style="font-size:11.5px;color:var(--gray);margin:2px 0 8px;">Si es un link de Google Drive, usá el que termina en <b>/preview</b> (no /view) para que se vea dentro de la app.</p>
       <button class="btn-primary" onclick="comerciosAdminAgregar()">Agregar comercio</button>
     </div>`;
 }
