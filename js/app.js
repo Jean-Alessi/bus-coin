@@ -373,7 +373,7 @@ function goHome(){
   localStorage.setItem('mi-mayor-de-12', miMayorDe12 ? '1' : '0');
   rankingUnirse();
   activarListenerCierreDeViaje();
-  iniciarComerciosEnHome();
+  iniciarComerciosDestino();
   showView('home');
   document.getElementById('tabbar').style.display = 'flex';
   actualizarMonedasEnPantalla();
@@ -399,7 +399,6 @@ function renderHome(){
   // raspadita del día, sin repetir lo que ya está a un toque de distancia.
   document.getElementById('home-content').innerHTML = `
     <div class="home-logo-banner"><img src="logo-empresa.png" alt="Logo"></div>
-    ${comerciosTarjetaHomeHTML()}
     ${pwaInstalarHTML()}
     ${raspaditaHTML()}`;
 }

@@ -30,44 +30,29 @@ function comerciosRefCatalogo(destino){
 
 const COMERCIOS_RUBROS_SUGERIDOS = ['Comida', 'Heladería', 'Tienda', 'Artesanías', 'Bebidas', 'Otro'];
 
-// ---- Tarjeta en Inicio: aparece sola si el viaje tiene destino cargado Y
-// ese destino tiene al menos un comercio activo. ----
+// ---- Escucha en segundo plano el destino del viaje y su catálogo de
+// comercios, para que la pestaña "Comercios" ya tenga todo listo apenas el
+// pasajero la abre (no depende de que la haya abierto antes). ----
 
 let comerciosDestinoViaje = null;
 let comerciosCatalogoActual = {};
-let comerciosHayParaMostrar = false;
 let comerciosListenerDestinoListo = false;
 
-function iniciarComerciosEnHome(){
+function iniciarComerciosDestino(){
   if(comerciosListenerDestinoListo || !codigoViaje) return;
   comerciosListenerDestinoListo = true;
   db.ref('salas/' + codigoViaje + '/destino').on('value', snap => {
     comerciosDestinoViaje = snap.val() || null;
     if(!comerciosDestinoViaje){
-      comerciosHayParaMostrar = false;
       comerciosCatalogoActual = {};
-      renderHome();
+      renderComercios();
       return;
     }
     comerciosRefCatalogo(comerciosDestinoViaje).on('value', snapCat => {
       comerciosCatalogoActual = snapCat.val() || {};
-      comerciosHayParaMostrar = Object.values(comerciosCatalogoActual).some(c => c && c.activo);
-      renderHome();
+      renderComercios();
     });
   });
-}
-
-function comerciosTarjetaHomeHTML(){
-  if(!comerciosHayParaMostrar) return '';
-  return `
-    <div class="tarjeta-comercios" onclick="showView('comercios')">
-      <span class="icono">🏪</span>
-      <div style="flex:1;">
-        <h2>Comercios adheridos</h2>
-        <p>Descuentos en ${comerciosDestinoViaje}</p>
-      </div>
-      <span class="flecha">›</span>
-    </div>`;
 }
 
 // ---- Vista del pasajero: lista de comercios + su código para canjear ----
@@ -105,11 +90,18 @@ function renderComercios(){
   if(comerciosVerCodigoDe){
     const c = comerciosCatalogoActual[comerciosVerCodigoDe];
     if(!c){ comerciosVerCodigoDe = null; renderComercios(); return; }
+    const flyerHTML = c.flyerUrl ? `
+      <div class="comercio-flyer-box">
+        ${/\.pdf($|\?)/i.test(c.flyerUrl)
+          ? `<a class="btn-ghost" href="${c.flyerUrl}" target="_blank" rel="noopener">📄 Ver flyer con los productos</a>`
+          : `<a href="${c.flyerUrl}" target="_blank" rel="noopener"><img src="${c.flyerUrl}" alt="Flyer de ${c.nombre}" class="comercio-flyer-img"></a>`}
+      </div>` : '';
     cont.innerHTML = `
       <div class="hero" style="margin-top:8px;">
         <h2>${c.nombre}</h2>
         <p>${c.descuento}</p>
       </div>
+      ${flyerHTML}
       <div class="comercio-qr-box">
         <div id="comercio-qr-canvas"></div>
         <p class="comercio-qr-nota">Mostrale esta pantalla al comercio: la escanean con su celular y te confirman el descuento ahí mismo.</p>
@@ -123,9 +115,30 @@ function renderComercios(){
     return;
   }
 
+  if(!comerciosDestinoViaje){
+    cont.innerHTML = `
+      <div class="hero" style="margin-top:8px;">
+        <h2>🏪 Comercios adheridos</h2>
+        <p>Aprovechá los descuentos en nuestros comercios adheridos.</p>
+      </div>
+      <p style="color:var(--gray);font-size:13px;">Este viaje todavía no tiene un destino cargado, así que por ahora no hay comercios para mostrar.</p>`;
+    return;
+  }
+
   const entradas = Object.keys(comerciosCatalogoActual)
     .map(id => ({ id, ...comerciosCatalogoActual[id] }))
     .filter(c => c.activo);
+
+  if(!entradas.length){
+    cont.innerHTML = `
+      <div class="hero" style="margin-top:8px;">
+        <h2>🏪 Comercios adheridos</h2>
+        <p>Aprovechá los descuentos en nuestros comercios adheridos.</p>
+      </div>
+      <p style="color:var(--gray);font-size:13px;">Todavía no hay comercios cargados para ${comerciosDestinoViaje}. ¡Volvé a mirar más adelante!</p>`;
+    return;
+  }
+
   const oficial = entradas.find(c => c.oficial);
   const resto = entradas.filter(c => !c.oficial);
 
@@ -147,7 +160,7 @@ function renderComercios(){
   cont.innerHTML = `
     <div class="hero" style="margin-top:8px;">
       <h2>🏪 Comercios en ${comerciosDestinoViaje}</h2>
-      <p>Tocá un comercio para ver tu código y mostrárselo cuando compres.</p>
+      <p>Aprovechá los descuentos en nuestros comercios adheridos. Tocá uno para ver tu código y mostrárselo cuando compres.</p>
     </div>
     ${oficialHTML}
     ${restoHTML}`;
@@ -313,6 +326,8 @@ function renderAdminComercios(){
       <label class="comercio-admin-checkbox"><input type="checkbox" id="ca-oficial-${c.id}" ${c.oficial ? 'checked' : ''}> Es la parada oficial de este destino</label>
       <input type="number" id="ca-montofijo-${c.id}" class="bingo-input-numero" style="width:100%;" placeholder="Monto fijo por ser la parada oficial ($)" value="${c.montoFijoOficial || ''}">
       <label class="comercio-admin-checkbox"><input type="checkbox" id="ca-activo-${c.id}" ${c.activo !== false ? 'checked' : ''}> Activo (visible para los pasajeros)</label>
+      <input type="text" id="ca-flyer-${c.id}" class="bingo-input-numero" style="width:100%;" placeholder="Link al flyer (imagen o PDF subido a Drive, Fotos, etc.)" value="${(c.flyerUrl || '').replace(/"/g, '&quot;')}">
+      ${c.flyerUrl ? `<p style="font-size:12px;color:var(--gray);margin:2px 0 8px;">Flyer actual: <a href="${c.flyerUrl}" target="_blank" rel="noopener">ver</a></p>` : ''}
       <div style="display:flex; gap:8px; margin-top:6px;">
         <button class="btn-ghost" style="margin-top:0;" onclick="comerciosAdminGuardar('${c.id}')">Guardar</button>
         <button class="btn-eliminar-pasajero" onclick="comerciosAdminEliminar('${c.id}')" title="Eliminar">✕</button>
@@ -332,6 +347,7 @@ function renderAdminComercios(){
       <input type="number" id="ca-nuevo-precio" class="bingo-input-numero" style="width:100%;" placeholder="Precio por canje ($)">
       <label class="comercio-admin-checkbox"><input type="checkbox" id="ca-nuevo-oficial"> Es la parada oficial de este destino</label>
       <input type="number" id="ca-nuevo-montofijo" class="bingo-input-numero" style="width:100%;" placeholder="Monto fijo por ser la parada oficial ($)">
+      <input type="text" id="ca-nuevo-flyer" class="bingo-input-numero" style="width:100%;" placeholder="Link al flyer (imagen o PDF subido a Drive, Fotos, etc.)">
       <button class="btn-primary" onclick="comerciosAdminAgregar()">Agregar comercio</button>
     </div>`;
 }
@@ -388,6 +404,7 @@ function comerciosAdminGuardar(id){
     oficial,
     montoFijoOficial: Number(leer('montofijo')) || 0,
     activo: marcado('activo'),
+    flyerUrl: leer('flyer'),
   };
   const guardar = () => comerciosRefCatalogo(comerciosAdminDestino).child(id).update(datos).then(() => {
     mostrarToast('Comercio guardado');
@@ -422,6 +439,7 @@ function comerciosAdminAgregar(){
     oficial,
     montoFijoOficial: Number(leer('montofijo')) || 0,
     activo: true,
+    flyerUrl: leer('flyer'),
   };
   const ref = comerciosRefCatalogo(comerciosAdminDestino).push();
   const guardar = () => ref.set(datos).then(() => {
