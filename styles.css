@@ -791,3 +791,48 @@ body{
   padding:1px 7px; font-size:11.5px; font-weight:700;
 }
 .buscolor-rival-chip-turno .buscolor-rival-cant{background:var(--orange); color:#fff;}
+
+/* ---- Comercios adheridos ---- */
+.tarjeta-comercios{
+  display:flex; align-items:center; gap:16px;
+  background:linear-gradient(135deg, #B07CC6, #7A4A94);
+  border-radius:22px; padding:20px; margin-bottom:16px; cursor:pointer;
+  color:#fff; box-shadow:0 10px 22px rgba(122,74,148,.32);
+}
+.tarjeta-comercios .icono{font-size:34px; flex-shrink:0;}
+.tarjeta-comercios h2{font-size:19px; font-weight:700; margin-bottom:3px;}
+.tarjeta-comercios p{font-size:13px; color:rgba(255,255,255,.85);}
+.tarjeta-comercios .flecha{font-size:20px; opacity:.85;}
+
+.comercio-fila{
+  display:flex; align-items:center; gap:14px; width:100%; text-align:left;
+  background:#fff; border:1.5px solid #ECE9E1; border-radius:18px;
+  padding:16px 18px; margin-bottom:12px; cursor:pointer; font-family:'Poppins',sans-serif;
+  box-shadow:0 3px 10px rgba(15,42,77,.06); transition:transform .12s ease;
+}
+.comercio-fila:active{transform:scale(.98);}
+.comercio-fila-txt h3{font-size:16px; font-weight:600; color:var(--navy); margin-bottom:2px;}
+.comercio-fila-txt p{font-size:12.5px; color:var(--gray);}
+.comercio-fila-flecha{font-size:20px; color:var(--gray); margin-left:auto;}
+
+.comercio-qr-box{
+  background:#fff; border:1.5px solid #ECE9E1; border-radius:18px;
+  padding:20px; text-align:center; margin-bottom:16px;
+}
+.comercio-qr-box #comercio-qr-canvas{display:flex; justify-content:center; margin-bottom:12px;}
+.comercio-qr-nota{font-size:12.5px; color:var(--gray); line-height:1.4;}
+
+.comercio-confirmar-box{
+  background:var(--navy-soft); border-radius:14px; padding:14px 16px; margin-bottom:16px;
+  font-size:13.5px; color:var(--navy); line-height:1.6;
+}
+
+.comercio-admin-card{
+  background:#fff; border:1.5px solid #ECE9E1; border-radius:14px;
+  padding:12px; margin-bottom:12px;
+}
+.comercio-admin-card input{margin-bottom:8px;}
+.comercio-admin-checkbox{
+  display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--navy);
+  margin:2px 0 8px; font-weight:600;
+}

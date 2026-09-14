@@ -73,11 +73,13 @@ function renderPinCodigoNuevo(){
     <div class="bingo-pin-box">
       <input type="text" id="codigo-personalizado-input" class="bingo-input-numero" style="text-transform:uppercase;" placeholder="Código a elección (opcional)">
       <input type="number" id="capacidad-viaje-input" class="bingo-input-numero" min="1" placeholder="Cantidad de pasajeros (opcional)">
+      <input type="text" id="destino-viaje-input" class="bingo-input-numero" style="width:100%;" placeholder="Destino (opcional, ej: Mar del Plata)">
       <textarea id="lista-pasajeros-crear-input" rows="4" style="width:100%;font-family:monospace;font-size:12.5px;border:1px solid var(--line-color,#ccc);border-radius:10px;padding:10px;margin-bottom:10px;" placeholder="Opcional: seleccioná en Excel las columnas de Apellido y Nombre, copialas (Ctrl+C) y pegalas acá (Ctrl+V) — así cada uno elige su nombre en vez de tipearlo"></textarea>
       <input type="password" id="pin-codigo-nuevo-input" class="bingo-input-numero" inputmode="numeric" maxlength="4" placeholder="PIN del organizador">
       <button class="btn-primary" onclick="confirmarGenerarCodigo()">Crear código de viaje</button>
       <p id="pin-codigo-nuevo-error" class="bingo-pin-error"></p>
       <p class="link-chico" style="margin-top:6px;">Si ponés una cantidad, nadie más va a poder entrar con este código una vez que se llenen esos cupos — aunque lo sigan reenviando.</p>
+      <p class="link-chico" style="margin-top:2px;">Si ponés un destino y ya hay comercios cargados para ese destino, les va a aparecer solo el botón de "Comercios adheridos".</p>
     </div>`;
 }
 
@@ -109,6 +111,9 @@ function confirmarGenerarCodigo(){
     localStorage.setItem('codigo-viaje', codigoViaje);
     db.ref('salas/' + codigoViaje + '/creado').set(Date.now());
     if(capacidad > 0) db.ref('salas/' + codigoViaje + '/capacidad').set(capacidad);
+    const destinoInput = document.getElementById('destino-viaje-input');
+    const destino = destinoInput ? destinoInput.value.trim() : '';
+    if(destino) db.ref('salas/' + codigoViaje + '/destino').set(destino);
     const listaInput = document.getElementById('lista-pasajeros-crear-input');
     const listaTexto = listaInput ? listaInput.value.trim() : '';
     if(listaTexto) listaPasajerosGuardarEnViaje(codigoViaje, listaTexto);
@@ -208,11 +213,14 @@ function renderAdminViajes(){
       const listaLen = (datos[c].listaPasajeros || []).length;
       const listaAbierta = adminListaAbiertaPara === c;
       const listoParaBorrar = !!datos[c].listoParaBorrar;
+      const canjesAbiertos = adminCanjesAbiertoPara === c;
+      const mayoresDe12 = Object.values((datos[c].ranking && datos[c].ranking.puntos) || {}).filter(p => p.mayorDe12).length;
       return `<div class="bingo-roster-item">
         <span>${c}${cerrado ? ' 🔒' : ''}${listoParaBorrar ? ' <span style="color:#B85A0B;font-weight:600;">· ✅ Listo para borrar</span>' : ''}</span>
         <span class="bingo-roster-derecha">
           <span>${pasajeros}${capacidad ? '/' + capacidad : ''} pasajero${pasajeros === 1 ? '' : 's'}</span>
           <button class="btn-eliminar-pasajero" style="width:auto;border-radius:10px;padding:4px 8px;font-size:11px;" onclick="adminToggleLista('${c}')" title="Cargar lista de pasajeros">📋${listaLen ? ' ' + listaLen : ''}</button>
+          ${datos[c].destino ? `<button class="btn-eliminar-pasajero" style="width:auto;border-radius:10px;padding:4px 8px;font-size:11px;" onclick="adminToggleCanjes('${c}')" title="Ver canjes de comercios">🏪</button>` : ''}
           <button class="btn-finalizar-viaje" onclick="toggleCerrarViaje('${c}',${!cerrado})">${cerrado ? 'Reabrir' : 'Finalizar'}</button>
           <button class="btn-eliminar-pasajero" onclick="eliminarViaje('${c}')" title="Eliminar viaje">✕</button>
         </span>
@@ -221,12 +229,23 @@ function renderAdminViajes(){
       <div style="margin:-6px 0 10px;">
         <textarea id="admin-lista-input-${c}" rows="4" style="width:100%;font-family:monospace;font-size:12.5px;border:1px solid var(--line-color,#ccc);border-radius:10px;padding:10px;margin-bottom:6px;" placeholder="Seleccioná en Excel las columnas de Apellido y Nombre, copialas (Ctrl+C) y pegalas acá (Ctrl+V)">${(datos[c].listaPasajeros || []).map(p => `${p.apellido}\t${p.nombre}`).join('\n')}</textarea>
         <button class="btn-primary" style="margin-bottom:4px;" onclick="adminGuardarLista('${c}')">Guardar lista</button>
+      </div>` : ''}
+      ${canjesAbiertos ? `
+      <div style="margin:-6px 0 10px;">
+        <p style="font-size:11.5px;color:var(--gray);margin-bottom:4px;">Destino: ${datos[c].destino} — ${mayoresDe12} mayores de 12 de ${pasajeros} pasajeros</p>
+        ${comerciosResumenViajeHTML(datos[c])}
       </div>` : ''}`;
     }).join('');
   });
 }
 
 let adminListaAbiertaPara = null;
+let adminCanjesAbiertoPara = null;
+
+function adminToggleCanjes(codigo){
+  adminCanjesAbiertoPara = adminCanjesAbiertoPara === codigo ? null : codigo;
+  renderAdminViajes();
+}
 
 function adminToggleLista(codigo){
   adminListaAbiertaPara = adminListaAbiertaPara === codigo ? null : codigo;
@@ -283,7 +302,7 @@ function rankingUnirse(){
   if(!miNombre || !miAsiento) return;
   const ref = rankingRefPuntos().child(String(miAsiento));
   ref.once('value').then(snap => {
-    if(snap.val() == null) ref.set({ nombre: miNombre, pts: 0 });
+    if(snap.val() == null) ref.set({ nombre: miNombre, pts: 0, mayorDe12: !!miMayorDe12 });
   });
   if(!rankingListener){
     rankingListener = rankingRefPuntos().on('value', snap => {
@@ -293,10 +312,22 @@ function rankingUnirse(){
   }
 }
 
+// Se guarda al elegir en el onboarding (no hace falta Firebase todavía: recién
+// se manda cuando se confirma todo en goHome()).
+let miMayorDe12 = null;
+
+function elegirMayorDe12(valor){
+  miMayorDe12 = valor;
+  const chips = document.querySelectorAll('#mi-mayor-de-12-chips .chip');
+  chips.forEach((chip, i) => chip.classList.toggle('selected', (i === 0) === valor));
+  actualizarBotonContinuar();
+}
+
 function actualizarBotonContinuar(){
   const nombreOk = document.getElementById('mi-nombre-input').value.trim().length > 0;
   const asientoOk = Number(document.getElementById('mi-asiento-input').value) > 0;
-  document.getElementById('btn-continuar').disabled = !(nombreOk && asientoOk);
+  const edadOk = miMayorDe12 !== null;
+  document.getElementById('btn-continuar').disabled = !(nombreOk && asientoOk && edadOk);
 }
 
 // Ya no se elige a mano: se asigna solo (pero siempre el mismo para la misma
@@ -339,8 +370,10 @@ function goHome(){
   localStorage.setItem('mi-nombre', miNombre);
   localStorage.setItem('mi-asiento', miAsiento);
   localStorage.setItem('mi-emoji', miEmoji);
+  localStorage.setItem('mi-mayor-de-12', miMayorDe12 ? '1' : '0');
   rankingUnirse();
   activarListenerCierreDeViaje();
+  iniciarComerciosEnHome();
   showView('home');
   document.getElementById('tabbar').style.display = 'flex';
   actualizarMonedasEnPantalla();
@@ -366,6 +399,7 @@ function renderHome(){
   // raspadita del día, sin repetir lo que ya está a un toque de distancia.
   document.getElementById('home-content').innerHTML = `
     <div class="home-logo-banner"><img src="logo-empresa.png" alt="Logo"></div>
+    ${comerciosTarjetaHomeHTML()}
     ${pwaInstalarHTML()}
     ${raspaditaHTML()}`;
 }
@@ -454,6 +488,7 @@ function showView(name){
   if(name==='chinchon'){ iniciarChinchon(); }
   if(name==='truco'){ iniciarTruco(); }
   if(name==='buscolor'){ iniciarBuscolor(); }
+  if(name==='comercios'){ iniciarComercios(); }
   if(name==='tienda'){ iniciarPremios(); }
   if(name==='onboard'){ listaPasajerosCargarParaOnboarding(); }
 }
@@ -527,6 +562,15 @@ function mostrarToast(msg, tipo){
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
+  // Si se abrió desde el QR de un comercio (?canjear=1&...), es el celular
+  // DEL COMERCIO, no el de un pasajero: se muestra solo la confirmación del
+  // canje y se corta acá, sin arrancar el resto de la app.
+  const datosCanje = comerciosLeerParamsCanje();
+  if(datosCanje){
+    comerciosMostrarPantallaCanje(datosCanje);
+    return;
+  }
+
   document.querySelectorAll('[data-icon]').forEach(el=>{
     el.innerHTML = icono(el.dataset.icon);
   });
@@ -534,6 +578,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
   if(nombreInput && miNombre) nombreInput.value = miNombre;
   const asientoInput = document.getElementById('mi-asiento-input');
   if(asientoInput && miAsiento) asientoInput.value = miAsiento;
+  const mayorDe12Guardado = localStorage.getItem('mi-mayor-de-12');
+  if(mayorDe12Guardado !== null) elegirMayorDe12(mayorDe12Guardado === '1');
   actualizarBotonContinuar();
 
   const codigoURL = leerCodigoViajeDeURL();
