@@ -804,6 +804,11 @@ body{
 .comercio-fila-txt p{font-size:12.5px; color:var(--gray);}
 .comercio-fila-flecha{font-size:20px; color:var(--gray); margin-left:auto;}
 
+.comercio-confirmado-banner{
+  background:#E4F7EC; color:#1E8E5A; border:1.5px solid #B7EBCE; border-radius:14px;
+  padding:12px 14px; margin-bottom:14px; font-size:13.5px; font-weight:600; text-align:center;
+}
+
 .comercio-qr-box{
   background:#fff; border:1.5px solid #ECE9E1; border-radius:18px;
   padding:20px; text-align:center; margin-bottom:16px;

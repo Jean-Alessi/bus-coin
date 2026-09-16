@@ -30,6 +30,12 @@ function comerciosRefCatalogo(destino){
 
 const COMERCIOS_RUBROS_SUGERIDOS = ['Comida', 'Heladería', 'Tienda', 'Artesanías', 'Bebidas', 'Otro'];
 
+// Puntos de ranking que gana el pasajero cuando el comercio confirma su
+// canje. Es el incentivo para que el pasajero se preocupe de que el
+// comercio realmente toque "Confirmar canje" (si no confirma, el pasajero
+// no suma nada, así que no le conviene mirar para el costado).
+const COMERCIOS_PUNTOS_POR_CANJE = 30;
+
 // ---- Escucha en segundo plano el destino del viaje y su catálogo de
 // comercios, para que la pestaña "Comercios" ya tenga todo listo apenas el
 // pasajero la abre (no depende de que la haya abierto antes). ----
@@ -58,15 +64,59 @@ function iniciarComerciosDestino(){
 // ---- Vista del pasajero: lista de comercios + su código para canjear ----
 
 let comerciosVerCodigoDe = null; // id del comercio cuyo QR se está mostrando
+let comerciosCanjeListenerRef = null;
+let comerciosMiCanjeConfirmado = false;
 
 function iniciarComercios(){
+  comerciosDejarDeEscucharMiCanje();
   comerciosVerCodigoDe = null;
   renderComercios();
 }
 
 function comerciosVerCodigo(comercioId){
   comerciosVerCodigoDe = comercioId;
+  comerciosMiCanjeConfirmado = false;
   renderComercios();
+  comerciosRegistrarVista(comercioId);
+  comerciosEscucharMiCanje(comercioId);
+}
+
+function comerciosVolverALista(){
+  comerciosDejarDeEscucharMiCanje();
+  comerciosVerCodigoDe = null;
+  renderComercios();
+}
+
+// Deja registro de que el pasajero mostró este código (sin que el comercio
+// haga nada todavía). Sirve para detectar, comparando contra los canjes
+// confirmados, comercios donde muchos pasajeros mostraron el código pero
+// casi nadie quedó confirmado — señal de que puede no estar escaneando.
+function comerciosRegistrarVista(comercioId){
+  if(!codigoViaje || !miAsiento) return;
+  const c = comerciosCatalogoActual[comercioId];
+  db.ref(`salas/${codigoViaje}/comercios/${comercioId}/vistas/${miAsiento}`).set({
+    nombre: miNombre || '',
+    comercioNombre: (c && c.nombre) || '',
+    momento: Date.now(),
+  });
+}
+
+// Mientras el pasajero tiene el código en pantalla, escucha en vivo si su
+// propio canje se confirma, para mostrarle ahí mismo que sumó los puntos
+// (así le queda claro que le conviene que el comercio confirme).
+function comerciosEscucharMiCanje(comercioId){
+  comerciosDejarDeEscucharMiCanje();
+  if(!codigoViaje || !miAsiento) return;
+  comerciosCanjeListenerRef = db.ref(`salas/${codigoViaje}/comercios/${comercioId}/canjes/${miAsiento}`);
+  comerciosCanjeListenerRef.on('value', snap => {
+    comerciosMiCanjeConfirmado = snap.exists();
+    if(comerciosVerCodigoDe === comercioId) renderComercios();
+  });
+}
+
+function comerciosDejarDeEscucharMiCanje(){
+  if(comerciosCanjeListenerRef) comerciosCanjeListenerRef.off();
+  comerciosCanjeListenerRef = null;
 }
 
 // Algunos links de flyer no son una imagen directa (un PDF, o la página de
@@ -107,17 +157,20 @@ function renderComercios(){
           <img src="${flyerUrlSeguro}" alt="Flyer de ${c.nombre}" class="comercio-flyer-img" onerror="comerciosFlyerComoIframe('${flyerBoxId}', '${flyerUrlSeguro}')">
         </div>
       </div>` : '';
+    const confirmadoHTML = comerciosMiCanjeConfirmado ? `
+      <div class="comercio-confirmado-banner">✅ El comercio confirmó tu compra. ¡Sumaste ${COMERCIOS_PUNTOS_POR_CANJE} puntos en el ranking!</div>` : '';
     cont.innerHTML = `
       <div class="hero" style="margin-top:8px;">
         <h2>${c.nombre}</h2>
         <p>${c.descuento}</p>
       </div>
+      ${confirmadoHTML}
       <div class="comercio-qr-box">
         <div id="comercio-qr-canvas"></div>
-        <p class="comercio-qr-nota">Mostrale esta pantalla al comercio: la escanean con su celular y te confirman el descuento ahí mismo.</p>
+        <p class="comercio-qr-nota">${comerciosMiCanjeConfirmado ? 'Ya quedó confirmado, no hace falta mostrarlo de nuevo.' : `Mostrale esta pantalla al comercio: la escanean con su celular, te confirman el descuento y sumás ${COMERCIOS_PUNTOS_POR_CANJE} puntos.`}</p>
       </div>
       ${flyerHTML}
-      <p class="link-chico" onclick="comerciosVerCodigoDe=null; renderComercios();">‹ Volver a la lista</p>`;
+      <p class="link-chico" onclick="comerciosVolverALista()">‹ Volver a la lista</p>`;
     const qrCont = document.getElementById('comercio-qr-canvas');
     if(qrCont && window.QRCode){
       qrCont.innerHTML = '';
@@ -283,9 +336,21 @@ function comerciosConfirmarCanjeAhora(viaje, asiento, comercioId){
           precioPorCanje: comercio.oficial ? 0 : (comercio.precioPorCanje || 0),
           oficial: !!comercio.oficial,
         };
-      }).then(() => comerciosMostrarPantallaCanje({ viaje, asiento, comercioId }));
+      }).then(resultado => {
+        if(resultado.committed) comerciosOtorgarPuntosPorCanje(viaje, asiento, pasajero.nombre || `Asiento ${asiento}`);
+        comerciosMostrarPantallaCanje({ viaje, asiento, comercioId });
+      });
     });
   });
+}
+
+// Le suma los puntos del canje al ranking del pasajero (el mismo ranking
+// que usa Premios), para que confirmar la compra le sirva de algo real.
+function comerciosOtorgarPuntosPorCanje(viaje, asiento, nombreFallback){
+  db.ref(`salas/${viaje}/ranking/puntos/${asiento}`).transaction(actual => ({
+    nombre: (actual && actual.nombre) || nombreFallback,
+    pts: ((actual && actual.pts) || 0) + COMERCIOS_PUNTOS_POR_CANJE,
+  }));
 }
 
 // ---- Administración del catálogo (por destino) ----
@@ -470,14 +535,20 @@ function comerciosResumenViajeHTML(sala){
   if(!ids.length) return '<p style="color:var(--gray);font-size:12.5px;margin:4px 0 0;">Todavía no hay canjes registrados en este viaje.</p>';
 
   const filas = ids.map(id => {
-    const canjes = Object.values((comerciosDelViaje[id] || {}).canjes || {});
+    const datos = comerciosDelViaje[id] || {};
+    const canjes = Object.values(datos.canjes || {});
+    const vistas = Object.values(datos.vistas || {});
     const facturables = canjes.filter(c => c.mayorDe12 && !c.oficial);
-    const nombre = (canjes[0] && canjes[0].comercioNombre) || id;
+    const nombre = (canjes[0] && canjes[0].comercioNombre) || (vistas[0] && vistas[0].comercioNombre) || id;
     const esOficial = canjes.some(c => c.oficial);
     const precio = facturables.length ? facturables[0].precioPorCanje : 0;
     const monto = facturables.length * precio;
+    const brecha = vistas.length - canjes.length;
+    const alertaHTML = brecha > 0
+      ? `<br><span style="color:#C0392B;">⚠️ ${vistas.length} mostraron el código acá y solo ${canjes.length} quedaron confirmados</span>`
+      : '';
     return `<div class="bingo-roster-item">
-      <span>${esOficial ? '⭐ ' : ''}${nombre}<br><span style="font-size:11px;color:var(--gray);">${canjes.length} canje${canjes.length === 1 ? '' : 's'} (${facturables.length} facturable${facturables.length === 1 ? '' : 's'})</span></span>
+      <span>${esOficial ? '⭐ ' : ''}${nombre}<br><span style="font-size:11px;color:var(--gray);">${canjes.length} canje${canjes.length === 1 ? '' : 's'} (${facturables.length} facturable${facturables.length === 1 ? '' : 's'})${alertaHTML}</span></span>
       <span class="bingo-roster-derecha"><b>$${monto}</b></span>
     </div>`;
   }).join('');
