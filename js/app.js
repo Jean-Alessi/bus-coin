@@ -538,8 +538,11 @@ function ganarMonedas(cantidad){
   if(!miNombre || !miAsiento) return;
   const asiento = String(miAsiento);
   const puntosActuales = (rankingPuntos[asiento] && rankingPuntos[asiento].pts) || 0;
-  rankingPuntos[asiento] = { nombre: miNombre, pts: Math.max(0, puntosActuales + cantidad) };
-  rankingRefPuntos().child(asiento).set(rankingPuntos[asiento]);
+  const nuevoPts = Math.max(0, puntosActuales + cantidad);
+  rankingPuntos[asiento] = Object.assign({}, rankingPuntos[asiento], { nombre: miNombre, pts: nuevoPts });
+  // .update() en vez de .set(): así no pisa otros campos del mismo registro,
+  // como el "mayorDe12" que usa Comercios para decidir qué canjes facturar.
+  rankingRefPuntos().child(asiento).update({ nombre: miNombre, pts: nuevoPts });
   analyticsRegistrar('monedas_ganadas', { cantidad, juego: analyticsVistaActual });
 }
 

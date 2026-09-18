@@ -347,7 +347,9 @@ function comerciosConfirmarCanjeAhora(viaje, asiento, comercioId){
 // Le suma los puntos del canje al ranking del pasajero (el mismo ranking
 // que usa Premios), para que confirmar la compra le sirva de algo real.
 function comerciosOtorgarPuntosPorCanje(viaje, asiento, nombreFallback){
-  db.ref(`salas/${viaje}/ranking/puntos/${asiento}`).transaction(actual => ({
+  // Se parte de "actual" completo (no solo nombre/pts) para no pisar otros
+  // campos del registro, como "mayorDe12".
+  db.ref(`salas/${viaje}/ranking/puntos/${asiento}`).transaction(actual => Object.assign({}, actual, {
     nombre: (actual && actual.nombre) || nombreFallback,
     pts: ((actual && actual.pts) || 0) + COMERCIOS_PUNTOS_POR_CANJE,
   }));

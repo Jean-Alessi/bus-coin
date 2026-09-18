@@ -3,8 +3,38 @@
     "salas": {
       ".read": true,
       "$codigo": {
-        ".read": true,
-        ".write": true
+        ".write": true,
+        ".validate": "$codigo.matches(/^[A-Z0-9]{1,20}$/)",
+        "ranking": {
+          "puntos": {
+            "$asiento": {
+              "nombre": { ".validate": "newData.isString() && newData.val().length <= 60" },
+              "pts": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
+              "mayorDe12": { ".validate": "newData.isBoolean()" }
+            }
+          }
+        },
+        "comercios": {
+          "$comercioId": {
+            "canjes": {
+              "$asiento": {
+                "nombre": { ".validate": "newData.isString() && newData.val().length <= 60" },
+                "momento": { ".validate": "newData.isNumber()" },
+                "mayorDe12": { ".validate": "newData.isBoolean()" },
+                "comercioNombre": { ".validate": "newData.isString() && newData.val().length <= 80" },
+                "precioPorCanje": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
+                "oficial": { ".validate": "newData.isBoolean()" }
+              }
+            },
+            "vistas": {
+              "$asiento": {
+                "nombre": { ".validate": "newData.isString() && newData.val().length <= 60" },
+                "comercioNombre": { ".validate": "newData.isString() && newData.val().length <= 80" },
+                "momento": { ".validate": "newData.isNumber()" }
+              }
+            }
+          }
+        }
       }
     },
     "analytics": {
@@ -13,7 +43,19 @@
     },
     "comercios": {
       ".read": true,
-      ".write": true
+      ".write": true,
+      "$destinoSlug": {
+        "$comercioId": {
+          "nombre": { ".validate": "newData.isString() && newData.val().length <= 80" },
+          "rubro": { ".validate": "newData.isString() && newData.val().length <= 40" },
+          "descuento": { ".validate": "newData.isString() && newData.val().length <= 160" },
+          "precioPorCanje": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
+          "montoFijoOficial": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000" },
+          "oficial": { ".validate": "newData.isBoolean()" },
+          "activo": { ".validate": "newData.isBoolean()" },
+          "flyerUrl": { ".validate": "newData.isString() && newData.val().length <= 600" }
+        }
+      }
     }
   }
 }
