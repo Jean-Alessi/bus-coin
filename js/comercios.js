@@ -24,8 +24,8 @@ function comerciosSlugDestino(destino){
     .replace(/^-+|-+$/g, '');
 }
 
-function comerciosRefCatalogo(destino){
-  return db.ref('comercios/' + comerciosSlugDestino(destino));
+function comerciosRefCatalogo(agenciaId, destino){
+  return db.ref('agencias/' + agenciaId + '/comercios/' + comerciosSlugDestino(destino));
 }
 
 const COMERCIOS_RUBROS_SUGERIDOS = ['Comida', 'Heladería', 'Tienda', 'Artesanías', 'Bebidas', 'Otro'];
@@ -41,22 +41,26 @@ const COMERCIOS_PUNTOS_POR_CANJE = 30;
 // pasajero la abre (no depende de que la haya abierto antes). ----
 
 let comerciosDestinoViaje = null;
+let comerciosAgenciaViaje = null;
 let comerciosCatalogoActual = {};
 let comerciosListenerDestinoListo = false;
 
 function iniciarComerciosDestino(){
   if(comerciosListenerDestinoListo || !codigoViaje) return;
   comerciosListenerDestinoListo = true;
-  db.ref('salas/' + codigoViaje + '/destino').on('value', snap => {
-    comerciosDestinoViaje = snap.val() || null;
-    if(!comerciosDestinoViaje){
-      comerciosCatalogoActual = {};
-      renderComercios();
-      return;
-    }
-    comerciosRefCatalogo(comerciosDestinoViaje).on('value', snapCat => {
-      comerciosCatalogoActual = snapCat.val() || {};
-      renderComercios();
+  db.ref('salas/' + codigoViaje + '/agenciaId').once('value').then(snapAgencia => {
+    comerciosAgenciaViaje = snapAgencia.val() || null;
+    db.ref('salas/' + codigoViaje + '/destino').on('value', snap => {
+      comerciosDestinoViaje = snap.val() || null;
+      if(!comerciosDestinoViaje || !comerciosAgenciaViaje){
+        comerciosCatalogoActual = {};
+        renderComercios();
+        return;
+      }
+      comerciosRefCatalogo(comerciosAgenciaViaje, comerciosDestinoViaje).on('value', snapCat => {
+        comerciosCatalogoActual = snapCat.val() || {};
+        renderComercios();
+      });
     });
   });
 }
@@ -276,7 +280,7 @@ function comerciosMostrarPantallaCanje(datos){
       document.body.innerHTML = comerciosCanjeErrorHTML('No se encontró a este pasajero en el viaje.');
       return;
     }
-    comerciosRefCatalogo(sala.destino).child(datos.comercioId).once('value').then(snapComercio => {
+    comerciosRefCatalogo(sala.agenciaId, sala.destino).child(datos.comercioId).once('value').then(snapComercio => {
       const comercio = snapComercio.val();
       if(!comercio){
         document.body.innerHTML = comerciosCanjeErrorHTML('Este comercio ya no está disponible.');
@@ -323,7 +327,7 @@ function comerciosConfirmarCanjeAhora(viaje, asiento, comercioId){
   db.ref('salas/' + viaje).once('value').then(snapSala => {
     const sala = snapSala.val() || {};
     const pasajero = (sala.ranking && sala.ranking.puntos && sala.ranking.puntos[asiento]) || {};
-    comerciosRefCatalogo(sala.destino).child(comercioId).once('value').then(snapComercio => {
+    comerciosRefCatalogo(sala.agenciaId, sala.destino).child(comercioId).once('value').then(snapComercio => {
       const comercio = snapComercio.val() || {};
       const refCanje = db.ref(`salas/${viaje}/comercios/${comercioId}/canjes/${asiento}`);
       refCanje.transaction(actual => {
@@ -372,17 +376,13 @@ function renderAdminComercios(){
 
   if(!comerciosAdminMostrandoPin){ cont.innerHTML = ''; return; }
 
-  if(localStorage.getItem('bingo-organizador') !== 'si'){
-    cont.innerHTML = `
-      <div class="bingo-pin-box">
-        <input type="password" id="admin-comercios-pin-input" class="bingo-input-numero" inputmode="numeric" maxlength="4" placeholder="PIN de administrador">
-        <button class="btn-primary" onclick="comerciosAdminVerificarPin()">Entrar</button>
-        <p id="admin-comercios-pin-error" class="bingo-pin-error"></p>
-      </div>`;
+  if(!agenciasEsOrganizador()){
+    cont.innerHTML = agenciasFormularioLoginHTML('admin-comercios', 'renderAdminComercios');
     return;
   }
 
   const buscadorHTML = `
+    <p class="link-chico">Conectado como ${agenciaActualNombre}. <span onclick="agenciasCerrarSesion()" style="text-decoration:underline;cursor:pointer;">Cerrar sesión</span></p>
     <div class="section-label">¿Qué destino querés administrar?</div>
     <input type="text" id="admin-comercios-destino-input" class="bingo-input-numero" style="width:100%;" placeholder="Ej: Mar del Plata" value="${comerciosAdminDestino || ''}">
     <button class="btn-ghost" onclick="comerciosAdminCargarDestino()">Ver comercios de este destino</button>`;
@@ -431,24 +431,12 @@ function renderAdminComercios(){
     </div>`;
 }
 
-function comerciosAdminVerificarPin(){
-  const input = document.getElementById('admin-comercios-pin-input');
-  const pin = input ? input.value.trim() : '';
-  const error = document.getElementById('admin-comercios-pin-error');
-  if(pin !== BINGO_PIN_ORGANIZADOR){
-    if(error) error.textContent = 'PIN incorrecto';
-    return;
-  }
-  localStorage.setItem('bingo-organizador', 'si');
-  renderAdminComercios();
-}
-
 function comerciosAdminCargarDestino(){
   const input = document.getElementById('admin-comercios-destino-input');
   const destino = input ? input.value.trim() : '';
   if(!destino) return;
   comerciosAdminDestino = destino;
-  comerciosRefCatalogo(destino).once('value').then(snap => {
+  comerciosRefCatalogo(agenciaActualId, destino).once('value').then(snap => {
     comerciosAdminCatalogo = snap.val() || {};
     renderAdminComercios();
   });
@@ -462,7 +450,7 @@ function comerciosAdminSacarOficialDeOtros(exceptoId){
   Object.keys(comerciosAdminCatalogo).forEach(id => {
     if(id !== exceptoId && comerciosAdminCatalogo[id].oficial) actualizaciones[id + '/oficial'] = false;
   });
-  return Object.keys(actualizaciones).length ? comerciosRefCatalogo(comerciosAdminDestino).update(actualizaciones) : Promise.resolve();
+  return Object.keys(actualizaciones).length ? comerciosRefCatalogo(agenciaActualId, comerciosAdminDestino).update(actualizaciones) : Promise.resolve();
 }
 
 function comerciosAdminGuardar(id){
@@ -485,7 +473,7 @@ function comerciosAdminGuardar(id){
     activo: marcado('activo'),
     flyerUrl: leer('flyer'),
   };
-  const guardar = () => comerciosRefCatalogo(comerciosAdminDestino).child(id).update(datos).then(() => {
+  const guardar = () => comerciosRefCatalogo(agenciaActualId, comerciosAdminDestino).child(id).update(datos).then(() => {
     mostrarToast('Comercio guardado');
     comerciosAdminCargarDestino();
   });
@@ -495,7 +483,7 @@ function comerciosAdminGuardar(id){
 
 function comerciosAdminEliminar(id){
   if(!confirm('¿Eliminar este comercio? No se puede deshacer.')) return;
-  comerciosRefCatalogo(comerciosAdminDestino).child(id).remove().then(() => comerciosAdminCargarDestino());
+  comerciosRefCatalogo(agenciaActualId, comerciosAdminDestino).child(id).remove().then(() => comerciosAdminCargarDestino());
 }
 
 function comerciosAdminAgregar(){
@@ -520,7 +508,7 @@ function comerciosAdminAgregar(){
     activo: true,
     flyerUrl: leer('flyer'),
   };
-  const ref = comerciosRefCatalogo(comerciosAdminDestino).push();
+  const ref = comerciosRefCatalogo(agenciaActualId, comerciosAdminDestino).push();
   const guardar = () => ref.set(datos).then(() => {
     mostrarToast('Comercio agregado');
     comerciosAdminCargarDestino();

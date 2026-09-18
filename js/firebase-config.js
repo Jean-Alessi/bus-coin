@@ -1,7 +1,7 @@
 // Conexión a Firebase Realtime Database: acá vive el estado compartido
 // (bingo, ranking, etc.) para que varios celulares jueguen lo mismo en vivo.
 const firebaseConfig = {
-  apiKey: "AIzaSyBvNiRv5eLK2VKWujGbNqJxe9gdoRcf4ug",
+  apiKey: "AIzaSyBvNiRv5elK2VKWujGbNqJxe9gdoRcf4ug",
   authDomain: "bus-coin-fb008.firebaseapp.com",
   databaseURL: "https://bus-coin-fb008-default-rtdb.firebaseio.com",
   projectId: "bus-coin-fb008",

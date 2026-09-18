@@ -69,13 +69,17 @@ function renderPinCodigoNuevo(){
   const cont = document.getElementById('generar-codigo-content');
   if(!cont) return;
   if(!mostrandoPinCodigoNuevo){ cont.innerHTML = ''; return; }
+  if(!agenciasEsOrganizador()){
+    cont.innerHTML = agenciasFormularioLoginHTML('generar-codigo', 'renderPinCodigoNuevo');
+    return;
+  }
   cont.innerHTML = `
+    <p class="link-chico" style="margin-bottom:8px;">Conectado como ${agenciaActualNombre}. <span onclick="agenciasCerrarSesion()" style="text-decoration:underline;cursor:pointer;">Cerrar sesión</span></p>
     <div class="bingo-pin-box">
       <input type="text" id="codigo-personalizado-input" class="bingo-input-numero" style="text-transform:uppercase;" placeholder="Código a elección (opcional)">
       <input type="number" id="capacidad-viaje-input" class="bingo-input-numero" min="1" placeholder="Cantidad de pasajeros (opcional)">
       <input type="text" id="destino-viaje-input" class="bingo-input-numero" style="width:100%;" placeholder="Destino (opcional, ej: Mar del Plata)">
       <textarea id="lista-pasajeros-crear-input" rows="4" style="width:100%;font-family:monospace;font-size:12.5px;border:1px solid var(--line-color,#ccc);border-radius:10px;padding:10px;margin-bottom:10px;" placeholder="Opcional: seleccioná en Excel las columnas de Apellido y Nombre, copialas (Ctrl+C) y pegalas acá (Ctrl+V) — así cada uno elige su nombre en vez de tipearlo"></textarea>
-      <input type="password" id="pin-codigo-nuevo-input" class="bingo-input-numero" inputmode="numeric" maxlength="4" placeholder="PIN del organizador">
       <button class="btn-primary" onclick="confirmarGenerarCodigo()">Crear código de viaje</button>
       <p id="pin-codigo-nuevo-error" class="bingo-pin-error"></p>
       <p class="link-chico" style="margin-top:6px;">Si ponés una cantidad, nadie más va a poder entrar con este código una vez que se llenen esos cupos — aunque lo sigan reenviando.</p>
@@ -87,14 +91,9 @@ function renderPinCodigoNuevo(){
 // dejarlo vacío para que se genere uno al azar. Si el código elegido ya
 // está en uso por otro viaje, avisa para que pruebe con otro.
 function confirmarGenerarCodigo(){
-  const pinInput = document.getElementById('pin-codigo-nuevo-input');
-  const pin = pinInput ? pinInput.value.trim() : '';
+  if(!agenciasEsOrganizador()) return;
   const error = document.getElementById('pin-codigo-nuevo-error');
   if(error) error.textContent = '';
-  if(pin !== BINGO_PIN_ORGANIZADOR){
-    if(error) error.textContent = 'PIN incorrecto';
-    return;
-  }
   const personalizadoInput = document.getElementById('codigo-personalizado-input');
   const personalizado = personalizadoInput ? personalizadoInput.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
   const codigo = personalizado || codigoAlAzar();
@@ -110,6 +109,7 @@ function confirmarGenerarCodigo(){
     codigoViaje = codigo;
     localStorage.setItem('codigo-viaje', codigoViaje);
     db.ref('salas/' + codigoViaje + '/creado').set(Date.now());
+    db.ref('salas/' + codigoViaje + '/agenciaId').set(agenciaActualId);
     if(capacidad > 0) db.ref('salas/' + codigoViaje + '/capacidad').set(capacidad);
     const destinoInput = document.getElementById('destino-viaje-input');
     const destino = destinoInput ? destinoInput.value.trim() : '';
@@ -188,18 +188,13 @@ function mostrarAdminViajes(){
 function renderAdminViajes(){
   const cont = document.getElementById('admin-viajes-content');
   if(!cont) return;
-  if(localStorage.getItem('bingo-organizador') !== 'si'){
+  if(!agenciasEsOrganizador()){
     if(!adminMostrandoPin){ cont.innerHTML = ''; return; }
-    cont.innerHTML = `
-      <div class="bingo-pin-box">
-        <input type="password" id="admin-pin-input" class="bingo-input-numero" inputmode="numeric" maxlength="4" placeholder="PIN de administrador">
-        <button class="btn-primary" onclick="verificarPinAdmin()">Entrar</button>
-        <p id="admin-pin-error" class="bingo-pin-error"></p>
-      </div>`;
+    cont.innerHTML = agenciasFormularioLoginHTML('admin-viajes', 'renderAdminViajes');
     return;
   }
-  cont.innerHTML = '<p style="color:var(--gray);font-size:13px;">Cargando viajes...</p>';
-  db.ref('salas').once('value').then(snap => {
+  cont.innerHTML = `<p class="link-chico">Conectado como ${agenciaActualNombre}. <span onclick="agenciasCerrarSesion()" style="text-decoration:underline;cursor:pointer;">Cerrar sesión</span></p><p style="color:var(--gray);font-size:13px;">Cargando viajes...</p>`;
+  db.ref('salas').orderByChild('agenciaId').equalTo(agenciaActualId).once('value').then(snap => {
     const datos = snap.val() || {};
     const codigos = Object.keys(datos);
     if(!codigos.length){
@@ -260,18 +255,6 @@ function adminGuardarLista(codigo){
     adminListaAbiertaPara = null;
     renderAdminViajes();
   });
-}
-
-function verificarPinAdmin(){
-  const input = document.getElementById('admin-pin-input');
-  const pin = input ? input.value.trim() : '';
-  const error = document.getElementById('admin-pin-error');
-  if(pin !== BINGO_PIN_ORGANIZADOR){
-    if(error) error.textContent = 'PIN incorrecto';
-    return;
-  }
-  localStorage.setItem('bingo-organizador', 'si');
-  renderAdminViajes();
 }
 
 function eliminarViaje(codigo){
