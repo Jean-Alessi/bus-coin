@@ -4,9 +4,9 @@ let bingoCartones = {};
 let bingoSeleccion = [];
 let bingoMostrandoPin = false;
 
-// PIN para reclamar el rol de organizador. Es una traba simple, no seguridad
-// real (el código es público) — alcanza para que ningún pasajero lo toque sin querer.
-const BINGO_PIN_ORGANIZADOR = '2314';
+// El PIN de organizador vive en js/marca.js (MARCA.pinOrganizador), para
+// que cambiarlo por cliente sea un solo lugar en todo el código.
+const BINGO_PIN_ORGANIZADOR = MARCA.pinOrganizador;
 const BINGO_CANTIDAD_CARTON = 12;
 const BINGO_TAMANO_CARTON = 3;
 // Números del cartón: 00 al 99, como en un bingo/lotería tradicional.

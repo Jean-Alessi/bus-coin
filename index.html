@@ -6,7 +6,7 @@
 <title>Busmac Viajes y Turismo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=73">
+<link rel="stylesheet" href="styles.css?v=74">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -18,13 +18,13 @@
   <div class="screen">
     <div class="statusbar">
       <img src="logo-empresa.png" alt="Logo" class="statusbar-logo">
-      <span class="statusbar-brand">busmac <em>viajes y turismo</em></span>
+      <span class="statusbar-brand" id="marca-statusbar">busmac <em>viajes y turismo</em></span>
     </div>
 
     <!-- CÓDIGO DE VIAJE -->
     <div class="view active" id="view-codigo-viaje">
       <div class="hero">
-        <h2>¡Bienvenido a bordo! 🚌 Arrancamos esta nueva experiencia con Busmac</h2>
+        <h2 id="marca-bienvenida">¡Bienvenido a bordo! 🚌 Arrancamos esta nueva experiencia con Busmac</h2>
       </div>
       <input type="text" id="codigo-viaje-input" class="bingo-input-numero" style="width:100%; text-transform:uppercase;" placeholder="Código del viaje" oninput="actualizarBotonCodigoViaje()">
       <p style="color:var(--gray); font-size:14px; margin:10px 0 18px;">¡Vamos a divertirnos! Solicitá el código de acceso al administrador del viaje.</p>
@@ -368,23 +368,24 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="js/firebase-config.js?v=73"></script>
-<script src="js/iconos.js?v=73"></script>
-<script src="js/sonido.js?v=73"></script>
-<script src="js/trivia.js?v=73"></script>
-<script src="js/acertijos.js?v=73"></script>
-<script src="js/pensamiento.js?v=73"></script>
-<script src="js/ahorcado.js?v=73"></script>
-<script src="js/cuatrouno.js?v=73"></script>
-<script src="js/valija.js?v=73"></script>
-<script src="js/memoria.js?v=3"></script>
+<script src="js/firebase-config.js?v=74"></script>
+<script src="js/marca.js?v=1"></script>
+<script src="js/iconos.js?v=74"></script>
+<script src="js/sonido.js?v=74"></script>
+<script src="js/trivia.js?v=74"></script>
+<script src="js/acertijos.js?v=74"></script>
+<script src="js/pensamiento.js?v=74"></script>
+<script src="js/ahorcado.js?v=74"></script>
+<script src="js/cuatrouno.js?v=74"></script>
+<script src="js/valija.js?v=74"></script>
+<script src="js/memoria.js?v=4"></script>
 <script src="js/sudoku.js?v=1"></script>
 <script src="js/patrones.js?v=2"></script>
 <script src="js/sopa.js?v=2"></script>
-<script src="js/bingo.js?v=73"></script>
-<script src="js/tutifruti.js?v=73"></script>
+<script src="js/bingo.js?v=74"></script>
+<script src="js/tutifruti.js?v=74"></script>
 <script src="js/impostor.js?v=8"></script>
-<script src="js/tienda.js?v=73"></script>
+<script src="js/tienda.js?v=74"></script>
 <script src="js/raspadita.js?v=2"></script>
 <script src="js/pwa.js?v=2"></script>
 <script src="js/triviaVivo.js?v=1"></script>
@@ -394,9 +395,9 @@
 <script src="js/chinchon.js?v=5"></script>
 <script src="js/truco.js?v=6"></script>
 <script src="js/buscolor.js?v=6"></script>
-<script src="js/comercios.js?v=4"></script>
+<script src="js/comercios.js?v=5"></script>
 <script src="js/analytics.js?v=1"></script>
 <script src="js/listaPasajeros.js?v=1"></script>
-<script src="js/app.js?v=73"></script>
+<script src="js/app.js?v=74"></script>
 </body>
 </html>

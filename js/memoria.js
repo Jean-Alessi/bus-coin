@@ -98,7 +98,7 @@ function renderMemoria(){
   const cartasHTML = memoriaCartas.map((c, i) => {
     const volteada = c.resuelta || memoriaVolteadas.includes(i);
     const clase = 'memoria-carta' + (volteada ? ' memoria-carta-volteada' : '') + (c.resuelta ? ' memoria-carta-resuelta' : '');
-    const contenido = c.emoji === MEMORIA_LOGO ? '<img src="icons/icon-192.png" alt="Busmac" class="memoria-logo-img">' : c.emoji;
+    const contenido = c.emoji === MEMORIA_LOGO ? '<img src="icons/icon-192.png" alt="Logo" class="memoria-logo-img">' : c.emoji;
     return `<button class="${clase}" onclick="tocarCartaMemoria(${i})">${volteada ? contenido : ''}</button>`;
   }).join('');
 

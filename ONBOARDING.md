@@ -20,36 +20,39 @@ desplegar en su propio dominio.
    el que está (son los datos del proyecto de Busmac, no sirven para
    otro cliente).
 
-## 2. PIN del organizador
+## 2. Marca y PIN del cliente — un solo archivo
 
-- Archivo: **`js/bingo.js`**, línea con `const BINGO_PIN_ORGANIZADOR`.
-- Poner un PIN de 4 dígitos distinto para este cliente (nunca reusar el de
-  otro cliente, aunque ahora cada uno ya tiene su propia base de datos:
-  es la clave que usa el organizador de esa empresa para administrar sus
-  viajes, cargar premios y ver el panel de admin).
+Todo lo que identifica a este cliente (nombre, mensaje de bienvenida, PIN
+de organizador) vive en **`js/marca.js`**. Es el único archivo que hay
+que tocar para esto — el resto de la app (`index.html`, `comercios.js`,
+`bingo.js`, etc.) lee estos valores de ahí, así que no hay que cazar el
+nombre viejo en varios lugares ni arriesgarse a olvidar uno:
 
-## 3. Marca del cliente (qué cambiar, archivo por archivo)
+```js
+const MARCA = {
+  marcaPrincipal: 'nombre-empresa',       // texto de la barra de arriba
+  marcaSecundaria: 'lo que hacen',        // texto chico al lado
+  nombreCompleto: 'Nombre Empresa S.A.',  // <title> de la pestaña
+  bienvenida: '¡Bienvenido a bordo! ...', // mensaje al abrir la app
+  pinOrganizador: '0000',                 // PIN de 4 dígitos, nunca reusar el de otro cliente
+};
+```
 
-El ícono "B" de Bus Coin (`icons/icon-192.png` y el resto de `icons/`)
-**se queda igual siempre** — es el ícono del producto, no de la empresa
-cliente. Lo que sí cambia es el logo y el nombre de la empresa que opera
-ese viaje:
+Además de este archivo:
 
 - **`logo-empresa.png`** — reemplazar el archivo por el logo de la nueva
   empresa (mismo nombre de archivo, para no tener que tocar código).
-- **`index.html`**:
-  - `<title>` (línea ~6): nombre de la empresa.
-  - `<span class="statusbar-brand">` (línea ~21): texto que aparece al
-    lado del logo en la barra de arriba.
-  - Texto de bienvenida en `view-codigo-viaje` (línea ~27): "Bienvenido a
-    esta nueva experiencia con [Empresa]".
 - **`manifest.json`**: `"name"` y `"short_name"` si el cliente quiere ver
   otro nombre al instalar la PWA (por defecto dice "Bus Coin", se puede
   dejar así si el cliente no pide lo contrario).
 - **`CNAME`**: dominio propio del cliente, si va a tener uno (o se puede
   quedar en el subdominio que dé GitHub Pages / Firebase Hosting).
 
-## 4. Contenido de los juegos (revisar, no siempre hay que tocarlo)
+El ícono "B" de Bus Coin (`icons/icon-192.png` y el resto de `icons/`)
+**se queda igual siempre** — es el ícono del producto, no de la empresa
+cliente.
+
+## 3. Contenido de los juegos (revisar, no siempre hay que tocarlo)
 
 La mayoría del contenido (trivia, sopa de letras, cartas, etc.) es
 genérico y sirve para cualquier cliente sin cambios. Lo único puntual a
@@ -62,7 +65,7 @@ revisar caso por caso:
   destinos en la Sopa de letras), se arma aparte — no es parte del
   onboarding estándar.
 
-## 5. Desplegar
+## 4. Desplegar
 
 - Mismo mecanismo que ya usa Busmac: sitio estático (GitHub Pages u otro
   hosting estático), sin backend propio — todo el estado en vivo vive en
@@ -70,7 +73,7 @@ revisar caso por caso:
 - Recordar bumpear los `?v=N` de `index.html` si se toca algo del código
   compartido, para que no quede cacheado en los celulares.
 
-## 6. Legal / comercial (fuera del código)
+## 5. Legal / comercial (fuera del código)
 
 - Esto no lo resuelve el código: hace falta un acuerdo de servicio simple
   con cada cliente (qué incluye, precio, quién es responsable de qué con
