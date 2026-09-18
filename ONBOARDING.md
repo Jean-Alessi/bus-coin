@@ -1,26 +1,42 @@
 # Onboarding de un cliente nuevo (empresa de micros)
 
-Bus Coin se vende como producto (queda "Bus Coin" como marca visible), pero
-cada cliente tiene su **propia base de datos y su propio despliegue** —
-esto es lo que garantiza que los viajes/pasajeros de una empresa nunca se
-mezclen ni queden accesibles desde el config de otra. En la práctica, dar
-de alta un cliente nuevo es: clonar este repo, cambiar lo de abajo, y
-desplegar en su propio dominio.
+Cada cliente tiene su **propio sitio** (con su propia marca y su propio
+link), pero desde que existe la multi-tenencia (ver más abajo) **todos
+comparten el mismo proyecto de Firebase** — el aislamiento entre empresas
+ya no depende de tener bases separadas, sino de que cada viaje y cada
+comercio quedan etiquetados con la agencia dueña, y las reglas de Firebase
+impiden que una agencia lea o escriba los datos de otra. En la práctica,
+dar de alta un cliente nuevo es: clonar este repo, cambiar la marca,
+registrar la agencia en la base compartida, y desplegar en su propio
+dominio.
 
-## 1. Firebase (aislamiento de datos — hacer esto primero)
+## 1. Firebase — usar el MISMO proyecto de todos (no crear uno nuevo)
 
-1. Crear un proyecto nuevo en https://console.firebase.google.com (uno por
-   cliente, nunca reusar el de otro).
-2. Activar **Realtime Database** en ese proyecto.
-3. Pegar las reglas de este mismo repo (`database.rules.json`) en
-   Firebase Console → Realtime Database → Reglas → Publicar.
-4. Ir a Configuración del proyecto → tus apps → agregar app Web → copiar el
-   objeto `firebaseConfig` que te da.
-5. Pegar ese objeto completo en **`js/firebase-config.js`**, reemplazando
-   el que está (son los datos del proyecto de Busmac, no sirven para
-   otro cliente).
+`js/firebase-config.js` **se deja tal cual está** — todas las empresas
+usan el proyecto `bus-coin-fb008`. Lo único que hay que hacer acá es
+registrar a la agencia nueva en la base compartida (esto sí es manual,
+todavía no hay una pantalla de alta automática):
 
-## 2. Marca y PIN del cliente — un solo archivo
+1. Crear la cuenta de organizador en Firebase Auth (Console → Authentication
+   → Users → Add user, con el email del cliente) — o desde la consola del
+   navegador con `firebase.auth().createUserWithEmailAndPassword(...)`.
+2. Elegir un `agenciaId` para el cliente (minúsculas, sin espacios, ej.
+   `expreso-norte`) y escribir estos dos nodos en Realtime Database
+   (Console → Realtime Database → Datos, o por CLI con
+   `firebase database:set`):
+   - `usuarios/{uid}/agenciaId` = `"expreso-norte"` (el `uid` es el que
+     te da Firebase al crear la cuenta del paso 1).
+   - `agencias/expreso-norte/nombre` = `"Expreso Norte S.A."`
+3. Mandarle un reset de contraseña (`firebase.auth().sendPasswordResetEmail(...)`)
+   para que el cliente elija su propia contraseña — nunca hace falta que
+   vos ni el cliente le den play a una contraseña por chat/mail.
+
+Con esto, cuando ese organizador se loguea en "Administrar viajes" o
+"Administrar comercios", el sistema sabe que es de `expreso-norte` y
+solo ve/edita lo suyo — aunque esté usando el mismo sitio y la misma
+base que Busmac.
+
+## 2. Marca del cliente — un solo archivo
 
 Todo lo que identifica a este cliente (nombre, mensaje de bienvenida, PIN
 de organizador) vive en **`js/marca.js`**. Es el único archivo que hay
@@ -34,9 +50,16 @@ const MARCA = {
   marcaSecundaria: 'lo que hacen',        // texto chico al lado
   nombreCompleto: 'Nombre Empresa S.A.',  // <title> de la pestaña
   bienvenida: '¡Bienvenido a bordo! ...', // mensaje al abrir la app
-  pinOrganizador: '0000',                 // PIN de 4 dígitos, nunca reusar el de otro cliente
+  pinOrganizador: '0000',                 // ver nota abajo
 };
 ```
+
+Ojo con `pinOrganizador`: ya **no** sirve para entrar a "Administrar
+viajes" ni "Administrar comercios" (eso ahora es con la cuenta del paso
+1). Sigue usándose solo para el rol liviano de "director" dentro de un
+viaje puntual — quién canta los números en Bingo, quién dirige El
+Impostor. Igual conviene poner uno propio por cliente, para que no sea
+el mismo que ya circula en otra empresa.
 
 Además de este archivo:
 
@@ -69,7 +92,7 @@ revisar caso por caso:
 
 - Mismo mecanismo que ya usa Busmac: sitio estático (GitHub Pages u otro
   hosting estático), sin backend propio — todo el estado en vivo vive en
-  el Firebase Realtime Database de ese cliente.
+  el Firebase Realtime Database compartido, aislado por `agenciaId`.
 - Recordar bumpear los `?v=N` de `index.html` si se toca algo del código
   compartido, para que no quede cacheado en los celulares.
 
