@@ -66,8 +66,16 @@
       }
     },
     "agencias": {
+      ".read": "auth != null && root.child('usuarios/' + auth.uid + '/superadmin').val() === true",
       "$agenciaId": {
         "nombre": { ".read": true, ".write": false },
+        "estadoPago": {
+          ".read": "auth != null && root.child('usuarios/' + auth.uid + '/superadmin').val() === true",
+          ".write": "auth != null && root.child('usuarios/' + auth.uid + '/superadmin').val() === true",
+          "activo": { ".validate": "newData.isBoolean()" },
+          "notas": { ".validate": "newData.isString() && newData.val().length <= 300" },
+          "actualizado": { ".validate": "newData.isNumber()" }
+        },
         "comercios": {
           ".read": true,
           ".write": "auth != null && root.child('usuarios/' + auth.uid + '/agenciaId').val() === $agenciaId",

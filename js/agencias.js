@@ -17,6 +17,7 @@
 
 let agenciaActualId = null;
 let agenciaActualNombre = null;
+let esSuperAdmin = false;
 
 function agenciasEsOrganizador(){
   return !!(firebase.auth().currentUser && agenciaActualId);
@@ -27,6 +28,7 @@ function agenciasCargarPerfil(){
   if(!user) return Promise.resolve(null);
   return db.ref('usuarios/' + user.uid).once('value').then(snap => {
     agenciaActualId = snap.child('agenciaId').val() || null;
+    esSuperAdmin = snap.child('superadmin').val() === true;
     if(!agenciaActualId) return null;
     return db.ref('agencias/' + agenciaActualId + '/nombre').once('value');
   }).then(snapNombre => {
@@ -90,9 +92,11 @@ function agenciasCerrarSesion(){
   firebase.auth().signOut();
   agenciaActualId = null;
   agenciaActualNombre = null;
+  esSuperAdmin = false;
   if(typeof renderPinCodigoNuevo === 'function') renderPinCodigoNuevo();
   if(typeof renderAdminViajes === 'function') renderAdminViajes();
   if(typeof renderAdminComercios === 'function') renderAdminComercios();
+  if(typeof renderPanelSuperAdmin === 'function') renderPanelSuperAdmin();
 }
 
 // Restaura la sesión sola al recargar la página (Firebase la persiste en
@@ -102,5 +106,6 @@ firebase.auth().onAuthStateChanged(user => {
     if(typeof renderPinCodigoNuevo === 'function') renderPinCodigoNuevo();
     if(typeof renderAdminViajes === 'function') renderAdminViajes();
     if(typeof renderAdminComercios === 'function') renderAdminComercios();
+    if(typeof renderPanelSuperAdmin === 'function') renderPanelSuperAdmin();
   });
 });
