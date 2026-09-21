@@ -53,6 +53,9 @@ function superAdminCargarTodo(){
       }));
     }));
   }).then(filas => {
+    // Si mientras cargaba se cerró sesión (o se sacó el acceso de superadmin),
+    // esta respuesta ya está vieja: no pisar la pantalla actual con esto.
+    if(!agenciasEsOrganizador() || !esSuperAdmin) return;
     superAdminDatos = filas.sort((a, b) => a.nombre.localeCompare(b.nombre));
     superAdminRenderTabla();
   });

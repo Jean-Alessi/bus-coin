@@ -107,5 +107,6 @@ firebase.auth().onAuthStateChanged(user => {
     if(typeof renderAdminViajes === 'function') renderAdminViajes();
     if(typeof renderAdminComercios === 'function') renderAdminComercios();
     if(typeof renderPanelSuperAdmin === 'function') renderPanelSuperAdmin();
+    if(typeof organizadorActualizarVisibilidad === 'function') organizadorActualizarVisibilidad();
   });
 });
