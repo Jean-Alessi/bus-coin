@@ -7,7 +7,7 @@
 - `.nojekyll` y `.well-known/assetlinks.json` (plantilla).
 
 ## Falta completar antes de subir (marcado como COMPLETAR)
-1. Correo de contacto y localidad en `privacidad.html` y `bases-premios.html`.
+1. (Hecho) Correo de contacto y localidad en las páginas legales.
 2. `assetlinks.json`: reemplazar `package_name` si cambia, y poner la huella SHA-256 que muestra Play Console (Integridad de la app → firma de la app).
 3. Verificar con asesoría legal las bases de premios (en Argentina, si el premio dependiera del azar puede requerir autorización; acá se asigna por ranking de habilidad).
 
