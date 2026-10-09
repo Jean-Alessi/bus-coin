@@ -26,6 +26,19 @@ if('serviceWorker' in navigator){
   });
 }
 
+// App de tienda (Google Play via TWA): Android abre la TWA con un referrer
+// "android-app://..." -- se recuerda en este celular porque las navegaciones
+// internas lo pierden. En esa versión no se ofrece "Instalá la app" (ya está
+// instalada) ni se muestra el Panel general del dueño.
+function esAppDeTienda(){
+  try {
+    if(document.referrer && document.referrer.indexOf('android-app://') === 0) localStorage.setItem('modo-tienda', 'si');
+    if(new URLSearchParams(location.search).get('origen') === 'tienda') localStorage.setItem('modo-tienda', 'si');
+    return localStorage.getItem('modo-tienda') === 'si' || !!window.Capacitor;
+  } catch(e){ return !!window.Capacitor; }
+}
+if(esAppDeTienda()) document.documentElement.classList.add('modo-tienda');
+
 function pwaYaInstalada(){
   return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 }
@@ -46,7 +59,7 @@ function pwaInstalar(){
 }
 
 function pwaInstalarHTML(){
-  if(pwaYaInstalada() || localStorage.getItem('pwa-instalar-oculto') === 'si') return '';
+  if(esAppDeTienda() || pwaYaInstalada() || localStorage.getItem('pwa-instalar-oculto') === 'si') return '';
 
   if(pwaPromptListo){
     return `

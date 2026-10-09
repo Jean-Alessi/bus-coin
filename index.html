@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=80">
-<link rel="stylesheet" href="escenas.css?v=7">
+<link rel="stylesheet" href="escenas.css?v=8">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -31,6 +31,7 @@
         <p class="entrada-nota">¡Vamos a divertirnos! Solicitá el código de acceso al administrador del viaje.</p>
         <div class="g-acciones"><button class="gbtn gbtn-ancho" id="btn-continuar-codigo" disabled onclick="confirmarCodigoViaje()">Continuar</button></div>
         <p id="codigo-viaje-error" class="bingo-pin-error"></p>
+        <p class="entrada-legal"><a href="privacidad.html">Política de privacidad</a> · <a href="bases-premios.html">Bases de los premios</a></p>
       </div>
       <!-- Oculto por defecto: un pasajero no tiene nada que hacer acá. Se
            muestra solo, si este celular ya organizó antes o tiene sesión de
@@ -41,7 +42,7 @@
           <button class="btn-organizador" onclick="mostrarGenerarCodigo()"><span class="btn-organizador-icono">➕</span>Nuevo viaje</button>
           <button class="btn-organizador" onclick="mostrarAdminViajes()"><span class="btn-organizador-icono">🔧</span>Viajes</button>
           <button class="btn-organizador" onclick="mostrarAdminComercios()"><span class="btn-organizador-icono">🏪</span>Comercios</button>
-          <button class="btn-organizador" onclick="mostrarPanelSuperAdmin()"><span class="btn-organizador-icono">👑</span>Panel general</button>
+          <button class="btn-organizador btn-solo-web" onclick="mostrarPanelSuperAdmin()"><span class="btn-organizador-icono">👑</span>Panel general</button>
         </div>
         <div id="generar-codigo-content"></div>
         <div id="admin-viajes-content"></div>
@@ -408,7 +409,7 @@
 <script src="js/impostor.js?v=9"></script>
 <script src="js/tienda.js?v=76"></script>
 <script src="js/ruleta.js?v=1"></script>
-<script src="js/pwa.js?v=2"></script>
+<script src="js/pwa.js?v=3"></script>
 <script src="js/triviaVivo.js?v=1"></script>
 <script src="js/cuento.js?v=2"></script>
 <script src="js/dibujar.js?v=5"></script>

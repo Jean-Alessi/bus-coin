@@ -827,3 +827,8 @@ button.tcarta{cursor:default;}
 .tcarta-pips-9 svg:nth-child(9){grid-column:1 / 3;}
 .m-mano-solapada .tcarta{margin-left:calc(-1 * var(--solape, 20px));}
 .m-mano-solapada .tcarta:first-child{margin-left:0;}
+
+/* Versión de tienda (TWA): sin Panel general del dueño */
+.modo-tienda .btn-solo-web{display:none;}
+.entrada-legal{font-size:12px; font-weight:600; text-align:center; margin:4px 6px 10px; opacity:.85; text-shadow:0 1px 3px rgba(0,0,0,.4);}
+.entrada-legal a{color:inherit; text-decoration:underline;}
