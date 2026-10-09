@@ -832,3 +832,10 @@ button.tcarta{cursor:default;}
 .modo-tienda .btn-solo-web{display:none;}
 .entrada-legal{font-size:12px; font-weight:600; text-align:center; margin:4px 6px 10px; opacity:.85; text-shadow:0 1px 3px rgba(0,0,0,.4);}
 .entrada-legal a{color:inherit; text-decoration:underline;}
+
+/* Flecha de volver flotante: solo cuando el juego oculta su título y ocupa toda la escena */
+.btn-back-flotante{display:none;}
+.juego-inmersivo .btn-back-flotante, .truco-en-mesa .btn-back-flotante{
+  display:flex; align-self:flex-start; margin:2px 0 6px 2px;
+  width:34px; height:34px; font-size:19px;
+}
