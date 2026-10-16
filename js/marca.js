@@ -14,6 +14,9 @@ const MARCA = {
   // <title> de la pestaña del navegador.
   nombreCompleto: 'Busmac Viajes y Turismo',
 
+  // Nombre corto, para textos de juegos y de la plaza ("Plaza Busmac").
+  nombreCorto: 'Busmac',
+
   // Mensaje de bienvenida en la pantalla de "código de viaje".
   bienvenida: '¡Bienvenido a bordo! 🚌 Arrancamos esta nueva experiencia con Busmac',
 
