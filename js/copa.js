@@ -86,7 +86,7 @@ function iniciarCopa(){
   if(cont && !Object.keys(copaEquipos).length) cont.innerHTML = gEscenaHTML('noche', gDialogoHTML('🏆 Copa Busmac', 'Cargando…'));
   copaEscuchar().then(renderCopa);
 }
-function copaIr(v, id){ copaVista = { v, id }; renderCopa(); window.scrollTo(0, 0); }
+function copaIr(v, id){ if(v !== 'trivia'){ copaTriviaEnPregunta = false; copaTriviaPausa = false; clearInterval(copaTriviaTimer); } copaVista = { v, id }; renderCopa(); window.scrollTo(0, 0); }
 
 // ---- Tabla de posiciones ----
 function copaTabla(){
@@ -336,14 +336,17 @@ function copaEscucharPartida(dId){
     copaPartidaTrivia[dId] = s.val() || {};
     copaPartidaEscuchada = dId;
     const activa = document.querySelector('.view.active');
-    if(activa && activa.id === 'view-copa' && copaVista.v === 'trivia' && copaVista.id === dId && !copaTriviaEnPregunta) renderCopa();
+    if(activa && activa.id === 'view-copa' && copaVista.v === 'trivia' && copaVista.id === dId && !copaTriviaEnPregunta && !copaTriviaPausa) renderCopa();
     copaTriviaRevisarFin(dId);
   });
 }
-let copaTriviaEnPregunta = false, copaTriviaTimer = null, copaTriviaMostrada = 0;
+// Mientras hay una pregunta en pantalla (o el cartel de correcto/incorrecto)
+// nada redibuja la trivia: si no, cualquier novedad de la Copa la salteaba.
+let copaTriviaEnPregunta = false, copaTriviaPausa = false, copaTriviaTimer = null, copaTriviaMostrada = 0;
 function renderCopaTrivia(cont, dId){
   const d = copaDesafios[dId]; const lado = d && copaSoyJugador(d);
   if(!d){ copaIr('inicio'); return; }
+  if(copaTriviaEnPregunta || copaTriviaPausa) return;
   // Hasta no tener las respuestas guardadas no se muestra ninguna pregunta
   // (si no, se marcaría como vista una que ya estaba respondida).
   if(copaPartidaEscuchada !== dId){
@@ -393,6 +396,7 @@ function renderCopaTrivia(cont, dId){
 function copaTriviaResponder(dId, i, k){
   if(!copaTriviaEnPregunta) return;
   copaTriviaEnPregunta = false;
+  copaTriviaPausa = true;
   clearInterval(copaTriviaTimer);
   const p = copaTriviaPreguntas(dId)[i];
   const ms = Math.min(COPA_TRIVIA_SEG * 1000, Date.now() - copaTriviaMostrada);
@@ -400,7 +404,7 @@ function copaTriviaResponder(dId, i, k){
   copaRefTrivia(dId).child(copaMiId()).child('r/' + i).set({ ok, ms }).then(() => {
     if(ok && typeof ganarMonedas === 'function') ganarMonedas(2);
     mostrarToast(ok ? '✅ ¡Correcto!' : k < 0 ? '⏱ Se acabó el tiempo' : '❌ Era: ' + p.opciones[p.correcta], ok ? 'gain' : 'loss');
-    setTimeout(renderCopa, 900);
+    setTimeout(() => { copaTriviaPausa = false; renderCopa(); }, 900);
   });
 }
 function copaTriviaTotales(d, datos){

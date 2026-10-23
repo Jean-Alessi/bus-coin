@@ -303,6 +303,7 @@ function renderAdminViajes(){
           <button class="btn-eliminar-pasajero" style="width:auto;border-radius:10px;padding:4px 8px;font-size:11px;" onclick="adminToggleCursos('${c}')" title="Cursos para la Guerra de cursos">🎓${listaCursos.length ? ' ' + listaCursos.length : ''}</button>
           <button class="btn-eliminar-pasajero" style="width:auto;border-radius:10px;padding:4px 8px;font-size:11px;" onclick="adminToggleFeria('${c}')" title="Feria de la plaza: kiosco, agencia y sorteo">🎪</button>
           ${datos[c].destino ? `<button class="btn-eliminar-pasajero" style="width:auto;border-radius:10px;padding:4px 8px;font-size:11px;" onclick="adminToggleCanjes('${c}')" title="Ver canjes de comercios">🏪</button>` : ''}
+          <button class="btn-eliminar-pasajero" style="width:auto;border-radius:10px;padding:4px 8px;font-size:11px;" onclick="adminCambiarPueblo('${c}','${String(datos[c].pueblo || '').replace(/'/g, '')}')" title="Pueblo de origen de los chicos (para la Vidriera)">🏘️ ${datos[c].pueblo ? String(datos[c].pueblo).replace(/</g, '') : 'Pueblo'}</button>
           <button class="btn-eliminar-pasajero" style="width:auto;border-radius:10px;padding:4px 8px;font-size:11px;" onclick="adminToggleCopa('${c}')" title="Copa Busmac: anotar los cursos y elegir capitanes">🏆</button>
           <button class="btn-eliminar-pasajero" style="width:auto;border-radius:10px;padding:4px 8px;font-size:11px;" onclick="adminCambiarEdad('${c}','${(datos[c].ajustes && datos[c].ajustes.edad) || ''}')" title="Edad del grupo: para 6 a 9 años se muestran solo los juegos para chicos">👦 ${(datos[c].ajustes && datos[c].ajustes.edad) === '6-9' ? '6-9' : 'Todas'}</button>
           <button class="btn-eliminar-pasajero" style="width:auto;border-radius:10px;padding:4px 8px;font-size:11px;" onclick="adminTogglePoker('${c}',${!(datos[c].ajustes && datos[c].ajustes.poker === true)})" title="Póker en este viaje (apagado para estudiantiles)">🃏 ${datos[c].ajustes && datos[c].ajustes.poker === true ? 'Sí' : 'No'}</button>
@@ -537,6 +538,7 @@ function renderHome(){
     <div class="home-logo-banner"><img src="logo-empresa.png?v=2" alt="Logo"></div>
     ${organizadorTarjetaHomeHTML()}
     ${typeof plazaTarjetaHomeHTML === 'function' ? plazaTarjetaHomeHTML() : ''}
+    ${typeof vidTarjetaHTML === 'function' ? vidTarjetaHTML() : ''}
     ${typeof avatarTarjetaHomeHTML === 'function' && (typeof mundoActivo !== 'function' || mundoActivo()) ? avatarTarjetaHomeHTML() : ''}
     ${pwaInstalarHTML()}
     ${ruletaHTML()}`);
@@ -594,7 +596,7 @@ function juegosPorEdad(lista){ const ok = EDAD_PERMITIDOS[edadGrupo]; return ok 
 
 function categoriasJuegosHTML(vista){
   const pend = typeof copaPendientes === 'function' ? copaPendientes() : 0;
-  return `<div class="categoria-juegos categoria-juegos-busqueda" onclick="showView('copa')" style="background:linear-gradient(135deg,#7a4dd8,#f2a93b);"><span class="categoria-juegos-icono">🏆</span><div class="categoria-juegos-info"><h2>Copa Busmac <span id="copa-badge" style="${pend ? '' : 'display:none;'}background:#E5484D;color:#fff;border-radius:999px;padding:0 8px;font-size:13px;">${pend || ''}</span></h2><p>Tu curso contra otros pueblos</p></div><span class="categoria-juegos-flecha">›</span></div>` +
+  return (typeof vidTarjetaHTML === 'function' ? vidTarjetaHTML() : '') + `<div class="categoria-juegos categoria-juegos-busqueda" onclick="showView('copa')" style="background:linear-gradient(135deg,#7a4dd8,#f2a93b);"><span class="categoria-juegos-icono">🏆</span><div class="categoria-juegos-info"><h2>Copa Busmac <span id="copa-badge" style="${pend ? '' : 'display:none;'}background:#E5484D;color:#fff;border-radius:999px;padding:0 8px;font-size:13px;">${pend || ''}</span></h2><p>Tu curso contra otros pueblos</p></div><span class="categoria-juegos-flecha">›</span></div>` +
     categoriaJuegosHTML(vista, 'solo', 'categoria-juegos-solo', '🧠', 'Desafiá tu mente', `${juegosPorEdad(TARJETAS_SOLO).length} juegos para vos solo`) +
     categoriaJuegosHTML(vista, 'video', 'categoria-juegos-video', '🎮', 'Video juegos', `${juegosPorEdad(TARJETAS_VIDEO).length} juegos de acción`) +
     (juegosPorEdad(TARJETAS_GRUPO_CARTAS).length ? categoriaJuegosHTML(vista, 'grupoCartas', 'categoria-juegos-cartas', '🃏', 'Juegos de cartas', `${juegosPorEdad(TARJETAS_GRUPO_CARTAS).length} juegos de cartas`) : '') +
@@ -619,7 +621,7 @@ function renderJuegos(){
 
 // Trivia, Acertijos y Bingo se entran desde el menú "Juegos" del tabbar, así
 // que esa pestaña queda marcada activa aunque ya estés adentro de uno de ellos.
-const TABS_HIJOS_DE_JUEGOS = ['copa', 'trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'memoria', 'sudoku', 'patrones', 'sopa', 'tutifruti', 'impostor', 'bingo', 'triviavivo', 'cuento', 'dibujar', 'escoba', 'chinchon', 'truco', 'buscolor', 'padel', 'busqueda', 'escape', 'corredor', 'vuelo', 'serpiente', 'tetris', 'ladrillos', 'parking', 'laberinto', 'tanque', 'pinball', 'bombas', 'plataformas', 'solitario', 'videopoker', 'texas', 'plaza', 'estacion', 'categorias'];
+const TABS_HIJOS_DE_JUEGOS = ['copa', 'vidriera', 'trivia', 'acertijos', 'pensamiento', 'ahorcado', 'cuatrouno', 'valija', 'memoria', 'sudoku', 'patrones', 'sopa', 'tutifruti', 'impostor', 'bingo', 'triviavivo', 'cuento', 'dibujar', 'escoba', 'chinchon', 'truco', 'buscolor', 'padel', 'busqueda', 'escape', 'corredor', 'vuelo', 'serpiente', 'tetris', 'ladrillos', 'parking', 'laberinto', 'tanque', 'pinball', 'bombas', 'plataformas', 'solitario', 'videopoker', 'texas', 'plaza', 'estacion', 'categorias'];
 
 // Volver desde cualquier juego: el botón ← del título, el flotante (cuando el
 // juego ocupa toda la escena) y el "atrás" del celular hacen lo mismo. En la
@@ -637,6 +639,7 @@ function volverDeJuego(){
   const activa = document.querySelector('.view.active');
   if(activa && activa.id === 'view-truco' && typeof trucoCopa !== 'undefined' && trucoCopa){ trucoSalirModoCopa(); showView('copa'); return; }
   if(activa && activa.id === 'view-copa' && typeof copaVista !== 'undefined' && copaVista.v !== 'inicio'){ copaIr('inicio'); return; }
+  if(activa && activa.id === 'view-vidriera' && typeof vidAbierto !== 'undefined' && vidAbierto){ vidAbierto = null; vidPreguntaAbierta = null; renderVidriera(); return; }
   if(activa && activa.id === 'view-escape'){ if(typeof escSalir === 'function') escSalir(); showView('busqueda'); return; } // el avance se guarda solo
   if(activa && activa.id === 'view-busqueda'){ showView('juegos'); return; }
   if(activa && activa.id === 'view-padel' && typeof padelVolver === 'function' && padelVolver()) return; // en un partido o esperando: primero vuelve a la lista de mesas
@@ -726,6 +729,7 @@ window.addEventListener('popstate', () => {
 
 function showView(name){
   const activaAntes = document.querySelector('.view.active');
+  if(typeof vidAlCambiarVista === 'function') vidAlCambiarVista(activaAntes ? activaAntes.id.replace('view-', '') : null, name);
   if(activaAntes && activaAntes.id === 'view-estacion' && name !== 'estacion' && typeof estacionSoltar === 'function') estacionSoltar();
   if(activaAntes && activaAntes.id === 'view-plaza' && name !== 'plaza' && name !== 'home') plazaOrigen = name;
   else if(name === 'plaza' || name === 'home') plazaOrigen = null;
@@ -776,6 +780,7 @@ function showView(name){
   if(name==='chinchon'){ iniciarChinchon(); }
   if(name==='truco'){ iniciarTruco(); }
   if(name==='copa'){ iniciarCopa(); }
+  if(name==='vidriera'){ iniciarVidriera(); }
   if(name==='buscolor'){ iniciarBuscolor(); }
   if(name==='padel'){ iniciarPadel(); }
   if(name==='busqueda'){ iniciarBusqueda(); }
@@ -923,6 +928,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
   // Si se abrió desde el QR de un comercio (?canjear=1&...), es el celular
   // DEL COMERCIO, no el de un pasajero: se muestra solo la confirmación del
   // canje y se corta acá, sin arrancar el resto de la app.
+  const datosCupon = typeof vidLeerParamsCupon === 'function' ? vidLeerParamsCupon() : null;
+  if(datosCupon){ vidMostrarPantallaCupon(datosCupon); return; }
   const datosCanje = comerciosLeerParamsCanje();
   if(datosCanje){
     comerciosMostrarPantallaCanje(datosCanje);

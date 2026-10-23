@@ -2,17 +2,27 @@
   "rules": {
     "salas": {
       ".read": true,
-      ".indexOn": ["agenciaId"],
+      ".indexOn": [
+        "agenciaId"
+      ],
       "$codigo": {
         ".write": true,
         ".validate": "$codigo.matches(/^[A-Z0-9]{1,20}$/)",
-        "agenciaId": { ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9-]{1,40}$/)" },
+        "agenciaId": {
+          ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9-]{1,40}$/)"
+        },
         "ranking": {
           "puntos": {
             "$asiento": {
-              "nombre": { ".validate": "newData.isString() && newData.val().length <= 60" },
-              "pts": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
-              "mayorDe12": { ".validate": "newData.isBoolean()" }
+              "nombre": {
+                ".validate": "newData.isString() && newData.val().length <= 60"
+              },
+              "pts": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000"
+              },
+              "mayorDe12": {
+                ".validate": "newData.isBoolean()"
+              }
             }
           }
         },
@@ -20,19 +30,37 @@
           "$comercioId": {
             "canjes": {
               "$asiento": {
-                "nombre": { ".validate": "newData.isString() && newData.val().length <= 60" },
-                "momento": { ".validate": "newData.isNumber()" },
-                "mayorDe12": { ".validate": "newData.isBoolean()" },
-                "comercioNombre": { ".validate": "newData.isString() && newData.val().length <= 80" },
-                "precioPorCanje": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
-                "oficial": { ".validate": "newData.isBoolean()" }
+                "nombre": {
+                  ".validate": "newData.isString() && newData.val().length <= 60"
+                },
+                "momento": {
+                  ".validate": "newData.isNumber()"
+                },
+                "mayorDe12": {
+                  ".validate": "newData.isBoolean()"
+                },
+                "comercioNombre": {
+                  ".validate": "newData.isString() && newData.val().length <= 80"
+                },
+                "precioPorCanje": {
+                  ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000"
+                },
+                "oficial": {
+                  ".validate": "newData.isBoolean()"
+                }
               }
             },
             "vistas": {
               "$asiento": {
-                "nombre": { ".validate": "newData.isString() && newData.val().length <= 60" },
-                "comercioNombre": { ".validate": "newData.isString() && newData.val().length <= 80" },
-                "momento": { ".validate": "newData.isNumber()" }
+                "nombre": {
+                  ".validate": "newData.isString() && newData.val().length <= 60"
+                },
+                "comercioNombre": {
+                  ".validate": "newData.isString() && newData.val().length <= 80"
+                },
+                "momento": {
+                  ".validate": "newData.isNumber()"
+                }
               }
             }
           }
@@ -48,14 +76,30 @@
       ".write": true,
       "$destinoSlug": {
         "$comercioId": {
-          "nombre": { ".validate": "newData.isString() && newData.val().length <= 80" },
-          "rubro": { ".validate": "newData.isString() && newData.val().length <= 40" },
-          "descuento": { ".validate": "newData.isString() && newData.val().length <= 160" },
-          "precioPorCanje": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
-          "montoFijoOficial": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000" },
-          "oficial": { ".validate": "newData.isBoolean()" },
-          "activo": { ".validate": "newData.isBoolean()" },
-          "flyerUrl": { ".validate": "newData.isString() && newData.val().length <= 600" }
+          "nombre": {
+            ".validate": "newData.isString() && newData.val().length <= 80"
+          },
+          "rubro": {
+            ".validate": "newData.isString() && newData.val().length <= 40"
+          },
+          "descuento": {
+            ".validate": "newData.isString() && newData.val().length <= 160"
+          },
+          "precioPorCanje": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000"
+          },
+          "montoFijoOficial": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000"
+          },
+          "oficial": {
+            ".validate": "newData.isBoolean()"
+          },
+          "activo": {
+            ".validate": "newData.isBoolean()"
+          },
+          "flyerUrl": {
+            ".validate": "newData.isString() && newData.val().length <= 600"
+          }
         }
       }
     },
@@ -68,30 +112,87 @@
     "agencias": {
       ".read": "auth != null && root.child('usuarios/' + auth.uid + '/superadmin').val() === true",
       "$agenciaId": {
-        "nombre": { ".read": true, ".write": false },
+        "nombre": {
+          ".read": true,
+          ".write": false
+        },
         "estadoPago": {
           ".read": "auth != null && root.child('usuarios/' + auth.uid + '/superadmin').val() === true",
           ".write": "auth != null && root.child('usuarios/' + auth.uid + '/superadmin').val() === true",
-          "activo": { ".validate": "newData.isBoolean()" },
-          "notas": { ".validate": "newData.isString() && newData.val().length <= 300" },
-          "actualizado": { ".validate": "newData.isNumber()" }
+          "activo": {
+            ".validate": "newData.isBoolean()"
+          },
+          "notas": {
+            ".validate": "newData.isString() && newData.val().length <= 300"
+          },
+          "actualizado": {
+            ".validate": "newData.isNumber()"
+          }
         },
         "comercios": {
           ".read": true,
           ".write": "auth != null && root.child('usuarios/' + auth.uid + '/agenciaId').val() === $agenciaId",
           "$destinoSlug": {
             "$comercioId": {
-              "nombre": { ".validate": "newData.isString() && newData.val().length <= 80" },
-              "rubro": { ".validate": "newData.isString() && newData.val().length <= 40" },
-              "descuento": { ".validate": "newData.isString() && newData.val().length <= 160" },
-              "precioPorCanje": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000" },
-              "montoFijoOficial": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000" },
-              "oficial": { ".validate": "newData.isBoolean()" },
-              "activo": { ".validate": "newData.isBoolean()" },
-              "flyerUrl": { ".validate": "newData.isString() && newData.val().length <= 600" }
+              "nombre": {
+                ".validate": "newData.isString() && newData.val().length <= 80"
+              },
+              "rubro": {
+                ".validate": "newData.isString() && newData.val().length <= 40"
+              },
+              "descuento": {
+                ".validate": "newData.isString() && newData.val().length <= 160"
+              },
+              "precioPorCanje": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1000000"
+              },
+              "montoFijoOficial": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10000000"
+              },
+              "oficial": {
+                ".validate": "newData.isBoolean()"
+              },
+              "activo": {
+                ".validate": "newData.isBoolean()"
+              },
+              "flyerUrl": {
+                ".validate": "newData.isString() && newData.val().length <= 600"
+              }
+            }
+          }
+        },
+        "vidriera": {
+          ".read": true,
+          ".write": "auth != null && root.child('usuarios/' + auth.uid + '/agenciaId').val() === $agenciaId"
+        },
+        "vidrieraStats": {
+          ".read": "auth != null && root.child('usuarios/' + auth.uid + '/agenciaId').val() === $agenciaId || (auth != null && root.child('usuarios/' + auth.uid + '/superadmin').val() === true)",
+          "$pueblo": {
+            "$neg": {
+              "$dia": {
+                "$campo": {
+                  ".write": true,
+                  ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 10000000"
+                }
+              }
             }
           }
         }
+      }
+    },
+    "copa": {
+      ".read": true,
+      ".write": true,
+      "equipos": {
+        ".indexOn": [
+          "agenciaId",
+          "viaje"
+        ]
+      },
+      "desafios": {
+        ".indexOn": [
+          "agenciaId"
+        ]
       }
     }
   }

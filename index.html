@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=84">
-<link rel="stylesheet" href="escenas.css?v=66">
+<link rel="stylesheet" href="escenas.css?v=67">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -42,11 +42,13 @@
           <button class="btn-organizador" onclick="mostrarGenerarCodigo()"><span class="btn-organizador-icono">➕</span>Nuevo viaje</button>
           <button class="btn-organizador" onclick="mostrarAdminViajes()"><span class="btn-organizador-icono">🔧</span>Viajes</button>
           <button class="btn-organizador" onclick="mostrarAdminComercios()"><span class="btn-organizador-icono">🏪</span>Comercios</button>
+          <button class="btn-organizador" onclick="mostrarAdminVidriera()"><span class="btn-organizador-icono">📣</span>Vidriera</button>
           <button class="btn-organizador btn-solo-web" onclick="mostrarPanelSuperAdmin()"><span class="btn-organizador-icono">👑</span>Panel general</button>
         </div>
         <div id="generar-codigo-content"></div>
         <div id="admin-viajes-content"></div>
         <div id="admin-comercios-content"></div>
+        <div id="admin-vidriera-content"></div>
         <div id="superadmin-content"></div>
       </div>
     </div>
@@ -547,6 +549,17 @@
       <div id="chinchon-content"></div>
     </div>
 
+    <!-- VIDRIERA DEL PUEBLO -->
+    <div class="view" id="view-vidriera">
+      <div class="app-header">
+        <div>
+          <h1>Vidriera del día</h1>
+          <div class="sub">Promos de los negocios de tu pueblo</div>
+        </div>
+      </div>
+      <div id="vidriera-content"></div>
+    </div>
+
     <!-- COPA BUSMAC -->
     <div class="view" id="view-copa">
       <div class="app-header">
@@ -711,12 +724,13 @@
 <script src="js/escoba.js?v=11"></script>
 <script src="js/chinchon.js?v=8"></script>
 <script src="js/truco.js?v=9"></script>
-<script src="js/copa.js?v=1"></script>
+<script src="js/copa.js?v=2"></script>
+<script src="js/vidriera.js?v=1"></script>
 <script src="js/buscolor.js?v=7"></script>
 <script src="js/comercios.js?v=12"></script>
 <script src="js/flyers.js?v=1"></script>
 <script src="js/analytics.js?v=1"></script>
 <script src="js/listaPasajeros.js?v=2"></script>
-<script src="js/app.js?v=109"></script>
+<script src="js/app.js?v=110"></script>
 </body>
 </html>
