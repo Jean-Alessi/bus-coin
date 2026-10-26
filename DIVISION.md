@@ -51,3 +51,13 @@ Lo que queda atado entre archivos (para la etapa 2: serán dependencias declarad
 - `truco.js` usa `copa.js`; `copa.js` usa `cursos.js` y `puntos.js`.
 - El mundo (plaza, sectores, feria, mundo, estacion, micro, mesas, tunel, boliche, seleccion, cartitas, padel, escape) es un bloque que se carga junto; `plaza3d` y `plaza3dmod` solo al tocar 🧊.
 - `app.js` sigue sabiendo de todos los juegos (el `showView` con ~40 `if`): se vuelve tabla en la etapa 2.
+
+**Etapa 2 — hecha (2026-10-26).** Carga por partes.
+- `js/modulos.js` es ahora la tabla de verdad: 36 módulos (`MODULOS`), qué módulo necesita cada pantalla (`MODULOS_VISTAS`) y las funciones de entrada que se pueden llamar antes de cargar (`MODULOS_FUNCIONES`). Los `?v=N` de los archivos perezosos se suben ahí, no en `index.html`.
+- `showView` (app.js) ahora baja el módulo de la pantalla si hace falta y recién entonces la abre (si ya estaba, abre al instante como antes). El `if(name===…)` de ~40 líneas pasó a la tabla `INICIAR_VISTA`.
+- Se carga siempre (22 archivos, 193 KB, antes 79 archivos y ~1,6 MB): firebase, marca, agencias, superadmin, iconos, escenas, sonido, nucleo, modulos, azar, grupos, ruleta, avatar, avatarcuerpo, mundo, puntos, cursos, pwa, naipes, analytics, listaPasajeros, app.
+- En segundo plano, ya mostrado el inicio: Vidriera y Copa (con lo que necesitan), para que sus tarjetas y avisos aparezcan solos. Con ahorro de datos o 2G no se hace.
+- El 3D de la plaza se baja recién al tocar 🧊 (o al entrar a la plaza si estaba prendido). La tarjeta "Subite al micro" del inicio pasó a `mundo.js`.
+- Panel del organizador: `renderAdminViajes` baja el módulo `admin` (pedidos, comercios, vidriera, copa y plaza).
+- Probado: las 50 pantallas, cada una en una página nueva y sola, sin errores; botones de administración; QR de comercio (`?canjear=1`) y cupón (`?cupon=1`); 3D por botón y por preferencia guardada.
+- Para sumar un juego nuevo: crear el archivo, agregarlo a un módulo en `MODULOS`, la vista en `MODULOS_VISTAS`, y su arranque en `INICIAR_VISTA` (app.js).
