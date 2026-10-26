@@ -40,3 +40,14 @@ Decisiones: las casitas de servicio salen de la plaza (la plaza queda de juegos 
 ## Pendiente de decidir (de Ale)
 
 - Dónde se publica la app de servicios de Busmac (otro subdominio de busmac.com.ar, o una ruta del mismo sitio).
+
+## Avance
+
+**Etapa 1 — hecha (2026-10-26).** Se creó `js/nucleo.js` (monedas por partida con tope diario, utilidades de canvas/logo, `barajar`, rol de organizador con PIN) y `js/naipes.js` (mazo español y palos). 33 símbolos se movieron sin perder ni duplicar ninguno (comparado antes/después). Probado: las 50 pantallas abren sin errores, los tests de arcade, escape, padel, mundo y copa pasan.
+
+Lo que queda atado entre archivos (para la etapa 2: serán dependencias declaradas entre módulos):
+- `triviaVivo.js` y `copa.js` usan `TEMAS`/`responder` de `trivia.js` → dependen del módulo trivia.
+- `impostor.js` y `dibujar.js` usan `palabras.js`; `cuento`, `dibujar` e `impostor` usan `grupos.js`.
+- `truco.js` usa `copa.js`; `copa.js` usa `cursos.js` y `puntos.js`.
+- El mundo (plaza, sectores, feria, mundo, estacion, micro, mesas, tunel, boliche, seleccion, cartitas, padel, escape) es un bloque que se carga junto; `plaza3d` y `plaza3dmod` solo al tocar 🧊.
+- `app.js` sigue sabiendo de todos los juegos (el `showView` con ~40 `if`): se vuelve tabla en la etapa 2.
