@@ -61,3 +61,5 @@ Lo que queda atado entre archivos (para la etapa 2: serán dependencias declarad
 - Panel del organizador: `renderAdminViajes` baja el módulo `admin` (pedidos, comercios, vidriera, copa y plaza).
 - Probado: las 50 pantallas, cada una en una página nueva y sola, sin errores; botones de administración; QR de comercio (`?canjear=1`) y cupón (`?cupon=1`); 3D por botón y por preferencia guardada.
 - Para sumar un juego nuevo: crear el archivo, agregarlo a un módulo en `MODULOS`, la vista en `MODULOS_VISTAS`, y su arranque en `INICIAR_VISTA` (app.js).
+
+**Arreglo urgente (2026-11-09).** Desde la etapa 2 los pasajeros no podían pasar de "Contanos quién sos": `goHome()` llamaba a `iniciarComerciosDestino()` (módulo `comercios`, ya no cargado al inicio). Ahora se pide en segundo plano. De paso: Padelbus viaja con la plaza (su cartel se dibuja ahí) y los avisos de evento de `mundo.js` ya no dependen de la plaza. Lección: probar siempre el recorrido real (código → onboarding → inicio → plaza), no solo abrir pantallas.
